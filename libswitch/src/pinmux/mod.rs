@@ -2,6 +2,7 @@
 
 use register::mmio::WriteOnly;
 
+use crate::i2c::I2cDevice;
 use crate::uart::UartDevice;
 
 const PINMUX_BASE: u32 = 0x7000_3000;
@@ -17,6 +18,7 @@ const PINMUX_LOCK: u32 = (1 << 7);
 const PINMUX_LPDR: u32 = (1 << 8);
 const PINMUX_HSM: u32 = (1 << 9);
 
+/// Configures an UART device.
 pub fn configure_uart(device: UartDevice) {
     let value = match device {
         UartDevice::A => 0,
@@ -35,4 +37,22 @@ pub fn configure_uart(device: UartDevice) {
     rx_reg.set(PINMUX_INPUT | PINMUX_PULL_UP);
     rts_reg.set(0);
     cts_reg.set(PINMUX_INPUT | PINMUX_PULL_DOWN);
+}
+
+/// Configures an I²C device.
+pub fn configure_i2c(device: I2cDevice) {
+    let value = match device {
+        I2cDevice::I1 => 0,
+        I2cDevice::I2 => 1,
+        I2cDevice::I3 => 2,
+        I2cDevice::I4 => 3,
+        I2cDevice::I5 => 4,
+        I2cDevice::I6 => 5,
+    };
+
+    let scl_reg = unsafe { &(*((PINMUX_BASE + 0xBC + 8 * value) as *const WriteOnly<u32>)) };
+    let sda_reg = unsafe { &(*((PINMUX_BASE + 0xC0 + 8 * value) as *const WriteOnly<u32>)) };
+
+    scl_reg.set(PINMUX_INPUT);
+    sda_reg.set(PINMUX_INPUT);
 }

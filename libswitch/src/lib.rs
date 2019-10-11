@@ -7,8 +7,13 @@
 #![no_std]
 #![feature(optimize_attr)]
 
+extern crate byteorder;
+
+extern crate register;
+
 pub mod clock;
 pub mod fuse;
+pub mod i2c;
 pub mod kfuse;
 pub mod pinmux;
 pub mod timer;
