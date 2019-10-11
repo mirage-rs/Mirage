@@ -5,7 +5,9 @@
 //! at own risk.
 
 #![no_std]
+#![feature(optimize_attr)]
 
 pub mod clock;
 pub mod fuse;
+pub mod kfuse;
 pub mod timer;
