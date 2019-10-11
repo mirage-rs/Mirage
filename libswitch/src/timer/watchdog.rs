@@ -1,7 +1,7 @@
 use register::mmio::ReadWrite;
 
-#[repr(C)]
 /// Representation of a Watchdog timer (WDT).
+#[repr(C)]
 pub struct Watchdog {
     config: ReadWrite<u32>,
     status: ReadWrite<u32>,
