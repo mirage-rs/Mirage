@@ -15,7 +15,9 @@ memcpy = true
 sysroot_path = "target/sysroot"
 
 [dependencies]
+bitflags = "1.2.0"
 byteorder = "1.3.2"
+enum_primitive = { git = "https://github.com/roblabla/enum_primitive-rs", branch = "master" }
 register = "0.3.3"
 
 [dependencies.num-traits]

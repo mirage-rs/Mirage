@@ -25,6 +25,7 @@ pub struct Fuse {
 }
 
 impl Fuse {
+    /// Gets the fuse registers.
     pub fn get() -> *const Self {
         0x7000_F800 as *const Fuse
     }
@@ -176,6 +177,7 @@ pub struct FuseChip {
 }
 
 impl FuseChip {
+    /// Gets the fuse chip.
     pub fn get() -> *const Self {
         0x7000_F900 as *const FuseChip
     }

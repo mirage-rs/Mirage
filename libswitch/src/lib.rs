@@ -7,12 +7,20 @@
 #![no_std]
 #![feature(optimize_attr)]
 
+#[macro_use]
+extern crate bitflags;
+
 extern crate byteorder;
+
+#[macro_use]
+extern crate enum_primitive;
 
 extern crate register;
 
+pub mod button;
 pub mod clock;
 pub mod fuse;
+pub mod gpio;
 pub mod i2c;
 pub mod kfuse;
 pub mod pinmux;
