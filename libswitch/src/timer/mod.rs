@@ -2,6 +2,8 @@
 
 use register::mmio::ReadWrite;
 
+pub mod watchdog;
+
 /// Returns the current time in seconds.
 pub fn get_seconds() -> u32 {
     let rtc_seconds = unsafe { &(*(0x7000_E008 as *const ReadWrite<u32>)) };
