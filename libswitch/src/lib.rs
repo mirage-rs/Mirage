@@ -10,4 +10,6 @@
 pub mod clock;
 pub mod fuse;
 pub mod kfuse;
+pub mod pinmux;
 pub mod timer;
+pub mod uart;
