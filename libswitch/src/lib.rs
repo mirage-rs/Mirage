@@ -7,4 +7,5 @@
 #![no_std]
 
 pub mod clock;
+pub mod fuse;
 pub mod timer;
