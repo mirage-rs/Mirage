@@ -5,3 +5,5 @@
 //! at own risk.
 
 #![no_std]
+
+pub mod timer;

@@ -15,3 +15,8 @@ memcpy = true
 sysroot_path = "target/sysroot"
 
 [dependencies]
+register = "0.3.3"
+
+[dependencies.num-traits]
+version = "0.2"
+default-features = false
