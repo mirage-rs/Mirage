@@ -5,6 +5,7 @@ use core::marker::{Send, Sync};
 use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 use register::mmio::ReadWrite;
 
+use crate::clock::Clock;
 use crate::timer::usleep;
 
 pub const MAX77621_CPU_I2C_ADDR: u8 = 0x1B;
@@ -67,6 +68,7 @@ pub struct Error;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct I2cDevice {
     registers: *const I2cRegisters,
+    clock: &'static Clock,
 }
 
 unsafe impl Send for I2cDevice {}
@@ -76,26 +78,32 @@ unsafe impl Sync for I2cDevice {}
 impl I2cDevice {
     pub const I1: Self = I2cDevice {
         registers: 0x7000_C000 as *const I2cRegisters,
+        clock: &Clock::I2C_1,
     };
 
     pub const I2: Self = I2cDevice {
         registers: 0x7000_C400 as *const I2cRegisters,
+        clock: &Clock::I2C_2,
     };
 
     pub const I3: Self = I2cDevice {
         registers: 0x7000_C500 as *const I2cRegisters,
+        clock: &Clock::I2C_3,
     };
 
     pub const I4: Self = I2cDevice {
         registers: 0x7000_C700 as *const I2cRegisters,
+        clock: &Clock::I2C_4,
     };
 
     pub const I5: Self = I2cDevice {
         registers: 0x7000_D000 as *const I2cRegisters,
+        clock: &Clock::I2C_5,
     };
 
     pub const I6: Self = I2cDevice {
         registers: 0x7000_D100 as *const I2cRegisters,
+        clock: &Clock::I2C_6,
     };
 }
 
@@ -189,6 +197,9 @@ impl I2cDevice {
         let bus_clear_config_reg = unsafe { &((*self.registers).i2c_bus_clear_config_0) };
         let bus_clear_status_reg = unsafe { &((*self.registers).i2c_bus_clear_status_0) };
         let interrupt_status_reg = unsafe { &((*self.registers).interrupt_status_register_0) };
+
+        // Enable device clock.
+        self.clock.enable();
 
         // Setup divisor and clear the bus.
         clk_divisor_reg.set(0x50001);
