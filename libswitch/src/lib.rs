@@ -25,4 +25,5 @@ pub mod i2c;
 pub mod kfuse;
 pub mod pinmux;
 pub mod timer;
+pub mod tsec;
 pub mod uart;
