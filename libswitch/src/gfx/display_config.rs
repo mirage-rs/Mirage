@@ -810,6 +810,23 @@ impl Config {
         ],
     };
 
+    pub const CLOCK_2: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0x34,
+                value: 0x4810C001,
+            },
+            ConfigTable {
+                ofset: 0x36,
+                value: 0x20,
+            },
+            ConfigTable {
+                ofset: 0x37,
+                value: 0x2DFC00,
+            },
+        ],
+    };
+
     pub const ONE_COLOR: Self = Config {
         tables: &[
             ConfigTable {
