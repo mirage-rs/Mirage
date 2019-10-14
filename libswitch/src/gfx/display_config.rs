@@ -721,6 +721,95 @@ impl Config {
         ],
     };
 
+    pub const DSI_CONIG_1: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0x4F,
+                value: 0x0,
+            },
+            ConfigTable {
+                offset: 0x3C,
+                value: 0x6070601,
+            },
+            ConfigTable {
+                offset: 0x3D,
+                value: 0x40A0E05,
+            },
+            ConfigTable {
+                offset: 0x3E,
+                value: 0x30172,
+            },
+            ConfigTable {
+                offset: 0x3F,
+                value: 0x190A14,
+            },
+            ConfigTable {
+                offset: 0x44,
+                value: 0x20000A40,
+            },
+            ConfigTable {
+                offset: 0x45,
+                value: 0x5A2F2000,
+            },
+            ConfigTable {
+                offset: 0x46,
+                value: 0x0,
+            },
+            ConfigTable {
+                offset: 0x23,
+                value: 0x40000208,
+            },
+            ConfigTable {
+                offset: 0x27,
+                value: 0x40000308,
+            },
+            ConfigTable {
+                offset: 0x2B,
+                value: 0x40000308,
+            },
+            ConfigTable {
+                offset: 0x25,
+                value: 0x40000308,
+            },
+            ConfigTable {
+                offset: 0x29,
+                value: 0x3F3B2B08,
+            },
+            ConfigTable {
+                offset: 0x2A,
+                value: 0x2CC,
+            },
+            ConfigTable {
+                offset: 0x2D,
+                value: 0x3F3B2B08,
+            },
+            ConfigTable {
+                offset: 0x2E,
+                value: 0x2CC,
+            },
+            ConfigTable {
+                offset: 0x34,
+                value: 0xCE0000,
+            },
+            ConfigTable {
+                offset: 0x35,
+                value: 0x87001A2,
+            },
+            ConfigTable {
+                offset: 0x36,
+                value: 0x190,
+            },
+            ConfigTable {
+                offset: 0x37,
+                value: 0x190,
+            },
+            ConfigTable {
+                offset: 0xF,
+                value: 0x0,
+            },
+        ],
+    };
+
     pub const ONE_COLOR: Self = Config {
         tables: &[
             ConfigTable {
