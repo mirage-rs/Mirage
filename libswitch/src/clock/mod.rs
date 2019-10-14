@@ -399,7 +399,13 @@ impl Clock {
         self.set_enable(false);
     }
 
-    /// Indicates whether the clock is enabled or not.
+    /// Resets the clock
+    pub fn reset(&self) {
+        self.disable();
+        self.enable();
+    }
+
+    /// Whether the clock is enabled or not.
     pub fn is_enabled(&self) -> bool {
         let enable_reg = unsafe { &(*((CLOCK_BASE + self.enable) as *const ReadWrite<u32>)) };
         let mask = (1 << (self.index & 0x1F)) as u32;
