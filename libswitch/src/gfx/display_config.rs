@@ -299,6 +299,251 @@ impl Config {
         ],
     };
 
+    pub const DSI_INIT: Self = Config {
+        tables: &[
+            Config {
+                offset: 0xA,
+                value: 0,
+            },
+            Config {
+                offset: 0xC,
+                value: 0,
+            },
+            Config {
+                offset: 0xD,
+                value: 0,
+            },
+            Config {
+                offset: 0xE,
+                value: 0,
+            },
+            Config {
+                offset: 0x1B,
+                value: 0,
+            },
+            Config {
+                offset: 0x1C,
+                value: 0,
+            },
+            Config {
+                offset: 0x1D,
+                value: 0,
+            },
+            Config {
+                offset: 0x1E,
+                value: 0,
+            },
+            Config {
+                offset: 0x1C5,
+                value: 0,
+            },
+            Config {
+                offset: 0x33,
+                value: 0,
+            },
+            Config {
+                offset: 0x25,
+                value: 0,
+            },
+            Config {
+                offset: 0x27,
+                value: 0,
+            },
+            Config {
+                offset: 0x29,
+                value: 0,
+            },
+            Config {
+                offset: 0x2B,
+                value: 0,
+            },
+            Config {
+                offset: 0x2D,
+                value: 0,
+            },
+            Config {
+                offset: 0x24,
+                value: 0,
+            },
+            Config {
+                offset: 0x26,
+                value: 0,
+            },
+            Config {
+                offset: 0x28,
+                value: 0,
+            },
+            Config {
+                offset: 0x2A,
+                value: 0,
+            },
+            Config {
+                offset: 0x2C,
+                value: 0,
+            },
+            Config {
+                offset: 0x2E,
+                value: 0,
+            },
+            Config {
+                offset: 0x10,
+                value: 0,
+            },
+            Config {
+                offset: 0x4C,
+                value: 0,
+            },
+            Config {
+                offset: 0x11,
+                value: 0x18,
+            },
+            Config {
+                offset: 0x12,
+                value: 0x1E0,
+            },
+            Config {
+                offset: 0x13,
+                value: 0,
+            },
+            Config {
+                offset: 0x1A,
+                value: 0,
+            },
+            Config {
+                offset: 0x34,
+                value: 0,
+            },
+            Config {
+                offset: 0x35,
+                value: 0,
+            },
+            Config {
+                offset: 0x36,
+                value: 0,
+            },
+            Config {
+                offset: 0x37,
+                value: 0,
+            },
+            Config {
+                offset: 0x4F,
+                value: 0,
+            },
+            Config {
+                offset: 0x3C,
+                value: 0x6070601,
+            },
+            Config {
+                offset: 0x3D,
+                value: 0x40A0E05,
+            },
+            Config {
+                offset: 0x3E,
+                value: 0x30109,
+            },
+            Config {
+                offset: 0x3F,
+                value: 0x190A14,
+            },
+            Config {
+                offset: 0x44,
+                value: 0x2000ffff,
+            },
+            Config {
+                offset: 0x45,
+                value: 0x7652000,
+            },
+            Config {
+                offset: 0x46,
+                value: 0,
+            },
+            Config {
+                offset: 0x4B,
+                value: 0,
+            },
+            Config {
+                offset: 0xB,
+                value: 1,
+            },
+            Config {
+                offset: 0xB,
+                value: 1,
+            },
+            Config {
+                offset: 0xB,
+                value: 0,
+            },
+            Config {
+                offset: 0xB,
+                value: 0,
+            },
+            Config {
+                offset: 0x4F,
+                value: 0,
+            },
+            Config {
+                offset: 0x3C,
+                value: 0x6070601,
+            },
+            Config {
+                offset: 0x3D,
+                value: 0x40A0E05,
+            },
+            Config {
+                offset: 0x3E,
+                value: 0x30118,
+            },
+            Config {
+                offset: 0x3F,
+                value: 0x190A14,
+            },
+            Config {
+                offset: 0x44,
+                value: 0x2000ffff,
+            },
+            Config {
+                offset: 0x45,
+                value: 0x13432000,
+            },
+            Config {
+                offset: 0x46,
+                value: 0,
+            },
+            Config {
+                offset: 0xF,
+                value: 0x102003,
+            },
+            Config {
+                offset: 0x10,
+                value: 0x31,
+            },
+            Config {
+                offset: 0xB,
+                value: 1,
+            },
+            Config {
+                offset: 0xB,
+                value: 1,
+            },
+            Config {
+                offset: 0x12,
+                value: 0x40,
+            },
+            Config {
+                offset: 0x13,
+                value: 0,
+            },
+            Config {
+                offset: 0x14,
+                value: 0,
+            },
+            Config {
+                offset: 0x1A,
+                value: 0,
+            },
+        ],
+    };
+
     pub const ONE_COLOR: Self = Config {
         tables: &[
             ConfigTable {
