@@ -17,7 +17,7 @@ pub struct Config<'a> {
 }
 
 impl Config {
-    pub const CLOCK_CONFIG: Self = Config {
+    pub const CLOCK_1: Self = Config {
         tables: &[
             ConfigTable {
                 offset: 0x4E,
@@ -38,7 +38,7 @@ impl Config {
         ],
     };
 
-    pub const DISPLAY_A: Self = Config {
+    pub const DISPLAY_A_1: Self = Config {
         tables: &[
             ConfigTable {
                 offset: 0x40,
