@@ -544,6 +544,183 @@ impl Config {
         ],
     };
 
+    pub const DSI_CONIG_VER_10: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0xA,
+                value: 0x439,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x9483FFB9,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xBD15,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x1939,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xAAAAAAD8,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xAAAAAAEB,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xAAEBAAAA,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xAAAAAAAA,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xAAAAAAEB,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xAAEBAAAA,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xAA,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x1BD15,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x2739,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFD8,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFF,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x2BD15,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xF39,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFD8,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFFFF,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xFFFFFF,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xBD15,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x6D915,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x439,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xB9,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+        ],
+    };
+
     pub const ONE_COLOR: Self = Config {
         tables: &[
             ConfigTable {
