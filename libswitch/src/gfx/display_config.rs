@@ -544,7 +544,7 @@ impl Config {
         ],
     };
 
-    pub const DSI_CONIG_VER_10: Self = Config {
+    pub const DSI_VER_10: Self = Config {
         tables: &[
             ConfigTable {
                 offset: 0xA,
@@ -721,7 +721,7 @@ impl Config {
         ],
     };
 
-    pub const DSI_CONIG_1: Self = Config {
+    pub const DSI_1: Self = Config {
         tables: &[
             ConfigTable {
                 offset: 0x4F,
@@ -823,6 +823,55 @@ impl Config {
             ConfigTable {
                 ofset: 0x37,
                 value: 0x2DFC00,
+            },
+        ],
+    };
+
+    pub const DSI_2: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0x13,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x10,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x11,
+                value: 6,
+            },
+            ConfigTable {
+                offset: 0x12,
+                value: 0x1E0,
+            },
+            ConfigTable {
+                offset: 0x12,
+                value: 0x1E0,
+            },
+            ConfigTable {
+                offset: 0xB,
+                value: 0x1,
+            },
+            ConfigTable {
+                offset: 0x10,
+                value: 0x103032,
+            },
+            ConfigTable {
+                offset: 0xF,
+                value: 0x33,
+            },
+            ConfigTable {
+                offset: 0x10,
+                value: 0x103032,
+            },
+            ConfigTable {
+                offset: 0xF,
+                value: 0x3,
+            },
+            ConfigTable {
+                offset: 0xF,
+                value: 0x23,
             },
         ],
     };
