@@ -876,6 +876,35 @@ impl Config {
         ],
     };
 
+    pub const MIPI_CALL: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0x18,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x02,
+                value: 0xF3F10000,
+            },
+            ConfigTable {
+                offset: 0x16,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x18,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x18,
+                value: 0x10010,
+            },
+            ConfigTable {
+                offset: 0x17,
+                value: 0x300,
+            },
+        ],
+    };
+
     pub const ONE_COLOR: Self = Config {
         tables: &[
             ConfigTable {
