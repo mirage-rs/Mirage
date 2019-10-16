@@ -876,7 +876,7 @@ impl Config {
         ],
     };
 
-    pub const MIPI_CALL: Self = Config {
+    pub const MIPI_CALL_1: Self = Config {
         tables: &[
             ConfigTable {
                 offset: 0x18,
@@ -924,6 +924,75 @@ impl Config {
                 value: 0,
             },
         ]
+    };
+
+    pub const MIPI_CAL_2: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0x0E,
+                value: 0x200200,
+            },
+            ConfigTable {
+                offset: 0x0F,
+                value: 0x200200,
+            },
+            ConfigTable {
+                offset: 0x19,
+                value: 0x200002,
+            },
+            ConfigTable {
+                offset: 0x1A,
+                value: 0x200002,
+            },
+            ConfigTable {
+                offset: 0x05,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x06,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x07,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x08,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x09,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x0A,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x10,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x11,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x1A,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x1C,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x1C,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0,
+                value: 0x2A000001,
+            },
+        ],
     };
 
     pub const ONE_COLOR: Self = Config {
