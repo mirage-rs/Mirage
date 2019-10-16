@@ -905,6 +905,27 @@ impl Config {
         ],
     };
 
+    pub const DSI_3: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0x4F,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x50,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x51,
+                value: 0x3333,
+            },
+            ConfigTable {
+                offset: 0x52,
+                value: 0,
+            },
+        ]
+    };
+
     pub const ONE_COLOR: Self = Config {
         tables: &[
             ConfigTable {
