@@ -87,7 +87,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
-    pub const UART_E: Self = Clock {
+    pub const UART_APE: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_Y,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_Y,
         source: CLK_RST_CONTROLLER_CLK_SOURCE_UART_APE,

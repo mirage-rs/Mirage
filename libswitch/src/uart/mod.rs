@@ -1,162 +1,410 @@
-//! Tegra210 UART driver.
+//! Universal Asynchronous Receiver/Transmitter driver for Tegra210.
+//!
+//! # Description
+//!
+//! There are four UARTs built into Tegra X1 devices.
+//! These UARTs support both 16450 and 16550 compatible modes
+//! (defaults to 16450).
+//! A fifth UART is located in the Audio Processing Engine (APE).
+//!
+//! Those UARTs are identical and provide serial data synchronization
+//! and data conversion for both receiver and transmitter sections.
+//!
+//! UARTs support device clocks of up to 200 MHz. Each symbol requires
+//! 16 clock cycles for proper sampling and processing of the input data.
+//! Thus, the maximum baud rate is `200 / 16 = 12.5M`.
+//!
+//! # Example
+//!
+//! ```
+//! use libswitch::uart::Uart;
+//!
+//! fn main() {
+//!     let mut device = &mut Uart::A;
+//!
+//!     device.init(115_200);
+//!     writeln!(&mut device, "Hello, friend!").ok();
+//! }
+//! ```
 
-use core::fmt::{Error, Write};
-use core::marker::{Send, Sync};
+use core::{
+    fmt::{Error, Write},
+    marker::{Send, Sync},
+    ops::Deref,
+};
 
 use register::mmio::*;
-use register::FieldValue;
 
-use crate::clock::Clock;
-use crate::timer::usleep;
+use crate::{clock::Clock, timer::usleep};
 
-const UART_LSR_RDR: u32 = (1 << 0);
-const UART_LSR_THRE: u32 = (1 << 5);
-const UART_LSR_TMTY: u32 = (1 << 6);
+/// Base address for the UART A registers.
+const UART_A_BASE: u32 = 0x7000_6000;
+/// Base address for the UART B registers.
+const UART_B_BASE: u32 = 0x7000_6040;
+/// Base address for the UART C registers.
+const UART_C_BASE: u32 = 0x7000_6200;
+/// Base address for the UART D registers.
+const UART_D_BASE: u32 = 0x7000_6300;
+/// Base address for the UART E registers.
+const UART_E_BASE: u32 = 0x7000_6400;
 
-const UART_LCR_WORD_LENGTH_8: u32 = 3;
-const UART_LCR_DLAB: u32 = (1 << 7);
+bitflags! {
+    /// Representation of the `UART_IIR_FCR_0` register.
+    ///
+    /// This register is used for FIFO control operations.
+    pub struct FifoControl: u32 {
+        /// Enable the transmit and receive FIFOs. This bit should be enabled.
+        const FCR_EN_FIFO = 1 << 0;
+        /// Clears the contents of the receive FIFO and resets its counter logic to 0
+        /// (the receive shift register is not cleared or altered).
+        /// This bit returns to 0 after clearing the FIFOs.
+        const RX_CLR = 1 << 1;
+        /// Clears the contents of the transmit FIFO and resets its counter logic to 0
+        /// (the transmit shift register is not cleared or altered).
+        /// This bit returns to 0 after clearing the FIFOs.
+        const TX_CLR = 1 << 2;
 
-const UART_FCR_FCR_EN_FIFO: u32 = (1 << 0);
-const UART_FCR_RX_CLR: u32 = (1 << 1);
-const UART_FCR_TX_CLR: u32 = (1 << 2);
+        /// DMA:
+        /// 0 = DMA_MODE_0.
+        /// 1 = DMA_MODE_1.
+        const DMA = 1 << 3;
+
+        /// TX_TRIG:
+        /// 0 = FIFO_COUNT_GREATER_16.
+        /// 1 = FIFO_COUNT_GREATER_8.
+        /// 2 = FIFO_COUNT_GREATER_4.
+        /// 3 = FIFO_COUNT_GREATER_1.
+        const TX_TRIG = 3 << 4;
+        const TX_TRIG_FIFO_COUNT_GREATER_16 = 0 << 4;
+        const TX_TRIG_FIFO_COUNT_GREATER_8 = 1 << 4;
+        const TX_TRIG_FIFO_COUNT_GREATER_4 = 2 << 4;
+        const TX_TRIG_FIFO_COUNT_GREATER_1 = 3 << 4;
+
+        /// RX_TRIG:
+        /// 0 = FIFO_COUNT_GREATER_16.
+        /// 1 = FIFO_COUNT_GREATER_8.
+        /// 2 = FIFO_COUNT_GREATER_4.
+        /// 3 = FIFO_COUNT_GREATER_1.
+        const RX_TRIG = 3 << 6;
+        const RX_TRIG_FIFO_COUNT_GREATER_16 = 0 << 6;
+        const RX_TRIG_FIFO_COUNT_GREATER_8 = 1 << 6;
+        const RX_TRIG_FIFO_COUNT_GREATER_4 = 2 << 6;
+        const RX_TRIG_FIFO_COUNT_GREATER_1 = 3 << 6;
+    }
+}
+
+bitflags! {
+    /// Representation of the `UART_IIR_FCR_0` register.
+    ///
+    /// This register is also used for interrupt identification.
+    pub struct InterruptIdentification: u32 {
+        /// Interrupt pending if ZERO.
+        const IS_STA = 1 << 0;
+        /// Encoded interrupt ID.
+        const IS_PRI0 = 1 << 1;
+        /// Encoded interrupt ID.
+        const IS_PRI1 = 1 << 2;
+        /// Encoded interrupt ID.
+        const IS_PRI2 = 1 << 3;
+
+        /// FIFO Mode Status.
+        /// 0 = MODE_16450 (no FIFO).
+        /// 1 = MODE_16550 (FIFO).
+        const EN_FIFO = 3 << 6;
+        const MODE_16450 = 0 << 6;
+        const MODE_16550 = 1 << 6;
+    }
+}
+
+bitflags! {
+    /// Representation of the `UART_LCR_0` register.
+    ///
+    /// This register denotes the UART Line Control Register,
+    /// which is used for setting various transfer options.
+    pub struct LineControl: u32 {
+        /// Word length of 5.
+        const WORD_LENGTH_5 = 0;
+        /// Word length of 6.
+        const WORD_LENGTH_6 = 1;
+        /// Word length of 7.
+        const WORD_LENGTH_7 = 2;
+        /// Word length of 8.
+        const WORD_LENGTH_8 = 3;
+
+        /// STOP:
+        /// 0 = Transmit 1 stop bit.
+        /// 1 = Transmit 2 stop bits (receiver always checks for 1 stop bit).
+        const STOP = 1 << 2;
+        /// No parity sent.
+        const PAR = 1 << 3;
+        /// Even parity format.
+        /// There will always be an even number of 1s in the parity representation.
+        const EVEN = 1 << 4;
+        /// Set (force) parity to value in `LCR`.
+        const SET_P = 1 << 5;
+        /// Set BREAK condition -- Transmitter sends all zeroes to indicate BREAK.
+        const SET_B = 1 << 6;
+        /// Divisor Latch Access Bit (set to allow programming of the DLH, DLM Divisors).
+        const DLAB = 1 << 7;
+    }
+}
+
+bitflags! {
+    /// Representation of the `UART_LSR_0` register.
+    ///
+    /// This register indicates the UART line status which is useful
+    /// for figuring out the state of data transfer progress.
+    pub struct LineStatus: u32 {
+        /// Receiver Data Ready.
+        const RDR = 1 << 0;
+        /// Receiver Overrun Error.
+        const OVRF = 1 << 1;
+        /// Parity Error.
+        const PERR = 1 << 2;
+        /// Framing Error.
+        const FERR = 1 << 3;
+        /// BREAK condition detected on line.
+        const BRK = 1 << 4;
+        /// Transmit Holding Register is Empty -- OK to write data.
+        const THRE = 1 << 5;
+        /// Transmit Shift Register empty status.
+        const TMTY = 1 << 6;
+        /// Receive FIFO error.
+        const FIFOE = 1 << 7;
+        /// Transmitter FIFO full status.
+        const TX_FIFO_FULL = 1 << 8;
+        /// Receiver FIFO empty status.
+        const RX_FIFO_EMPTY = 1 << 9;
+    }
+}
+
+bitflags! {
+    /// Representation of the `UART_VENDOR_STATUS_0_0` register.
+    ///
+    /// This register is used to acquire status data on the
+    /// RX and TX FIFOs.
+    pub struct VendorStatus: u32 {
+        /// This bit is set to 1 when the TX path is IDLE.
+        const UART_TX_IDLE = 1 << 0;
+        /// This bit is set to 1 when the RX path is IDLE.
+        const UART_RX_IDLE = 1 << 1;
+
+        /// This bit is set to 1 when a read is issued to an empty FIFO and gets
+        /// cleared on register read (sticky bit until read).
+        /// 0 = NO_UNDERRUN.
+        /// 1 = UNDERRUN.
+        const RX_UNDERRUN = 1 << 2;
+
+        ///This bit is set to 1 when write data is issued to the TX FIFO when it is already full
+        /// and gets cleared on register read (sticky bit until read).
+        /// 0 = NO_OVERRUN.
+        /// 1 = OVERRUN.
+        const TX_OVERRUN = 1 << 3;
+
+        /// The entry in this field reflects the number of current entries in the RX FIFO.
+        const RX_FIFO_COUNTER = 63 << 16;
+        /// The entry in this field reflects the number of current entries in the TX FIFO.
+        const TX_FIFO_COUNTER = 63 << 24;
+    }
+}
 
 /// Representation of the UART registers.
+#[allow(non_snake_case)]
 #[repr(C)]
-pub struct UartRegisters {
-    thr_dlab: ReadWrite<u32>,
-    ier_dlab: ReadWrite<u32>,
-    iir_fcr: ReadWrite<u32>,
-    lcr: ReadWrite<u32>,
-    mcr: ReadWrite<u32>,
-    lsr: ReadWrite<u32>,
-    msr: ReadWrite<u32>,
-    spr: ReadWrite<u32>,
-    irda_csr: ReadWrite<u32>,
-    rx_fifo_cfg: ReadWrite<u32>,
-    mie: ReadWrite<u32>,
-    vendor_status: ReadWrite<u32>,
-    unk: [u8; 0xC],
-    asr: ReadWrite<u32>,
+struct Registers {
+    /// The `UART_THR_DLAB_0_0` register.
+    pub THR_DLAB: ReadWrite<u32>,
+    /// The `UART_IER_DLAB_0_0` register.
+    pub IER_DLAB: ReadWrite<u32>,
+    /// The `UART_IIR_FCR_0` register.
+    pub IIR_FCR: ReadWrite<u32>,
+    /// The `UART_LCR_0` register.
+    pub LCR: ReadWrite<u32>,
+    /// The `UART_MCR_0` register.
+    pub MCR: ReadWrite<u32>,
+    /// The `UART_LSR_0` register.
+    pub LSR: ReadWrite<u32>,
+    /// The `UART_MSR_0` register.
+    pub MSR: ReadWrite<u32>,
+    /// The `UART_SPR_0` register.
+    pub SPR: ReadWrite<u32>,
+    /// The `UART_IRDA_CSR_0` register.
+    pub IRDA_CSR: ReadWrite<u32>,
+    /// The `UART_RX_FIFO_CFG_0` register.
+    pub RX_FIFO_CFG: ReadWrite<u32>,
+    /// The `UART_MIE_0` register.
+    pub MIE: ReadWrite<u32>,
+    /// The `UART_VENDOR_STATUS_0_0` register.
+    pub VENDOR_STATUS: ReadWrite<u32>,
+    _unk: [u8; 0xC],
+    /// The `UART_ASR_0` register.
+    pub ASR: ReadWrite<u32>,
 }
 
-/// Representation of a UART device.
+impl Registers {
+    /// Factory method to create a pointer to the UART A registers.
+    pub fn get_a() -> *const Self {
+        UART_A_BASE as *const _
+    }
+
+    /// Factory method to create a pointer to the UART B registers.
+    pub fn get_b() -> *const Self {
+        UART_B_BASE as *const _
+    }
+
+    /// Factory method to create a pointer to the UART C registers.
+    pub fn get_c() -> *const Self {
+        UART_C_BASE as *const _
+    }
+
+    /// Factory method to create a pointer to the UART D registers.
+    pub fn get_d() -> *const Self {
+        UART_D_BASE as *const _
+    }
+
+    /// Factory method to create a pointer to the UART E registers.
+    pub fn get_e() -> *const Self {
+        UART_E_BASE as *const _
+    }
+}
+
+impl Deref for Registers {
+    type Target = Self;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self }
+    }
+}
+
+/// Representation of a UART.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct UartDevice {
-    pub registers: *const UartRegisters,
-    pub clock: &'static Clock,
+pub struct Uart {
+    /// The UART CPU registers used for communication.
+    registers: &'static Registers,
+    /// The device clock to enable data transfer.
+    clock: &'static Clock,
 }
 
-unsafe impl Send for UartDevice {}
-
-unsafe impl Sync for UartDevice {}
-
-impl UartDevice {
-    pub const A: Self = UartDevice {
-        registers: 0x7000_6000 as *const UartRegisters,
+// Definitions for known UARTs.
+impl Uart {
+    /// Representation of the UART A.
+    pub const A: Self = Uart {
+        registers: &Registers::get_a(),
         clock: &Clock::UART_A,
     };
 
-    pub const B: Self = UartDevice {
-        registers: 0x7000_6040 as *const UartRegisters,
+    /// Representation of the UART B.
+    pub const B: Self = Uart {
+        registers: &Registers::get_b(),
         clock: &Clock::UART_B,
     };
 
-    pub const C: Self = UartDevice {
-        registers: 0x7000_6200 as *const UartRegisters,
+    /// Representation of the UART C.
+    pub const C: Self = Uart {
+        registers: &Registers::get_c(),
         clock: &Clock::UART_C,
     };
 
-    pub const D: Self = UartDevice {
-        registers: 0x7000_6300 as *const UartRegisters,
+    /// Representation of the UART D.
+    pub const D: Self = Uart {
+        registers: &Registers::get_d(),
         clock: &Clock::UART_D,
     };
 
-    pub const E: Self = UartDevice {
-        registers: 0x7000_6400 as *const UartRegisters,
-        clock: &Clock::UART_E,
+    /// Representation of the UART APE.
+    pub const E: Self = Uart {
+        registers: &Registers::get_e(),
+        clock: &Clock::UART_APE,
     };
 }
 
-impl UartDevice {
+impl Uart {
+    /// Waits for a given amount of cycles at a given baud rate.
     #[inline]
     fn wait_cycles(&self, baud: u32, amount: u32) {
         usleep((amount * 1_000_000 + 16 * baud - 1) / (16 * baud));
     }
 
+    /// Waits for a given amount of symbols at a given baud rate.
     #[inline]
     fn wait_symbols(&self, baud: u32, amount: u32) {
         usleep((amount * 1_000_000 + baud - 1) / baud);
     }
 
+    /// Blocks until the line has entered the desired state.
     #[inline]
-    fn wait_idle(&self, status: u32) {
-        let lsr_reg = unsafe { &((*self.registers).lsr) };
+    pub fn wait_idle(&self, status: VendorStatus) {
+        if status & VendorStatus::UART_TX_IDLE {
+            while (self.registers.LSR.get() & LineStatus::TMTY.bits()) == 0 {}
+        }
 
-        while (lsr_reg.get() & value) == 0 {}
+        if status & VendorStatus::UART_RX_IDLE {
+            while (self.registers.LSR.get() & LineStatus::RDR.bits()) == 0 {}
+        }
     }
 
+    /// Waits until data have been transmitted.
     #[inline]
     fn wait_transmit(&self) {
-        let lsr_reg = unsafe { &((*self.registers).lsr) };
-
-        while (lsr_reg.get() & UART_LSR_THRE) == 0 {}
+        while (self.registers.LSR.get() & LineStatus::THRE.bits()) == 0 {}
     }
 
+    /// Waits until data have been received.
     #[inline]
     fn wait_receive(&self) {
-        let lsr_reg = unsafe { &((*self.registers).lsr) };
-
-        while (lsr_reg.get() & UART_LSR_RDR) == 0 {}
+        while (self.registers.LSR.get() & LineStatus::RDR.bits()) == 0 {}
     }
 
-    /// Initializes the device.
+    /// Initializes the UART.
     pub fn init(&self, baud: u32) {
         // Enable device clock.
         self.clock.enable();
 
         // Wait for TX idle state.
-        self.wait_idle(UART_LSR_TMTY);
+        self.wait_idle(VendorStatus::UART_TX_IDLE);
 
-        let rate = (8 * baud + 408_000_000) / (16 * baud);
-
-        let uart_base = unsafe { &(*self.registers) };
+        // Calculate baud rate and round to nearest.
+        let baud_rate = (8 * baud + 408_000_000) / (16 * baud);
 
         // Disable interrupts.
-        uart_base.ier_dlab.set(0);
+        self.registers.IER_DLAB.set(0);
 
         // No hardware flow control.
-        uart_base.mcr.set(0);
+        self.registers.MCR.set(0);
 
         // Enable DLAB and set word length to 8.
-        uart_base.lcr.set(UART_LCR_DLAB | UART_LCR_WORD_LENGTH_8);
+        self.registers
+            .LCR
+            .set((LineControl::DLAB | LineControl::WORD_LENGTH_8).bits());
 
-        uart_base.thr_dlab.set(rate);
-        uart_base.ier_dlab.set(rate >> 8);
+        self.registers.THR_DLAB.set(baud_rate);
+        self.registers.IER_DLAB.set(baud_rate >> 8);
 
         // Disable DLAB.
-        uart_base.lcr.set(uart_base.lcr.get() & !UART_LCR_DLAB);
+        self.registers
+            .LCR
+            .set(self.registers.LCR.get() & !LineControl::DLAB.bits());
 
-        uart_base.spr.get(); // Dummy read.
+        self.registers.SPR.get(); // Dummy read.
         self.wait_symbols(baud, 3); // Wait for 3 symbols.
 
         // Enable FIFO.
-        uart_base.iir_fcr.set(UART_FCR_FCR_EN_FIFO);
-        uart_base.spr.get(); // Dummy read.
+        self.registers.IIR_FCR.set(FifoControl::FCR_EN_FIFO.bits());
+        self.registers.SPR.get(); // Dummy read.
         self.wait_cycles(baud, 3); // Wait for 3 baud cycles.
 
         // Flush FIFO.
-        self.wait_idle(UART_LSR_TMTY); // Ensure no data is being written to TX FIFO.
-        uart_base
-            .iir_fcr
-            .set(uart_base.iir_fcr.get() | UART_FCR_RX_CLR | UART_FCR_TX_CLR); // Clear TX and RX FIFOs.
+        self.wait_idle(VendorStatus::UART_TX_IDLE); // Ensure no data is being written to TX FIFO.
+        self.registers
+            .IIR_FCR
+            .set(self.registers.IIR_FCR.get() | (FifoControl::RX_CLR | FifoControl::TX_CLR)); // Clear TX and RX FIFOs.
         self.wait_cycles(baud, 32); // Wait for 32 baud cycles.
 
         // Wait for idle state.
-        self.wait_idle(UART_LSR_TMTY);
-        self.wait_idle(UART_LSR_RDR);
+        self.wait_idle(VendorStatus::UART_TX_IDLE | VendorStatus::UART_RX_IDLE);
     }
 
-    /// Sends an `u32`.
+    /// Sends an `u32` over UART.
     pub fn write_u32(&self, value: u32) {
         let mut digits: [u8; 10] = [0x0; 10];
         let mut value = value;
@@ -172,11 +420,11 @@ impl UartDevice {
         }
 
         for digit in digits.iter().rev() {
-            self.write(&[*digit]);
+            self.write_byte(*digit);
         }
     }
 
-    /// Sends an `u64`.
+    /// Sends an `u64` over UART.
     pub fn write_u64(&self, value: u64) {
         let mut digits: [u8; 20] = [0x0; 20];
         let mut value = value;
@@ -192,32 +440,33 @@ impl UartDevice {
         }
 
         for digit in digits.iter().rev() {
-            self.write(&[*digit]);
+            self.write_byte(*digit);
         }
     }
 
-    /// Sends a buffer of `u8` data.
+    /// Writes a byte over UART.
+    pub fn write_byte(&self, byte: u8) {
+        // Wait until it is possible to send data.
+        self.wait_transmit();
+
+        // Send the byte.
+        self.registers.THR_DLAB.set(u32::from(byte));
+    }
+
+    /// Sends a buffer of `u8` data over UART.
     pub fn write(&self, data: &[u8]) {
-        let thr_reg = unsafe { &((*self.registers).thr_dlab) };
-
         for byte in data {
-            // Wait until it is possible to send data.
-            self.wait_transmit();
-
-            // Send data.
-            thr_reg.set(u32::from(*byte));
+            self.write_byte(*byte);
         }
     }
 
-    /// Reads and returns a byte (`u8`).
+    /// Reads a byte (`u8`) over UART.
     pub fn read_byte(&self) -> u8 {
-        let thr_reg = unsafe { &((*self.registers).thr_dlab) };
-
         // Wait until it is possible to receive data.
         self.wait_receive();
 
         // Read byte.
-        thr_reg.get() as u8
+        self.registers.THR_DLAB.get() as u8
     }
 
     /// Reads bytes into a buffer.
@@ -228,8 +477,9 @@ impl UartDevice {
     }
 }
 
-impl Write for UartDevice {
+impl Write for Uart {
     fn write_str(&mut self, s: &str) -> Result<(), Error> {
+        // Write data.
         self.write(s.as_bytes());
 
         // Wait for everything to be written.
@@ -238,3 +488,7 @@ impl Write for UartDevice {
         Ok(())
     }
 }
+
+unsafe impl Send for Uart {}
+
+unsafe impl Sync for Uart {}

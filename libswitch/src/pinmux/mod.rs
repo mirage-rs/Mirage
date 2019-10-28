@@ -3,7 +3,7 @@
 use register::mmio::*;
 
 use crate::i2c::I2cDevice;
-use crate::uart::UartDevice;
+use crate::uart::Uart;
 
 const PINMUX_BASE: u32 = 0x7000_3000;
 
@@ -194,13 +194,13 @@ impl PinmuxRegisters {
 }
 
 /// Configures an UART device.
-pub fn configure_uart(device: UartDevice) {
+pub fn configure_uart(device: Uart) {
     let value = match device {
-        UartDevice::A => 0,
-        UartDevice::B => 1,
-        UartDevice::C => 2,
-        UartDevice::D => 3,
-        UartDevice::E => 4,
+        Uart::A => 0,
+        Uart::B => 1,
+        Uart::C => 2,
+        Uart::D => 3,
+        Uart::E => 4,
     };
 
     let tx_reg = unsafe { &(*((PINMUX_BASE + 0xE4 + 0x10 * value) as *const WriteOnly<u32>)) };

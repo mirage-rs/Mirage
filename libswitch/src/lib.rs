@@ -98,7 +98,7 @@ fn config_gpios() {
 
     pinmux::configure_i2c(i2c::I2cDevice::I1);
     pinmux::configure_i2c(i2c::I2cDevice::I5);
-    pinmux::configure_uart(uart::UartDevice::A);
+    pinmux::configure_uart(uart::Uart::A);
 
     // Configure Volume Up/Down as inputs.
     gpio::GpioPin::BUTTON_VOL_UP.config(gpio::GpioConfig::Input);
