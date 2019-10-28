@@ -544,7 +544,7 @@ impl Config {
             ],
     };
 
-    pub const DSI_VER_10: Self = Config {
+    pub const DSI_VER_10_1: Self = Config {
         tables: &[
             ConfigTable {
                 offset: 0xA,
@@ -1762,6 +1762,100 @@ impl Config {
                 value: 0,
             },
             ],
+    };
+
+    pub const DSI_VER_10_2: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0xA,
+                value: 0x439,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x9483FFB9,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x2139,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x191919D5,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x19191919,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x19191919,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x19191919,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x19191919,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x19191919,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x19191919,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x19191919,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x19,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xB39,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x4F0F41B1,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xF179A433,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x2D81,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0x439,
+            },
+            ConfigTable {
+                offset: 0xA,
+                value: 0xB9,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0x2,
+            },
+            ],
+
     };
 }
 
