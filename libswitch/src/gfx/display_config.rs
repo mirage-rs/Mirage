@@ -296,7 +296,7 @@ impl Config {
                 offset: 0x41,
                 value: 0xF,
             },
-        ],
+            ],
     };
 
     pub const DSI_INIT: Self = Config {
@@ -541,7 +541,7 @@ impl Config {
                 offset: 0x1A,
                 value: 0,
             },
-        ],
+            ],
     };
 
     pub const DSI_VER_10: Self = Config {
@@ -718,7 +718,7 @@ impl Config {
                 offset: 0x13,
                 value: 0x2,
             },
-        ],
+            ],
     };
 
     pub const DSI_1: Self = Config {
@@ -807,7 +807,7 @@ impl Config {
                 offset: 0xF,
                 value: 0x0,
             },
-        ],
+            ],
     };
 
     pub const CLOCK_2: Self = Config {
@@ -873,7 +873,7 @@ impl Config {
                 offset: 0xF,
                 value: 0x23,
             },
-        ],
+            ],
     };
 
     pub const MIPI_CALL_1: Self = Config {
@@ -902,7 +902,7 @@ impl Config {
                 offset: 0x17,
                 value: 0x300,
             },
-        ],
+            ],
     };
 
     pub const DSI_3: Self = Config {
@@ -992,7 +992,7 @@ impl Config {
                 offset: 0,
                 value: 0x2A000001,
             },
-        ],
+            ],
     };
 
     pub const ONE_COLOR: Self = Config {
@@ -1029,7 +1029,7 @@ impl Config {
                 offset: 0x32,
                 value: 0x20,
             },
-        ],
+            ],
     };
 
     pub const FRAMEBUFFER: Self = Config {
@@ -1162,7 +1162,464 @@ impl Config {
                 offset: 0x41,
                 value: 0x3,
             },
-        ],
+            ],
+    };
+
+    pub const DISPLAY_A_2: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0x40,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x10,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x10,
+            },
+            ConfigTable {
+                offset: 0x70e,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x10,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x10,
+            },
+            ConfigTable {
+                offset: 0x611,
+                value:   0xF0,
+            },
+            ConfigTable {
+                offset: 0x612,
+                value: 0x12A,
+            },
+            ConfigTable {
+                offset: 0x613,
+                value:   0,
+            },
+            ConfigTable {
+                offset: 0x614,
+                value:   0x198,
+            },
+            ConfigTable {
+                offset: 0x615,
+                value:   0x39B,
+            },
+            ConfigTable {
+                offset: 0x616,
+                value:   0x32F,
+            },
+            ConfigTable {
+                offset: 0x617,
+                value:   0x204,
+            },
+            ConfigTable {
+                offset: 0x618,
+                value:   0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x20,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x20,
+            },
+            ConfigTable {
+                offset: 0x70e,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x20,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x20,
+            },
+            ConfigTable {
+                offset: 0x611,
+                value:   0xF0,
+            },
+            ConfigTable {
+                offset: 0x612,
+                value: 0x12A,
+            },
+            ConfigTable {
+                offset: 0x613,
+                value:   0,
+            },
+            ConfigTable {
+                offset: 0x614,
+                value:   0x198,
+            },
+            ConfigTable {
+                offset: 0x615,
+                value:   0x39B,
+            },
+            ConfigTable {
+                offset: 0x616,
+                value:   0x32F,
+            },
+            ConfigTable {
+                offset: 0x617,
+                value:   0x204,
+            },
+            ConfigTable {
+                offset: 0x618,
+                value:   0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x40,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x40,
+            },
+            ConfigTable {
+                offset: 0x70e,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x40,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x40,
+            },
+            ConfigTable {
+                offset: 0x611,
+                value:   0xF0,
+            },
+            ConfigTable {
+                offset: 0x612,
+                value: 0x12A,
+            },
+            ConfigTable {
+                offset: 0x613,
+                value:   0,
+            },
+            ConfigTable {
+                offset: 0x614,
+                value:   0x198,
+            },
+            ConfigTable {
+                offset: 0x615,
+                value:   0x39B,
+            },
+            ConfigTable {
+                offset: 0x616,
+                value:   0x32F,
+            },
+            ConfigTable {
+                offset: 0x617,
+                value:   0x204,
+            },
+            ConfigTable {
+                offset: 0x618,
+                value:   0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x10,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x20,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x40,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x430,
+                value: 0x8,
+            },
+            ConfigTable {
+                offset: 0x42f,
+                value: 0x0,
+            },
+            ConfigTable {
+                offset: 0x307,
+                value: 0x1000000,
+            },
+            ConfigTable {
+                offset: 0x309,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x4E4,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x300,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0xF00,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0xF,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x10,
+            },
+            ConfigTable {
+                offset: 0x716,
+                value: 0x10000FF,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x20,
+            },
+            ConfigTable {
+                offset: 0x716,
+                value: 0x10000FF,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x40,
+            },
+            ConfigTable {
+                offset: 0x716,
+                value: 0x10000FF,
+            },
+            ConfigTable {
+                offset: 0x31,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x10,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x20,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x40,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x402,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x32,
+                value: 0x0,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0xF00,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0xF,
+            },
+            ConfigTable {
+                offset: 0x40,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x405,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x406,
+                value: 0x10000,
+            },
+            ConfigTable {
+                offset: 0x407,
+                value:  0x10048,
+            },
+            ConfigTable {
+                offset: 0x408,
+                value:  0x90048,
+            },
+            ConfigTable {
+                offset: 0x409,
+                value: 0x50002D0,
+            },
+            ConfigTable {
+                offset: 0x40a,
+                value: 0xA0088,
+            },
+            ConfigTable {
+                offset: 0x431,
+                value: 0x10001,
+            },
+            ConfigTable {
+                offset: 0x303,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x432,
+                value: 0x5,
+            },
+            ConfigTable {
+                offset: 0x42f,
+                value: 0x0,
+            },
+            ConfigTable {
+                offset: 0x42e,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x31,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x10,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x20,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42,
+                value: 0x40,
+            },
+            ConfigTable {
+                offset: 0x700,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x402,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x32,
+                value: 0x20,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x100,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x1,
+            },
+            ConfigTable {
+                offset: 0x40,
+                value: 0x5,
+            },
+            ConfigTable {
+                offset: 0x40a,
+                value: 0xA0088,
+            },
+            ConfigTable {
+                offset: 0x40,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x100,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x1,
+            },
+            ConfigTable {
+                offset: 0x0,
+                value: 0x301,
+            },
+            ConfigTable {
+                offset: 0x0,
+                value: 0x301,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x100,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x1,
+            },
+            ConfigTable {
+                offset: 0x40,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x42e,
+                value: 4,
+            },
+            ConfigTable {
+                offset: 0x430,
+                value: 0x8,
+            },
+            ConfigTable {
+                offset: 0x31,
+                value: 0,
+            },
+            ],
     };
 }
 
