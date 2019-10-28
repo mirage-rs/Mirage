@@ -1621,6 +1621,79 @@ impl Config {
             },
             ],
     };
+
+    pub const DISPLAY_A_3: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0x40a,
+                value: 0xA0088,
+            },
+            ConfigTable {
+                offset: 0x38,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x40,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x39,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x28,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x32,
+                value: 0x0,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x100,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x1,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x100,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x1,
+            },
+            ConfigTable {
+                offset: 0x0,
+                value: 0x301,
+            },
+            ConfigTable {
+                offset: 0x0,
+                value: 0x301,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x100,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x1,
+            },
+            ConfigTable {
+                offset: 0x36,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x100,
+            },
+            ConfigTable {
+                offset: 0x41,
+                value: 0x1,
+            },
+            ],
+    };
 }
 
 impl Config {
