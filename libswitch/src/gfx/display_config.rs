@@ -1694,6 +1694,75 @@ impl Config {
             },
             ],
     };
+
+    pub const DSI_4: Self = Config {
+        tables: &[
+            ConfigTable {
+                offset: 0xB,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x4F,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x3C,
+                value: 0x6070601,
+            },
+            ConfigTable {
+                offset: 0x3D,
+                value: 0x40A0E05,
+            },
+            ConfigTable {
+                offset: 0x3E,
+                value: 0x30118,
+            },
+            ConfigTable {
+                offset: 0x3F,
+                value: 0x190A14,
+            },
+            ConfigTable {
+                offset: 0x44,
+                value: 0x2000FFFF,
+            },
+            ConfigTable {
+                offset: 0x45,
+                value: 0x13432000,
+            },
+            ConfigTable {
+                offset: 0x46,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0xF,
+                value: 0x102003,
+            },
+            ConfigTable {
+                offset: 0x10,
+                value: 0x31,
+            },
+            ConfigTable {
+                offset: 0xB,
+                value: 0x1,
+            },
+            ConfigTable {
+                offset: 0x12,
+                value: 0x40,
+            },
+            ConfigTable {
+                offset: 0x13,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x14,
+                value: 0,
+            },
+            ConfigTable {
+                offset: 0x1A,
+                value: 0,
+            },
+            ],
+    };
 }
 
 impl Config {
