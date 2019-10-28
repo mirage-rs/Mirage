@@ -16,6 +16,15 @@ pub struct Config<'a> {
     tables: &'a [ConfigTable],
 }
 
+macro_rules! config_table {
+    ($offset:ident, $value:ident) => {
+        ConfigTable {
+            offset: offset,
+            value: value,
+        }
+    }
+}
+
 impl Config {
     pub const CLOCK_1: Self = Config {
         tables: &[
