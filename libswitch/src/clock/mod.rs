@@ -2,7 +2,7 @@
 
 use register::mmio::ReadWrite;
 
-const CLOCK_BASE: u32 = 0x6000_6000;
+pub const CLOCK_BASE: u32 = 0x6000_6000;
 
 /// Clock representation.
 #[derive(Debug, Clone)]

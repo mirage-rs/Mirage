@@ -130,6 +130,16 @@ pub struct GpioPin {
     pub offset: GpioPinOffset,
 }
 
+#[macro_export]
+macro_rules! gpio {
+    ($port:ident, $pin:tt) => {
+        GpioPin {
+            port: GpioPort::$port,
+            offset: ::paste::expr!(GpioPinOffset::[<P $pin>]),
+        }
+    }
+}
+
 impl GpioPin {
     pub const BUTTON_VOL_DOWN: Self = GpioPin {
         port: GpioPort::X,
