@@ -26,6 +26,7 @@ pub fn get_microseconds() -> u32 {
     timerus_cntr_1us_0.get()
 }
 
+/// Sleeps for a given duration in seconds.
 pub fn sleep(duration: u32) {
     let rtc_seconds = unsafe { &(*(0x7000_E008 as *const ReadWrite<u32>)) };
 

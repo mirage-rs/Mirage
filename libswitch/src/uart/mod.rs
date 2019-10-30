@@ -17,7 +17,7 @@
 //! # Example
 //!
 //! ```
-//! use libswitch::uart::Uart;
+//! use mirage_libswitch::uart::Uart;
 //!
 //! fn main() {
 //!     let mut device = &mut Uart::A;
@@ -33,7 +33,7 @@ use core::{
     ops::Deref,
 };
 
-use register::mmio::*;
+use register::mmio::ReadWrite;
 
 use crate::{clock::Clock, timer::usleep};
 
@@ -404,56 +404,16 @@ impl Uart {
         self.wait_idle(VendorStatus::UART_TX_IDLE | VendorStatus::UART_RX_IDLE);
     }
 
-    /// Sends an `u32` over UART.
-    pub fn write_u32(&self, value: u32) {
-        let mut digits: [u8; 10] = [0x0; 10];
-        let mut value = value;
-
-        for i in digits.iter_mut() {
-            *i = ((value % 10) + 0x30) as u8;
-
-            value /= 10;
-
-            if value == 0 {
-                break;
-            }
-        }
-
-        for digit in digits.iter().rev() {
-            self.write_byte(*digit);
-        }
-    }
-
-    /// Sends an `u64` over UART.
-    pub fn write_u64(&self, value: u64) {
-        let mut digits: [u8; 20] = [0x0; 20];
-        let mut value = value;
-
-        for i in digits.iter_mut() {
-            *i = ((value % 10) + 0x30) as u8;
-
-            value /= 10;
-
-            if value == 0 {
-                break;
-            }
-        }
-
-        for digit in digits.iter().rev() {
-            self.write_byte(*digit);
-        }
-    }
-
     /// Writes a byte over UART.
     pub fn write_byte(&self, byte: u8) {
-        // Wait until it is possible to send data.
+        // Wait until it is possible to write data.
         self.wait_transmit();
 
-        // Send the byte.
+        // Write the byte.
         self.registers.THR_DLAB.set(u32::from(byte));
     }
 
-    /// Sends a buffer of `u8` data over UART.
+    /// Writes a buffer of `u8` data over UART.
     pub fn write(&self, data: &[u8]) {
         for byte in data {
             self.write_byte(*byte);
@@ -462,7 +422,7 @@ impl Uart {
 
     /// Reads a byte (`u8`) over UART.
     pub fn read_byte(&self) -> u8 {
-        // Wait until it is possible to receive data.
+        // Wait until it is possible to read data.
         self.wait_receive();
 
         // Read byte.
