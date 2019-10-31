@@ -30,7 +30,6 @@
 use core::{
     fmt::{Error, Write},
     marker::{Send, Sync},
-    ops::Deref,
 };
 
 use register::mmio::ReadWrite;
@@ -244,35 +243,27 @@ struct Registers {
 impl Registers {
     /// Factory method to create a pointer to the UART A registers.
     pub fn get_a() -> *const Self {
-        UART_A_BASE as *const _
+        unsafe { *(UART_A_BASE as *const _) }
     }
 
     /// Factory method to create a pointer to the UART B registers.
     pub fn get_b() -> *const Self {
-        UART_B_BASE as *const _
+        unsafe { *(UART_B_BASE as *const _) }
     }
 
     /// Factory method to create a pointer to the UART C registers.
     pub fn get_c() -> *const Self {
-        UART_C_BASE as *const _
+        unsafe { *(UART_C_BASE as *const _) }
     }
 
     /// Factory method to create a pointer to the UART D registers.
     pub fn get_d() -> *const Self {
-        UART_D_BASE as *const _
+        unsafe { *(UART_D_BASE as *const _) }
     }
 
     /// Factory method to create a pointer to the UART E registers.
     pub fn get_e() -> *const Self {
-        UART_E_BASE as *const _
-    }
-}
-
-impl Deref for Registers {
-    type Target = Self;
-
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*self }
+        unsafe { *(UART_E_BASE as *const _) }
     }
 }
 
