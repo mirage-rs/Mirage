@@ -62,18 +62,14 @@ fn config_oscillators() {
 }
 
 fn config_gpios() {
-    let pinmux_registers = pinmux::PinmuxRegisters::get();
+    let pinmux = &pinmux::Pinmux::new();
 
-    let pinmux_uart2_tx_reg = unsafe { &((*pinmux_registers).uart2_tx) };
-    pinmux_uart2_tx_reg.set(0);
-    let pinmux_uart3_tx_reg = unsafe { &((*pinmux_registers).uart3_tx) };
-    pinmux_uart3_tx_reg.set(0);
+    pinmux.uart2_tx.set(0);
+    pinmux.uart3_tx.set(0);
 
     // Set Joy-Con IsAttached direction.
-    let pinmux_pe6_reg = unsafe { &((*pinmux_registers).pe6) };
-    pinmux_pe6_reg.set(pinmux::PINMUX_INPUT);
-    let pinmux_ph6_reg = unsafe { &((*pinmux_registers).ph6) };
-    pinmux_ph6_reg.set(pinmux::PINMUX_INPUT);
+    pinmux.pe6.set(pinmux::INPUT);
+    pinmux.ph6.set(pinmux::INPUT);
 
     // Set pin mode for Joy-Con IsAttached and UART_B/C TX pins.
     gpio!(G, 0).set_mode(gpio::GpioMode::GPIO);
@@ -91,7 +87,7 @@ fn config_gpios() {
 
     pinmux::configure_i2c(i2c::I2cDevice::I1);
     pinmux::configure_i2c(i2c::I2cDevice::I5);
-    pinmux::configure_uart(uart::Uart::A);
+    pinmux::configure_uart(pinmux, &uart::Uart::A);
 
     // Configure Volume Up/Down as inputs.
     gpio::GpioPin::BUTTON_VOL_UP.config(gpio::GpioConfig::Input);

@@ -1,25 +1,114 @@
 //! Pin Multiplexer (Pinmux) configurations for various I/O controllers.
+//!
+//! # Description
+//!
+//! Tegra X1 devices can be configured with different I/O functions to
+//! allow use in a variety of different configurations.
+//!
+//! Many of the pins on Tegra X1 devices are connected to multi-purpose
+//! I/O (MPIO) pads. An MPIO can operate in two modes:
+//! either acting as a signal for a particular I/O controller, referred
+//! to as a Special-Function I/O (SFIO); or as a software-controlled
+//! general-purpose I/O function, referred to as GPIO. Each MPIO has
+//! up to four SFIO functions as well as being a GPIO.
+//!
+//! Though each MPIO has up to 5 functions (a GPIO function and up to
+//! 4 SFIO functions), a given MPIO can only act as a single function
+//! at a given point in time. The Pinmux controller in Tegra X1 devices
+//! includes the logic and registers to select a particular function for
+//! each MPIO.
+//!
+//! The VGPIO controller supports 8-bit general-purpose Input/Output
+//! (VGPIO) ports (port A through port D). These ports allow VGPIO signals
+//! to be mapped onto unused individual functional pins which might not
+//! be present in the same device. This provides a means to virtualize
+//! various pins that cannot be mapped in the same package and have to be
+//! moved to a companion device.
+//!
+//! # Example
+//!
+//! ```
+//! use mirage_libswitch::{pinmux::configure_uart, uart::Uart};
+//!
+//! fn main() {
+//!     let device = Uart::A;
+//!     configure_uart(&device);
+//! }
+//! ```
+
+use core::ops::Deref;
 
 use register::mmio::*;
 
-use crate::i2c::I2cDevice;
-use crate::uart::Uart;
+use crate::{i2c::I2cDevice, uart::Uart};
 
+/// The base address for Pinmux registers.
 const PINMUX_BASE: u32 = 0x7000_3000;
 
-pub const PINMUX_PULL_NONE: u32 = (0 << 2);
-pub const PINMUX_PULL_DOWN: u32 = (1 << 2);
-pub const PINMUX_PULL_UP: u32 = (2 << 2);
+/// Configuration value for no pulls.
+pub const PULL_NONE: u32 = (0 << 2);
+/// Pull-down configuration value.
+pub const PULL_DOWN: u32 = (1 << 2);
+/// Pull-up configuration value.
+pub const PULL_UP: u32 = (2 << 2);
 
-pub const PINMUX_TRISTATE: u32 = (1 << 4);
-pub const PINMUX_PARKED: u32 = (1 << 5);
-pub const PINMUX_INPUT: u32 = (1 << 6);
-pub const PINMUX_LOCK: u32 = (1 << 7);
-pub const PINMUX_LPDR: u32 = (1 << 8);
-pub const PINMUX_HSM: u32 = (1 << 9);
+/// Disables the pad’s output driver. This setting overrides all other
+/// functional settings and also whether pad is selected for SFIO or
+/// GPIO. Can be used when the pad direction changes or the pad is
+/// assigned to a different SFIO to avoid glitches. During Cold Boot,
+/// most of the pads come with this bit set to TRISTATE so that they do
+/// not actively drive anything. For Normal Operation, the bit has to be
+/// set to PASSTHROUGH state.Used by the Pinmux logic to drive the
+/// appropriate pad control signals.
+pub const TRISTATE: u32 = (1 << 4);
+/// PARKING state holds control during DPD/LP0. During LP0
+/// (deep sleep) entry, all pads (except a few pads in the AO region)
+/// are put in the DPD state This bit is set in the Pinmux register
+/// by default during Reset. In LP0 exit until this bit is cleared
+/// (typically by the LP0 exit Pinmux recovery code), the pads are in
+/// the DPD state, i.e., PARKED in the same value as that of LP0 entry.
+pub const PARKED: u32 = (1 << 5);
+/// Enables or disables input receiver. Applicable to all pads.
+pub const INPUT: u32 = (1 << 6);
+/// Lock control for writing to the register. Used for security purposes
+/// to permanently lock the value to a pinmux register.
+///
+/// 0: Writes to this register are accepted.
+/// 1: Writes to this register are ignored (until the next wake from Deep Sleep).
+///
+/// This is a sticky bit. Once software sets this bit to 1, the only
+/// way to clear it is to reset the chip or enter and exit Deep Sleep.
+pub const LOCK: u32 = (1 << 7);
+/// Enable only one Base Drivers when set High. Typically set when
+/// interfacing chips require minimal rise/fall time such as I2C.
+/// Applicable to ST and DD pads.
+pub const LPDR: u32 = (1 << 8);
+/// Enables High Speed operation for Receiver and Transmitter.
+/// Applicable to CZ pads.
+pub const HSM: u32 = (1 << 9);
 
+/// Enables open-drain pull-up capability to 3.3V, thereby enabling
+/// High Voltage Operation. Enables 3.3V Receive. If E_IO_HV=1,
+/// the pad can support 3.3V open-drain driving with I/O pull-up
+/// tolerance up to 3.3V and the Receiver is adjusted to 3.3V DC
+/// characteristics.
+/// Default enabled for all the pads so that they can safely operate
+/// without knowing whether externally it is pulled up to 3.3V or 1.8V
+/// until the pins get used actively. Until that point, it can be driven
+/// to High-Z or Logic 0. The platform software can read the status of
+/// pull-up values and configure the E_IO_HV before actually using the pin.
+/// For the PMIC I2C interface (i.e., PWR_I2C_SCL and PWR_I2C_SDA), it
+/// is set at Logic 0 because this interface is needed during boot and
+/// the PMIC interface typically has the pull-up at 1.8V.Applicable to DD pads.
+pub const IO_HV: u32 = (1 << 10);
+/// Enabling Schmitt provides better noise margin characteristics for the input.
+/// Depending on driver’s logic threshold levels, this can be enabled.
+/// Applicable to all pads.
+pub const SCHMT: u32 = (1 << 12);
+
+/// Representation of the Pinmux registers.
 #[repr(C)]
-pub struct PinmuxRegisters {
+struct Registers {
     pub sdmmc1_clk: ReadWrite<u32>,
     pub sdmmc1_cmd: ReadWrite<u32>,
     pub sdmmc1_dat3: ReadWrite<u32>,
@@ -187,31 +276,65 @@ pub struct PinmuxRegisters {
     pub pz5: ReadWrite<u32>,
 }
 
-impl PinmuxRegisters {
+impl Registers {
+    /// Factory method to create a pointer to the Pinmux registers.
     pub fn get() -> *const Self {
-        PINMUX_BASE as *const PinmuxRegisters
+        PINMUX_BASE as *const Registers
+    }
+}
+
+/// Pinmux abstraction.
+pub struct Pinmux;
+
+impl Deref for Pinmux {
+    type Target = Registers;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*Registers::get() }
+    }
+}
+
+impl Pinmux {
+    /// Creates a new Pinmux object.
+    pub fn new() -> Self {
+        Pinmux
     }
 }
 
 /// Configures an UART device.
-pub fn configure_uart(device: Uart) {
-    let value = match device {
-        Uart::A => 0,
-        Uart::B => 1,
-        Uart::C => 2,
-        Uart::D => 3,
-        Uart::E => 4,
-    };
-
-    let tx_reg = unsafe { &(*((PINMUX_BASE + 0xE4 + 0x10 * value) as *const WriteOnly<u32>)) };
-    let rx_reg = unsafe { &(*((PINMUX_BASE + 0xE8 + 0x10 * value) as *const WriteOnly<u32>)) };
-    let rts_reg = unsafe { &(*((PINMUX_BASE + 0xEC + 0x10 * value) as *const WriteOnly<u32>)) };
-    let cts_reg = unsafe { &(*((PINMUX_BASE + 0xF0 + 0x10 * value) as *const WriteOnly<u32>)) };
-
-    tx_reg.set(0);
-    rx_reg.set(PINMUX_INPUT | PINMUX_PULL_UP);
-    rts_reg.set(0);
-    cts_reg.set(PINMUX_INPUT | PINMUX_PULL_DOWN);
+pub fn configure_uart(pinmux: &Pinmux, uart: &Uart) {
+    match uart {
+        &Uart::A => {
+            pinmux.uart1_tx.set(0);
+            pinmux.uart1_rx.set(INPUT | PULL_UP);
+            pinmux.uart1_rts.set(0);
+            pinmux.uart1_cts.set(INPUT | PULL_DOWN);
+        }
+        &Uart::B => {
+            pinmux.uart2_tx.set(0);
+            pinmux.uart2_rx.set(INPUT | PULL_UP);
+            pinmux.uart2_rts.set(0);
+            pinmux.uart2_cts.set(INPUT | PULL_DOWN);
+        }
+        &Uart::C => {
+            pinmux.uart3_tx.set(0);
+            pinmux.uart3_rx.set(INPUT | PULL_UP);
+            pinmux.uart3_rts.set(0);
+            pinmux.uart3_cts.set(INPUT | PULL_DOWN);
+        }
+        &Uart::D => {
+            pinmux.uart4_tx.set(0);
+            pinmux.uart4_rx.set(INPUT | PULL_UP);
+            pinmux.uart4_rts.set(0);
+            pinmux.uart4_cts.set(INPUT | PULL_DOWN);
+        }
+        &Uart::E => {
+            pinmux.dap1_fs.set(0);
+            pinmux.dap1_din.set(INPUT | PULL_UP);
+            pinmux.dap1_dout.set(0);
+            pinmux.dap1_sclk.set(INPUT | PULL_DOWN);
+        }
+    }
 }
 
 /// Configures an I²C device.
