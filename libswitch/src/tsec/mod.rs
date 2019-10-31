@@ -331,8 +331,8 @@ impl Tsec {
         Clock::HOST1X.enable();
         Clock::TSEC.enable();
         Clock::SOR_SAFE.enable();
-        Clock::SOR_0.enable();
-        Clock::SOR_1.enable();
+        Clock::SOR0.enable();
+        Clock::SOR1.enable();
         Clock::KFUSE.enable();
     }
 
@@ -341,8 +341,8 @@ impl Tsec {
         Clock::HOST1X.disable();
         Clock::TSEC.disable();
         Clock::SOR_SAFE.disable();
-        Clock::SOR_0.disable();
-        Clock::SOR_1.disable();
+        Clock::SOR0.disable();
+        Clock::SOR1.disable();
         Clock::KFUSE.disable();
     }
 

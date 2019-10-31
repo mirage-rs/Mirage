@@ -1,17 +1,81 @@
-//! Tegra 210 Clock implementation and configurations.
+//! Tegra 210 Clock And Reset Controller interface and configurations.
+//!
+//! # Description
+//!
+//! The Clock and Reset (CAR) block contains all the logic needed to
+//! control most of the clocks and resets to the Tegra X1 device.
+//! The CAR block provides the registers to program the PLLs and
+//! controls most of the clock source programming, and most of the
+//! clock dividers.
+//!
+//! Generally speaking, clocks are used to set up non-boot devices
+//! for operation.
+//!
+//! # Example
+//!
+//! ```
+//! use mirage_libswitch::clock::Clock;
+//!
+//! fn main() {
+//!     let se_clock = Clock::SE;
+//!
+//!     // Enable Security Engine.
+//!     se_clock.enable();
+//!     assert_eq!(se_clock.is_enabled(), true);
+//!
+//!     // Disable Security Engine.
+//!     se_clock.disable();
+//!     assert_eq!(se_clock.is_enabled(), false);
+//! }
+//! ```
 
 use register::mmio::ReadWrite;
 
-pub const CLOCK_BASE: u32 = 0x6000_6000;
+/// Base address for clock registers.
+const CLOCK_BASE: u32 = 0x6000_6000;
 
-/// Clock representation.
+/// The `CLK_RST_CONTROLLER_SPARE_REG0_0` register.
+pub(crate) const SPARE_REG0: &'static ReadWrite<u32> =
+    unsafe { &(*((CLOCK_BASE + 0x55C) as *const ReadWrite<u32>)) };
+
+/// The `CLK_RST_CONTROLLER_OSC_CTRL_0` register.
+pub(crate) const OSC_CTRL: &'static ReadWrite<u32> =
+    unsafe { &(*((CLOCK_BASE + 0x50) as *const ReadWrite<u32>)) };
+
+/// The `CLK_RST_CONTROLLER_CLK_SYSTEM_RATE_0` register.
+pub(crate) const CLK_SYSTEM_RATE: &'static ReadWrite<u32> =
+    unsafe { &(*((CLOCK_BASE + 0x30) as *const ReadWrite<u32>)) };
+
+/// The `CLK_RST_CONTROLLER_PLLMB_BASE_0` register.
+pub(crate) const PLLMB_BASE: &'static ReadWrite<u32> =
+    unsafe { &(*((CLOCK_BASE + 0x5E8) as *const ReadWrite<u32>)) };
+
+/// The `CLK_RST_CONTROLLER_CLK_SOURCE_SYS_0` register.
+pub(crate) const CLK_SOURCE_SYS: &'static ReadWrite<u32> =
+    unsafe { &(*((CLOCK_BASE + 0x400) as *const ReadWrite<u32>)) };
+
+/// The `CLK_RST_CONTROLLER_SCLK_BURST_POLICY_0` register.
+pub(crate) const SCLK_BURST_POLICY: &'static ReadWrite<u32> =
+    unsafe { &(*((CLOCK_BASE + 0x28) as *const ReadWrite<u32>)) };
+
+/// The `CLK_RST_CONTROLLER_SUPER_SCLK_DIVIDER_0` register.
+pub(crate) const SCLK_DIVIDER: &'static ReadWrite<u32> =
+    unsafe { &(*((CLOCK_BASE + 0x2C) as *const ReadWrite<u32>)) };
+
+/// Representation of a device clock.
 #[derive(Debug, Clone)]
 pub struct Clock {
+    /// The clock device reset register.
     reset: u32,
+    /// The clock device enable register.
     enable: u32,
+    /// The clock source register.
     source: u32,
+    /// The clock index.
     index: u8,
+    /// The clock source value.
     clock_source: u32,
+    /// The clock divisor register.
     clock_divisor: u32,
 }
 
@@ -50,7 +114,9 @@ const CLK_RST_CONTROLLER_CLK_SOURCE_SOR1: u32 = 0x410;
 const CLK_RST_CONTROLLER_CLK_SOURCE_CSITE: u32 = 0x1D4;
 const CLK_RST_CONTROLLER_CLK_SOURCE_PWM: u32 = 0x11;
 
+// Definitions for known devices.
 impl Clock {
+    /// Representation of the UART A clock.
     pub const UART_A: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_L,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_L,
@@ -60,6 +126,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the UART B clock.
     pub const UART_B: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_L,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_L,
@@ -69,6 +136,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the UART C clock.
     pub const UART_C: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_H,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_H,
@@ -78,6 +146,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the UART D clock.
     pub const UART_D: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_U,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_U,
@@ -87,6 +156,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the UART APE clock.
     pub const UART_APE: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_Y,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_Y,
@@ -96,6 +166,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the I²C 1 clock.
     pub const I2C_1: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_L,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_L,
@@ -105,6 +176,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the I²C 2 clock.
     pub const I2C_2: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_H,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_H,
@@ -114,6 +186,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the I²C 3 clock.
     pub const I2C_3: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_U,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_U,
@@ -123,6 +196,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the I²C 4 clock.
     pub const I2C_4: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_V,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_V,
@@ -132,6 +206,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the I²C 5 clock.
     pub const I2C_5: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_H,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_H,
@@ -141,6 +216,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the I²C 6 clock.
     pub const I2C_6: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_X,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_X,
@@ -150,6 +226,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the Security Engine clock.
     pub const SE: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_V,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_V,
@@ -159,6 +236,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the TZRAM clock.
     pub const TZRAM: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_V,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_V,
@@ -168,6 +246,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the HOST1X clock.
     pub const HOST1X: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_L,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_L,
@@ -177,6 +256,7 @@ impl Clock {
         clock_divisor: 0x3,
     };
 
+    /// Representation of the TSEC clock.
     pub const TSEC: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_U,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_U,
@@ -186,6 +266,7 @@ impl Clock {
         clock_divisor: 0x2,
     };
 
+    /// Representation of the SOR_SAFE clock.
     pub const SOR_SAFE: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_Y,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_Y,
@@ -195,7 +276,8 @@ impl Clock {
         clock_divisor: 0,
     };
 
-    pub const SOR_0: Self = Clock {
+    /// Representation of the SOR0 clock.
+    pub const SOR0: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_X,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_X,
         source: CLK_NO_SOURCE,
@@ -204,7 +286,8 @@ impl Clock {
         clock_divisor: 0,
     };
 
-    pub const SOR_1: Self = Clock {
+    /// Representation of the SOR1 clock.
+    pub const SOR1: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_X,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_X,
         source: CLK_RST_CONTROLLER_CLK_SOURCE_SOR1,
@@ -213,6 +296,7 @@ impl Clock {
         clock_divisor: 0x2,
     };
 
+    /// Representation of the KFUSE clock.
     pub const KFUSE: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_H,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_H,
@@ -222,6 +306,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the CL-DVFS clock.
     pub const CL_DVFS: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_W,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_W,
@@ -231,6 +316,7 @@ impl Clock {
         clock_divisor: 0,
     };
 
+    /// Representation of the CSITE clock.
     pub const CORESIGHT: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_U,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_U,
@@ -240,6 +326,7 @@ impl Clock {
         clock_divisor: 0x4,
     };
 
+    /// Representation of the PWM clock.
     pub const PWM: Self = Clock {
         reset: CLK_RST_CONTROLLER_RST_DEVICES_L,
         enable: CLK_RST_CONTROLLER_CLK_OUT_ENB_L,
@@ -251,6 +338,7 @@ impl Clock {
 }
 
 impl Clock {
+    /// Sets whether the clock should be reset or not.
     fn set_reset(&self, set_reset: bool) {
         let reset_reg = unsafe { &(*((CLOCK_BASE + self.reset) as *const ReadWrite<u32>)) };
 
@@ -266,6 +354,7 @@ impl Clock {
         reset_reg.set(new_value);
     }
 
+    /// Sets whether the clock should be enabled or disabled.
     fn set_enable(&self, set_enable: bool) {
         let enable_reg = unsafe { &(*((CLOCK_BASE + self.enable) as *const ReadWrite<u32>)) };
 
@@ -305,7 +394,7 @@ impl Clock {
         self.set_enable(false);
     }
 
-    /// Whether the clock is enabled or not.
+    /// Indicates whether the clock is enabled or not.
     pub fn is_enabled(&self) -> bool {
         let enable_reg = unsafe { &(*((CLOCK_BASE + self.enable) as *const ReadWrite<u32>)) };
         let mask = (1 << (self.index & 0x1F)) as u32;

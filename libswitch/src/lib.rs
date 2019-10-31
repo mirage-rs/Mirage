@@ -35,16 +35,14 @@ fn config_oscillators() {
     let pmc_registers = pmc::PmcRegisters::get();
 
     unsafe {
-        let clock_spare_reg0_reg = &(*((clock::CLOCK_BASE + 0x55C) as *const ReadWrite<u32>));
-        clock_spare_reg0_reg.set((clock_spare_reg0_reg.get() & 0xFFFF_FFF3) | 4);
+        clock::SPARE_REG0.set((clock::SPARE_REG0.get() & 0xFFFF_FFF3) | 4);
 
         let sysctr0_cntfid0_0_reg = &(*((0x700F_0000 + 0x20) as *const ReadWrite<u32>));
         sysctr0_cntfid0_0_reg.set(19200000);
         let timerus_usec_cfg_0_reg = &(*(0x6000_5014 as *const ReadWrite<u32>));
         timerus_usec_cfg_0_reg.set(0x45F);
 
-        let clock_osc_ctrl_reg = &(*((clock::CLOCK_BASE + 0x50) as *const ReadWrite<u32>));
-        clock_osc_ctrl_reg.set(0x5000_0071);
+        clock::OSC_CTRL.set(0x5000_0071);
         let pmc_osc_edpd_over_reg = &((*pmc_registers).osc_edpd_over);
         pmc_osc_edpd_over_reg.set((pmc_osc_edpd_over_reg.get() & 0xFFFF_FF81) | 0xE);
         pmc_osc_edpd_over_reg.set((pmc_osc_edpd_over_reg.get() & 0xFFBF_FFFF) | 0x400000);
@@ -52,19 +50,14 @@ fn config_oscillators() {
         pmc_cntrl2_reg.set((pmc_cntrl2_reg.get() & 0xFFFF_EFFF) | 0x1000);
         let pmc_scratch188_reg = &((*pmc_registers).scratch188);
         pmc_scratch188_reg.set((pmc_scratch188_reg.get() & 0xFCFF_FFFF) | 0x2000000);
-        let clock_clk_sys_rate_reg = &(*((clock::CLOCK_BASE + 0x30) as *const ReadWrite<u32>));
-        clock_clk_sys_rate_reg.set(0x10);
-        let clock_pllmb_base_reg = &(*((clock::CLOCK_BASE + 0x5E8) as *const ReadWrite<u32>));
-        clock_pllmb_base_reg.set(clock_pllmb_base_reg.get() & 0xBFFF_FFFF);
+        clock::CLK_SYSTEM_RATE.set(0x10);
+        clock::PLLMB_BASE.set(clock::PLLMB_BASE.get() & 0xBFFF_FFFF);
         let pmc_tsc_mult_reg = &((*pmc_registers).tsc_mult);
         pmc_tsc_mult_reg.set((pmc_tsc_mult_reg.get() & 0xFFFF_0000) | 0x249F);
-        let clock_clk_source_sys_reg = &(*((clock::CLOCK_BASE + 0x400) as *const ReadWrite<u32>));
-        clock_clk_source_sys_reg.set(0);
-        let clock_sclk_brst_pol_reg = &(*((clock::CLOCK_BASE + 0x28) as *const ReadWrite<u32>));
-        clock_sclk_brst_pol_reg.set(0x2000_4444);
-        let clock_super_sclk_div_reg = &(*((clock::CLOCK_BASE + 0x2C) as *const ReadWrite<u32>));
-        clock_super_sclk_div_reg.set(0x8000_0000);
-        clock_clk_sys_rate_reg.set(2);
+        clock::CLK_SOURCE_SYS.set(0);
+        clock::SCLK_BURST_POLICY.set(0x2000_4444);
+        clock::SCLK_DIVIDER.set(0x8000_0000);
+        clock::CLK_SYSTEM_RATE.set(2);
     }
 }
 
