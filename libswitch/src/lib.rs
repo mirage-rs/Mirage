@@ -27,38 +27,50 @@ pub mod i2c;
 pub mod kfuse;
 pub mod pinmux;
 pub mod pmc;
+pub mod sysctr0;
 pub mod timer;
 pub mod tsec;
 pub mod uart;
 
 fn config_oscillators() {
-    let pmc_registers = pmc::PmcRegisters::get();
+    let pmc = &pmc::Pmc::new();
 
-    unsafe {
-        clock::SPARE_REG0.set((clock::SPARE_REG0.get() & 0xFFFF_FFF3) | 4);
+    // Set CLK_M_DIVISOR to 2.
+    clock::SPARE_REG0.set((clock::SPARE_REG0.get() & 0xFFFF_FFF3) | 4);
+    // Set counter frequency.
+    sysctr0::CNTFID0.set(19200000);
+    // For 19.2MHz clk_m.
+    timer::TIMERUS_USEC_CFG.set(0x45F);
 
-        let sysctr0_cntfid0_0_reg = &(*((0x700F_0000 + 0x20) as *const ReadWrite<u32>));
-        sysctr0_cntfid0_0_reg.set(19200000);
-        let timerus_usec_cfg_0_reg = &(*(0x6000_5014 as *const ReadWrite<u32>));
-        timerus_usec_cfg_0_reg.set(0x45F);
+    // Set OSC to 38.4MHz and drive strength.
+    clock::OSC_CTRL.set(0x5000_0071);
 
-        clock::OSC_CTRL.set(0x5000_0071);
-        let pmc_osc_edpd_over_reg = &((*pmc_registers).osc_edpd_over);
-        pmc_osc_edpd_over_reg.set((pmc_osc_edpd_over_reg.get() & 0xFFFF_FF81) | 0xE);
-        pmc_osc_edpd_over_reg.set((pmc_osc_edpd_over_reg.get() & 0xFFBF_FFFF) | 0x400000);
-        let pmc_cntrl2_reg = &((*pmc_registers).cntrl2);
-        pmc_cntrl2_reg.set((pmc_cntrl2_reg.get() & 0xFFFF_EFFF) | 0x1000);
-        let pmc_scratch188_reg = &((*pmc_registers).scratch188);
-        pmc_scratch188_reg.set((pmc_scratch188_reg.get() & 0xFCFF_FFFF) | 0x2000000);
-        clock::CLK_SYSTEM_RATE.set(0x10);
-        clock::PLLMB_BASE.set(clock::PLLMB_BASE.get() & 0xBFFF_FFFF);
-        let pmc_tsc_mult_reg = &((*pmc_registers).tsc_mult);
-        pmc_tsc_mult_reg.set((pmc_tsc_mult_reg.get() & 0xFFFF_0000) | 0x249F);
-        clock::CLK_SOURCE_SYS.set(0);
-        clock::SCLK_BURST_POLICY.set(0x2000_4444);
-        clock::SCLK_DIVIDER.set(0x8000_0000);
-        clock::CLK_SYSTEM_RATE.set(2);
-    }
+    // // Set LP0 OSC drive strength.
+    pmc.osc_edpd_over
+        .set((pmc.osc_edpd_over.get() & 0xFFFF_FF81) | 0xE);
+    pmc.osc_edpd_over
+        .set((pmc.osc_edpd_over.get() & 0xFFBF_FFFF) | 0x400000);
+    pmc.cntrl2.set((pmc.cntrl2.get() & 0xFFFF_EFFF) | 0x1000);
+    // LP0 EMC2TMC_CFG_XM2COMP_PU_VREF_SEL_RANGE.
+    pmc.scratch188
+        .set((pmc.scratch188.get() & 0xFCFF_FFFF) | 0x2000000);
+
+    // // Set HCLK div to 2 and PCLK div to 1.
+    clock::CLK_SYSTEM_RATE.set(0x10);
+    // Disable PLLMB.
+    clock::PLLMB_BASE.set(clock::PLLMB_BASE.get() & 0xBFFF_FFFF);
+
+    pmc.tsc_mult
+        .set((pmc.tsc_mult.get() & 0xFFFF_0000) | 0x249F); //0x249F = 19200000 * (16 / 32.768 kHz)
+
+    // Set SCLK div to 1.
+    clock::CLK_SOURCE_SYS.set(0);
+    // Set clk source to Run and PLLP_OUT2 (204MHz).
+    clock::SCLK_BURST_POLICY.set(0x2000_4444);
+    // Enable SUPER_SDIV to 1.
+    clock::SCLK_DIVIDER.set(0x8000_0000);
+    // Set HCLK div to 1 and PCLK div to 3.
+    clock::CLK_SYSTEM_RATE.set(2);
 }
 
 fn config_gpios() {
@@ -95,16 +107,11 @@ fn config_gpios() {
 }
 
 fn config_pmc_scratch() {
-    let pmc_registers = pmc::PmcRegisters::get();
+    let pmc = &pmc::Pmc::new();
 
-    unsafe {
-        let pmc_scratch20_reg = &((*pmc_registers).scratch20);
-        pmc_scratch20_reg.set(pmc_scratch20_reg.get() & 0xFFF3_FFFF);
-        let pmc_scratch190_reg = &((*pmc_registers).scratch190);
-        pmc_scratch190_reg.set(pmc_scratch190_reg.get() & 0xFFFF_FFFE);
-        let pmc_secure_scratch21_reg = &((*pmc_registers).secure_scratch21);
-        pmc_secure_scratch21_reg.set(pmc_secure_scratch21_reg.get() | 0x10);
-    }
+    pmc.scratch20.set(pmc.scratch20.get() & 0xFFF3_FFFF);
+    pmc.scratch190.set(pmc.scratch190.get() & 0xFFFF_FFFE);
+    pmc.secure_sratch21.set(pmc.secure_scratch21.get() | 0x10);
 }
 
 fn mbist_workaround() {

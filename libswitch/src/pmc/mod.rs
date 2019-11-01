@@ -1,11 +1,15 @@
 //! Power Management Controller registers.
 
+use core::ops::Deref;
+
 use register::mmio::ReadWrite;
 
+/// Base address for the PMC registers.
 const PMC_BASE: u32 = 0x7000_E400;
 
+/// Representation of the PMC registers.
 #[repr(C)]
-pub struct PmcRegisters {
+struct Registers {
     pub cntrl: ReadWrite<u32>,
     pub sec_disable: ReadWrite<u32>,
     pub pmc_swrst: ReadWrite<u32>,
@@ -557,8 +561,28 @@ pub struct PmcRegisters {
     pub secure_scratch119: ReadWrite<u32>,
 }
 
-impl PmcRegisters {
+impl Registers {
+    /// Factory method to create a pointer to the PMC registers.
+    #[inline]
     pub fn get() -> *const Self {
-        PMC_BASE as *const PmcRegisters
+        PMC_BASE as *const _
+    }
+}
+
+/// Representation of the PMC.
+pub(crate) struct Pmc;
+
+impl Deref for Pmc {
+    type Target = Registers;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*Registers::get() }
+    }
+}
+
+impl Pmc {
+    /// Factory method to create a new PMC object.
+    pub fn new() -> Self {
+        Pmc
     }
 }

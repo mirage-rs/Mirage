@@ -29,22 +29,26 @@ use register::mmio::ReadWrite;
 const TIMERS_BASE: u32 = 0x6000_5000;
 
 /// The `TIMERUS_CNTR_1US_0` register.
-const TIMERUS_CNTR_1US: &'static ReadWrite<u32> =
+pub(crate) const TIMERUS_CNTR_1US: &'static ReadWrite<u32> =
     unsafe { &(*((TIMERS_BASE + 0x10) as *const ReadWrite<u32>)) };
+
+/// The `TIMERUS_USEC_CFG_0` register.
+pub(crate) const TIMERUS_USEC_CFG: &'static ReadWrite<u32> =
+    unsafe { &(*((TIMERS_BASE + 0x14) as *const ReadWrite<u32>)) };
 
 /// Base address for RTC registers.
 const RTC_BASE: u32 = 0x7000_E000;
 
 /// The `APBDEV_RTC_SECONDS_0` register.
-const RTC_SECONDS: &'static ReadWrite<u32> =
+pub(crate) const RTC_SECONDS: &'static ReadWrite<u32> =
     unsafe { &(*((RTC_BASE + 0x8) as *const ReadWrite<u32>)) };
 
 /// The `APBDEV_RTC_SHADOW_SECONDS_0` register.
-const RTC_SHADOW_SECONDS: &'static ReadWrite<u32> =
+pub(crate) const RTC_SHADOW_SECONDS: &'static ReadWrite<u32> =
     unsafe { &(*((RTC_BASE + 0xC) as *const ReadWrite<u32>)) };
 
 /// The `APBDEV_RTC_MILLI_SECONDS_0` register.
-const RTC_MILLI_SECONDS: &'static ReadWrite<u32> =
+pub(crate) const RTC_MILLI_SECONDS: &'static ReadWrite<u32> =
     unsafe { &(*((RTC_BASE + 0x10) as *const ReadWrite<u32>)) };
 
 /// Returns the current time in seconds.
