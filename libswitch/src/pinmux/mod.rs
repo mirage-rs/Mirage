@@ -25,6 +25,26 @@
 //! various pins that cannot be mapped in the same package and have to be
 //! moved to a companion device.
 //!
+//! # Implementation
+//!
+//! - Publicly exposed Pinmux configurations are implemented as constants.
+//! These should however be irrelevant for most cases as the required
+//! configurations are done internally.
+//!
+//! - [`Registers`] is an abstraction of the Pinmux register block that is
+//! mapped to `0x70003000`. [`Registers::get`] is used to create a pointer
+//! to these.
+//!
+//! - The public [`Pinmux`] struct is a further abstraction layer which as
+//! the [`Deref`] trait implemented. Thus dereferencing a [`Pinmux`] object
+//! will dereference a pointer to the [`Registers`] block to expose it for
+//! read and write access. A new [`Pinmux`] object should be created using
+//! the factory method [`Pinmux::new`]. **Raw writes to the Pinmux registers
+//! are to be avoided since it may damage your device!**
+//!
+//! - The functions [`configure_uart`] and [`configure_i2c`] can be used
+//! to configure UART and I²C devices for use.
+//!
 //! # Example
 //!
 //! ```
@@ -35,6 +55,14 @@
 //!     configure_uart(&device);
 //! }
 //! ```
+//!
+//! [`Registers`]: struct.Registers.html
+//! [`Registers::get`]: struct.Registers.html#method_get
+//! [`Pinmux`]: struct.Pinmux.html
+//! [`Pinmux::get`]: struct.Pinmux.html#method_get
+//! [`Deref`]: https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html
+//! [`configure_uart`]: fn.configure_uart.html
+//! [`configure_i2c`]: fn.configure_i2c.html
 
 use core::ops::Deref;
 
@@ -279,7 +307,7 @@ struct Registers {
 impl Registers {
     /// Factory method to create a pointer to the Pinmux registers.
     pub fn get() -> *const Self {
-        PINMUX_BASE as *const Registers
+        PINMUX_BASE as *const _
     }
 }
 
@@ -351,6 +379,6 @@ pub fn configure_i2c(device: I2cDevice) {
     let scl_reg = unsafe { &(*((PINMUX_BASE + 0xBC + 8 * value) as *const WriteOnly<u32>)) };
     let sda_reg = unsafe { &(*((PINMUX_BASE + 0xC0 + 8 * value) as *const WriteOnly<u32>)) };
 
-    scl_reg.set(PINMUX_INPUT);
-    sda_reg.set(PINMUX_INPUT);
+    scl_reg.set(INPUT);
+    sda_reg.set(INPUT);
 }

@@ -10,6 +10,20 @@
 //! is divided into 4 binary blobs which are required to
 //! derive the final TSEC key.
 //!
+//! # Implementation
+//!
+//! - Important SOR1 registers are exposed as global constants
+//! within the crate.
+//!
+//! - The [`Registers`] struct represents the TSEC registers
+//! that are mapped to address `0x54500000`. A pointer to
+//! these can be created using the factory method [`Registers::get`].
+//!
+//! - The [`Tsec`] struct holds an instance of [`Registers`] and
+//! provides further hardware abstractions. It allows for loading
+//! and executing Falcon firmware and finally deriving the TSEC
+//! key.
+//!
 //! # Example
 //!
 //! ```
@@ -30,8 +44,11 @@
 //!     let key = TSEC.get_key(1, FALCON_FIRMWARE).unwrap();
 //! }
 //! ```
+//!
+//! [`Registers`]: struct.Registers.html
+//! [`Registers::get`]: struct.Registers.html#method_get
+//! [`Tsec`]: struct.Tsec.html
 
-use byteorder::{LittleEndian, ReadBytesExt};
 use register::mmio::ReadWrite;
 
 use crate::clock::Clock;
@@ -342,7 +359,6 @@ impl Registers {
 }
 
 /// Representation of the TSEC.
-#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Tsec {
     /// The TSEC CPU registers used for communication.
     registers: &'static Registers,
@@ -406,7 +422,7 @@ impl Tsec {
     }
 
     /// Retrieves the TSEC key.
-    pub fn get_key(&self, rev: u32, firmware: &mut [u8]) -> Result<u8, ()> {
+    pub fn get_key(&self, rev: u32, firmware: &mut [u8]) -> Result<[u32; 4], ()> {
         self.enable_clocks();
 
         // Configure Falcon.
@@ -452,11 +468,11 @@ impl Tsec {
         host1x_reg.set(0);
 
         // Fetch result from SOR1.
-        let mut temp: [u32; 0x4] = [0; 4];
-        temp[0] = SOR1_DP_HDCP_BKSV_LSB.get();
-        temp[1] = SOR1_TMDS_HDCP_BKSV_LSB.get();
-        temp[2] = SOR1_TMDS_HDCP_CN_MSB.get();
-        temp[3] = SOR1_TMDS_HDCP_CN_LSB.get();
+        let mut key: [u32; 0x4] = [0; 4];
+        key[0] = SOR1_DP_HDCP_BKSV_LSB.get();
+        key[1] = SOR1_TMDS_HDCP_BKSV_LSB.get();
+        key[2] = SOR1_TMDS_HDCP_CN_MSB.get();
+        key[3] = SOR1_TMDS_HDCP_CN_LSB.get();
 
         // Clear SOR1 registers.
         SOR1_DP_HDCP_BKSV_LSB.set(0);
@@ -464,29 +480,24 @@ impl Tsec {
         SOR1_TMDS_HDCP_CN_MSB.set(0);
         SOR1_TMDS_HDCP_CN_LSB.set(0);
 
-        // Read the key value.
-        let key = temp.read_u8::<LittleEndian>().unwrap();
-
         Ok(key)
     }
 
     /// Loads the TSEC firmware.
-    pub fn load_firmware(&self, firmware: &mut [u8]) -> Result<(), ()> {
+    pub fn load_firmware(&self, firmware: &[u8]) -> Result<(), ()> {
         let mut res = Ok(());
 
-        let registers = unsafe { &(*self.registers) };
-
         // Configure Falcon.
-        registers.falcon_dmactl.set(0);
-        registers.falcon_irqmset.set(0xFFF2);
-        registers.falcon_irqdest.set(0xFFF0);
-        registers.falcon_itfen.set(3);
+        self.registers.falcon_dmactl.set(0);
+        self.registers.falcon_irqmset.set(0xFFF2);
+        self.registers.falcon_irqdest.set(0xFFF0);
+        self.registers.falcon_itfen.set(3);
 
         if self.dma_wait_idle().is_ok() {
             // Load firmware.
-            registers
+            self.registers
                 .falcon_dmatrfbase
-                .set(firmware.read_u32::<LittleEndian>().unwrap() >> 8);
+                .set(firmware.as_ptr() as u32 >> 8);
 
             let addr = 0;
             while addr < firmware.len() {
@@ -509,16 +520,14 @@ impl Tsec {
 
     /// Executes the loaded TSEC firmware.
     pub fn execute_firmware(&self, rev: Option<u32>) {
-        let registers = unsafe { &(*self.registers) };
-
         // Unknown HOST1X write.
-        let host1x_reg = unsafe { &(*((0x5000_0000 + 0x3300) as *const ReadWrite<u32>)) };
+        let host1x_reg = unsafe { &(*((HOST1X_BASE + 0x3300) as *const ReadWrite<u32>)) };
         host1x_reg.set(0x34C2_E1DA);
 
         // Execute the firmware.
-        registers.falcon_mailbox1.set(0);
-        registers.falcon_mailbox0.set(rev.unwrap_or(0));
-        registers.falcon_bootvec.set(0);
-        registers.falcon_cpuctl.set(2);
+        self.registers.falcon_mailbox1.set(0);
+        self.registers.falcon_mailbox0.set(rev.unwrap_or(0));
+        self.registers.falcon_bootvec.set(0);
+        self.registers.falcon_cpuctl.set(2);
     }
 }

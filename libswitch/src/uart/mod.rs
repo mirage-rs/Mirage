@@ -14,6 +14,36 @@
 //! 16 clock cycles for proper sampling and processing of the input data.
 //! Thus, the maximum baud rate is `200 / 16 = 12.5M`.
 //!
+//! # Implementation
+//!
+//! - The bitflag structs [`FifoControl`], [`InterruptIdentification`],
+//! [`LineControl`], [`LineStatus`], [`VendorStatus`] are abstractions
+//! over possible values in these UART registers.
+//!
+//! - The [`Registers`] struct along with its factory methods provide
+//! abstractions over the UART registers and the possibility to create
+//! pointers for each UART mapped at a different address.
+//!
+//! - The [`Uart`] struct is an abstraction over a UART which holds
+//! the corresponding [`Clock`] for enabling the device and the
+//! [`Registers`] block to do communication.
+//!
+//! - [`Uart`] holds pre-defined constants which represent the UARTs
+//! A through E and should be used instead of creating instances of
+//! the [`Uart`] struct manually.
+//!
+//! - [`Uart::init`] has to be called for each device before it can
+//! be used.
+//!
+//! - [`Uart::read`] and [`Uart::write`] are the recommended methods
+//! for communicating over UART. For writing data, using the methods
+//! exposed by the [`Write`] trait are however preferred if you're
+//! transmitting strings.
+//!
+//! - The [`Send`] and [`Sync`] traits are implemented for [`Uart`],
+//! instances and its references can be shared safely between thread
+//! boundaries.
+//!
 //! # Example
 //!
 //! ```
@@ -26,6 +56,21 @@
 //!     writeln!(&mut device, "Hello, friend!").ok();
 //! }
 //! ```
+//!
+//! [`FifoControl`]: enum.FifoControl.html
+//! [`InterruptIdentification`]: enum.InterruptIdentification.html
+//! [`LineControl`]: enum.LineControl.html
+//! [`LineStatus`]: enum.LineStatus.html
+//! [`VendorStatus`]: enum.VendorStatus.html
+//! [`Registers`]: struct.Registers.html
+//! [`Uart`]: struct.Uart.html
+//! [`Clock`]: ../clock/struct.Clock.html
+//! [`Uart::init`]: struct.Uart.html#method_init
+//! [`Uart::read`]: struct.Uart.html#method_read
+//! [`Uart::write`]: struct.Uart.html#method_write
+//! [`Write`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Write.html
+//! [`Send`]: https://doc.rust-lang.org/nightly/core/marker/trait.Send.html
+//! [`Sync`]: https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html
 
 use core::{
     fmt::{Error, Write},
@@ -242,33 +287,38 @@ struct Registers {
 
 impl Registers {
     /// Factory method to create a pointer to the UART A registers.
-    pub fn get_a() -> *const Self {
-        unsafe { *(UART_A_BASE as *const _) }
+    #[inline]
+    pub fn get_a() -> &'static Self {
+        unsafe { &*(UART_A_BASE as *const Registers) }
     }
 
     /// Factory method to create a pointer to the UART B registers.
-    pub fn get_b() -> *const Self {
-        unsafe { *(UART_B_BASE as *const _) }
+    #[inline]
+    pub fn get_b() -> &'static Self {
+        unsafe { &*(UART_B_BASE as *const Registers) }
     }
 
     /// Factory method to create a pointer to the UART C registers.
-    pub fn get_c() -> *const Self {
-        unsafe { *(UART_C_BASE as *const _) }
+    #[inline]
+    pub fn get_c() -> &'static Self {
+        unsafe { &*(UART_C_BASE as *const Registers) }
     }
 
     /// Factory method to create a pointer to the UART D registers.
-    pub fn get_d() -> *const Self {
-        unsafe { *(UART_D_BASE as *const _) }
+    #[inline]
+    pub fn get_d() -> &'static Self {
+        unsafe { &*(UART_D_BASE as *const Registers) }
     }
 
     /// Factory method to create a pointer to the UART E registers.
-    pub fn get_e() -> *const Self {
-        unsafe { *(UART_E_BASE as *const _) }
+    #[inline]
+    pub fn get_e() -> &'static Self {
+        unsafe { &*(UART_E_BASE as *const Registers) }
     }
 }
 
 /// Representation of a UART.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy)]
 pub struct Uart {
     /// The UART CPU registers used for communication.
     registers: &'static Registers,
@@ -280,31 +330,31 @@ pub struct Uart {
 impl Uart {
     /// Representation of the UART A.
     pub const A: Self = Uart {
-        registers: &Registers::get_a(),
+        registers: Registers::get_a(),
         clock: &Clock::UART_A,
     };
 
     /// Representation of the UART B.
     pub const B: Self = Uart {
-        registers: &Registers::get_b(),
+        registers: Registers::get_b(),
         clock: &Clock::UART_B,
     };
 
     /// Representation of the UART C.
     pub const C: Self = Uart {
-        registers: &Registers::get_c(),
+        registers: Registers::get_c(),
         clock: &Clock::UART_C,
     };
 
     /// Representation of the UART D.
     pub const D: Self = Uart {
-        registers: &Registers::get_d(),
+        registers: Registers::get_d(),
         clock: &Clock::UART_D,
     };
 
     /// Representation of the UART APE.
     pub const E: Self = Uart {
-        registers: &Registers::get_e(),
+        registers: Registers::get_e(),
         clock: &Clock::UART_APE,
     };
 }
@@ -325,11 +375,11 @@ impl Uart {
     /// Blocks until the line has entered the desired state.
     #[inline]
     pub fn wait_idle(&self, status: VendorStatus) {
-        if status & VendorStatus::UART_TX_IDLE {
+        if status.contains(VendorStatus::UART_TX_IDLE) {
             while (self.registers.LSR.get() & LineStatus::TMTY.bits()) == 0 {}
         }
 
-        if status & VendorStatus::UART_RX_IDLE {
+        if status.contains(VendorStatus::UART_RX_IDLE) {
             while (self.registers.LSR.get() & LineStatus::RDR.bits()) == 0 {}
         }
     }
@@ -388,7 +438,7 @@ impl Uart {
         self.wait_idle(VendorStatus::UART_TX_IDLE); // Ensure no data is being written to TX FIFO.
         self.registers
             .IIR_FCR
-            .set(self.registers.IIR_FCR.get() | (FifoControl::RX_CLR | FifoControl::TX_CLR)); // Clear TX and RX FIFOs.
+            .set(self.registers.IIR_FCR.get() | (FifoControl::RX_CLR | FifoControl::TX_CLR).bits()); // Clear TX and RX FIFOs.
         self.wait_cycles(baud, 32); // Wait for 32 baud cycles.
 
         // Wait for idle state.

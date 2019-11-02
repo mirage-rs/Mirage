@@ -5,7 +5,7 @@
 //! at own risk.
 
 #![no_std]
-#![feature(optimize_attr)]
+#![feature(optimize_attribute)]
 
 #[macro_use]
 extern crate bitflags;
@@ -15,9 +15,11 @@ extern crate byteorder;
 #[macro_use]
 extern crate enum_primitive;
 
+extern crate paste;
+
 extern crate register;
 
-use register::mmio::ReadWrite;
+use crate::gpio::*;
 
 pub mod button;
 pub mod clock;
@@ -102,8 +104,8 @@ fn config_gpios() {
     pinmux::configure_uart(pinmux, &uart::Uart::A);
 
     // Configure Volume Up/Down as inputs.
-    gpio::GpioPin::BUTTON_VOL_UP.config(gpio::GpioConfig::Input);
-    gpio::GpioPin::BUTTON_VOL_DOWN.config(gpio::GpioConfig::Input);
+    gpio::Gpio::BUTTON_VOL_UP.config(gpio::GpioConfig::Input);
+    gpio::Gpio::BUTTON_VOL_DOWN.config(gpio::GpioConfig::Input);
 }
 
 fn config_pmc_scratch() {
@@ -111,7 +113,7 @@ fn config_pmc_scratch() {
 
     pmc.scratch20.set(pmc.scratch20.get() & 0xFFF3_FFFF);
     pmc.scratch190.set(pmc.scratch190.get() & 0xFFFF_FFFE);
-    pmc.secure_sratch21.set(pmc.secure_scratch21.get() | 0x10);
+    pmc.secure_scratch21.set(pmc.secure_scratch21.get() | 0x10);
 }
 
 fn mbist_workaround() {

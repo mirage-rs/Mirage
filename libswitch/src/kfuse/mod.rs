@@ -22,9 +22,9 @@ pub fn read(buffer: &mut [u32]) -> Result<(), ()> {
 
     Clock::KFUSE.enable();
 
-    while !(state_reg.get() & KFUSE_STATE_DONE) {}
+    while (state_reg.get() & KFUSE_STATE_DONE) == 0 {}
 
-    if !(state_reg.get() & KFUSE_STATE_CRCPASS) {
+    if (state_reg.get() & KFUSE_STATE_CRCPASS) == 0 {
         Clock::KFUSE.disable();
         return Err(());
     }
@@ -32,7 +32,7 @@ pub fn read(buffer: &mut [u32]) -> Result<(), ()> {
     keyaddr_reg.set(KFUSE_KEYADDR_AUTOINC);
 
     for i in 0..KFUSE_NUM_WORDS {
-        buffer[i] = keys_reg.get();
+        buffer[i as usize] = keys_reg.get();
     }
 
     Clock::KFUSE.disable();

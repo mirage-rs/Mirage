@@ -12,6 +12,17 @@
 //! microseconds to be used by the rest of the system regardless of the
 //! clk_m frequency.
 //!
+//! # Implementation
+//!
+//! - The most important RTC and Timers registers are exposed as global constants
+//! within the crate.
+//!
+//! - The functions [`get_seconds`], [`get_milliseconds`] and [`get_microseconds`]
+//! can be used to retrieve the current time.
+//!
+//! - The functions [`sleep`], [`msleep`] and [`usleep`] are built on top of this
+//! to cause blocking delays.
+//!
 //! # Example
 //!
 //! ```
@@ -22,6 +33,13 @@
 //!     println!("Five seconds later.");
 //! }
 //! ```
+//!
+//! [`get_seconds`]: fn.get_seconds.html
+//! [`get_milliseconds`]: fn.get_milliseconds.html
+//! [`get_microseconds`]: fn.get_microseconds.html
+//! [`sleep`]: fn.sleep.html
+//! [`msleep`]: fn.msleep.html
+//! [`usleep`]: fn.usleep.html
 
 use register::mmio::ReadWrite;
 

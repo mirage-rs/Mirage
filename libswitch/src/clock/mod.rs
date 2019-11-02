@@ -11,6 +11,20 @@
 //! Generally speaking, clocks are used to set up non-boot devices
 //! for operation.
 //!
+//! # Implementation
+//!
+//! - Most of the CAR registers were ignored as they aren't required.
+//! A few ones however are exposed as global constants within the crate.
+//!
+//! - The [`Clock`] struct is an abstraction of a device clock which
+//! holds all the important configuration values for controlling it.
+//!
+//! - [`Clock`] holds pre-defined constants which represent known clocks.
+//! These can be used for convenience.
+//!
+//! - [`Clock::enable`], [`Clock::disable`] and [`Clock::is_enabled`] can
+//! be used to check and modify the state of a device.
+//!
 //! # Example
 //!
 //! ```
@@ -28,6 +42,11 @@
 //!     assert_eq!(se_clock.is_enabled(), false);
 //! }
 //! ```
+//!
+//! [`Clock`]: struct.Clock.html
+//! [`Clock::enable`]: struct.Clock.html#method_enable
+//! [`Clock::disable`]: struct.Clock.html#method_disable
+//! [`Clock::is_enabled`]: struct.Clock.html#method_is_enabled
 
 use register::mmio::ReadWrite;
 
@@ -63,7 +82,7 @@ pub(crate) const SCLK_DIVIDER: &'static ReadWrite<u32> =
     unsafe { &(*((CLOCK_BASE + 0x2C) as *const ReadWrite<u32>)) };
 
 /// Representation of a device clock.
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Clock {
     /// The clock device reset register.
     reset: u32,

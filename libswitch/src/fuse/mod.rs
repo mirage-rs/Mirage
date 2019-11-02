@@ -1,10 +1,10 @@
 //! Tegra210 Fuse implementation.
 
-use crate::timer::usleep;
-
 use register::mmio::ReadWrite;
 
-/// Representation of the fuse registers.
+use crate::timer::usleep;
+
+/// Representation of the Fuse registers.
 #[repr(C)]
 pub struct Fuse {
     pub ctrl: ReadWrite<u32>,
@@ -25,13 +25,14 @@ pub struct Fuse {
 }
 
 impl Fuse {
-    /// Gets the fuse registers.
+    /// Factory method to create a pointer to the Fuse registers.
+    #[inline]
     pub fn get() -> *const Self {
-        0x7000_F800 as *const Fuse
+        0x7000_F800 as *const _
     }
 }
 
-/// Representation of the fuse chip.
+/// Representation of the Fuse chip.
 #[repr(C)]
 pub struct FuseChip {
     pub production_mode: ReadWrite<u32>,
@@ -177,9 +178,10 @@ pub struct FuseChip {
 }
 
 impl FuseChip {
-    /// Gets the fuse chip.
+    /// Factory method to create a pointer to the Fuse chip.
+    #[inline]
     pub fn get() -> *const Self {
-        0x7000_F900 as *const FuseChip
+        0x7000_F900 as *const _
     }
 }
 
@@ -194,106 +196,97 @@ pub fn init() {
 pub fn make_registers_visible(make_visible: bool) {
     let misc_clk_enable_reg = unsafe { &(*(0x6000_6048 as *const ReadWrite<u32>)) };
 
-    misc_clk_enable_reg.set((misc_clk_enable_reg.get() & 0xEFFF_FFFF) | ((make_visible & 1) << 28));
+    misc_clk_enable_reg.set(
+        (misc_clk_enable_reg.get() & 0xEFFF_FFFF) | ((if make_visible { 1 } else { 0 } & 1) << 28),
+    );
 }
 
 /// Disables all fuse programming.
 pub fn disable_programming() {
-    let fuse = Fuse::get();
+    let fuse = unsafe { &*Fuse::get() };
 
-    let dis_pgm_reg = unsafe { &(*fuse).dis_pgm };
-    dis_pgm_reg.set(1);
+    fuse.dis_pgm.set(1);
 }
 
 pub fn disable_secondary_private_key() {
-    let fuse = Fuse::get();
+    let fuse = unsafe { &*Fuse::get() };
 
-    let privatekeydisable_reg = unsafe { &(*fuse).privatekeydisable };
-    privatekeydisable_reg.set(0x10);
+    fuse.privatekeydisable.set(0x10);
 }
 
 /// Wait for the fuse driver to enter an idle state.
 pub fn wait_idle() {
-    let fuse = Fuse::get();
-
-    let ctrl_reg = unsafe { &(*fuse).ctrl };
+    let fuse = unsafe { &*Fuse::get() };
 
     // Wait for STATE_IDLE.
-    let mut ctrl_val = 0;
-    while (ctrl_val & 0xF0000) != 0x40000 {
+    let mut ctrl = 0;
+    while (ctrl & 0xF0000) != 0x40000 {
         usleep(1);
-        ctrl_val = ctrl_reg.get();
+        ctrl = fuse.ctrl.get();
     }
 }
 
 /// Reads a fuse from the hardware array.
 pub fn hardware_read(address: u32) -> u32 {
-    let fuse = Fuse::get();
+    let fuse = unsafe { &*Fuse::get() };
     wait_idle();
 
     // Program the target address.
-    let reg_addr_reg = unsafe { &(*fuse).reg_addr };
-    reg_addr_reg.set(address);
+    fuse.reg_addr.set(address);
 
     // Enable read operation in control register.
-    let ctrl_reg = unsafe { &(*fuse).ctrl };
-    let mut ctrl_val = ctrl_reg.get();
-    ctrl_val &= !0x3;
-    ctrl_val |= 0x1; // Set FUSE_READ command.
-    ctrl_reg.set(ctrl_val);
+    let mut ctrl = fuse.ctrl.get();
+    ctrl &= !0x3;
+    ctrl |= 0x1; // Set FUSE_READ command.
+    fuse.ctrl.set(ctrl);
 
     wait_idle();
 
-    let reg_read_reg = unsafe { &(*fuse).reg_read };
-    reg_read_reg.get()
+    fuse.reg_read.get()
 }
 
 /// Writes a fuse to the hardware array.
 pub fn hardware_write(address: u32, value: u32) {
-    let fuse = Fuse::get();
+    let fuse = unsafe { &*Fuse::get() };
     wait_idle();
 
     // Program the target address and value.
-    let reg_addr_reg = unsafe { &(*fuse).reg_addr };
-    let reg_write_reg = unsafe { &(*fuse).reg_write };
-    reg_addr_reg.set(address);
-    reg_write_reg.set(value);
+    fuse.reg_addr.set(address);
+    fuse.reg_write.set(value);
 
     // Enable write operation in control register.
-    let ctrl_reg = unsafe { &(*fuse).ctrl };
-    let mut ctrl_val = ctrl_reg.get();
-    ctrl_val &= !0x3;
-    ctrl_val |= 0x2; // Set FUSE_WRITE command.
-    ctrl_reg.set(ctrl_val);
+    let mut ctrl = fuse.ctrl.get();
+    ctrl &= !0x3;
+    ctrl |= 0x2; // Set FUSE_WRITE command.
+    fuse.ctrl.set(ctrl);
 
     wait_idle();
 }
 
 /// Senses the fuse hardware array into the shadow cache.
 pub fn hardware_sense() {
-    let fuse = Fuse::get();
+    let fuse = unsafe { &*Fuse::get() };
     wait_idle();
 
     // Enable sense operation in control register.
-    let ctrl_reg = unsafe { &(*fuse).ctrl };
-    let mut ctrl_val = ctrl_reg.get();
-    ctrl_val &= !0x3;
-    ctrl_val |= 0x3; // Set FUSE_SENSE command.
-    ctrl_reg.set(ctrl_val);
+    let mut ctrl = fuse.ctrl.get();
+    ctrl &= !0x3;
+    ctrl |= 0x3; // Set FUSE_SENSE command.
+    fuse.ctrl.set(ctrl);
 
     wait_idle();
 }
 
 /// Retrieves the Device ID from the shadow cache.
 pub fn get_device_id() -> u64 {
-    let fuse_chip = FuseChip::get();
+    let fuse_chip = unsafe { &*FuseChip::get() };
     let mut device_id = 0;
 
-    let y_coord = unsafe { &(*fuse_chip).y_coordinate.get() & 0x1FF };
-    let x_coord = unsafe { &(*fuse_chip).x_coordinate.get() & 0x1FF };
-    let wafer_id = unsafe { &(*fuse_chip).wafer_id.get() & 0x3F };
-    let lot_code = unsafe { &(*fuse_chip).lot_code_0.get() };
-    let fab_code = unsafe { &(*fuse_chip).fab_code.get() & 0x3F };
+    let y_coord = fuse_chip.y_coordinate.get() & 0x1FF;
+    let x_coord = fuse_chip.x_coordinate.get() & 0x1FF;
+    let wafer_id = fuse_chip.wafer_id.get() & 0x3F;
+    let lot_code = fuse_chip.lot_code_0.get();
+    let fab_code = fuse_chip.fab_code.get() & 0x3F;
 
     let mut derived_lot_code = 0;
     for i in 0..5 {
@@ -301,11 +294,11 @@ pub fn get_device_id() -> u64 {
     }
     derived_lot_code &= 0x03FF_FFFF;
 
-    device_id |= y_coord << 0;
-    device_id |= x_coord << 9;
-    device_id |= wafer_id << 18;
-    device_id |= derived_lot_code << 24;
-    device_id |= fab_code << 50;
+    device_id |= (y_coord as u64) << 0;
+    device_id |= (x_coord as u64) << 9;
+    device_id |= (wafer_id as u64) << 18;
+    device_id |= (derived_lot_code as u64) << 24;
+    device_id |= (fab_code as u64) << 50;
 
     device_id
 }
