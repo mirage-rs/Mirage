@@ -23,8 +23,8 @@
 //!
 //! fn main() {
 //!     // Wait for 10 seconds to get the key combination for entering RCM.
-//!     wait_for(10, Button::POWER | Button::VOL_UP)
-//!         .and_then(|_| println!("Key combination for entering RCM was pressed!"));
+//!     let button = wait_for(10, Button::POWER | Button::VOL_UP)
+//!         .unwrap_or_else(|_| panic!("Key combination for entering RCM wasn't pressed in time!"));
 //! }
 //! ```
 //!
@@ -64,14 +64,8 @@ pub fn read() -> Button {
         result |= Button::VOL_UP;
     }
 
-    let mut buffer: [u8; 1] = [0; 1];
-    if I2cDevice::I5
-        .read(MAX77620_PWR_I2C_ADDR, 0x15, &mut buffer)
-        .is_ok()
-    {
-        if (buffer[0] & 0x4) != 0 {
-            result |= Button::POWER;
-        }
+    if I2c::C5.read_byte(MAX77620_PWR_I2C_ADDR, 0x15).unwrap() & 0x4 != 0 {
+        result |= Button::POWER;
     }
 
     result

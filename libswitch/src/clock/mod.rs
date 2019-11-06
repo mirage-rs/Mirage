@@ -82,7 +82,7 @@ pub(crate) const SCLK_DIVIDER: &'static ReadWrite<u32> =
     unsafe { &(*((CLOCK_BASE + 0x2C) as *const ReadWrite<u32>)) };
 
 /// Representation of a device clock.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Clock {
     /// The clock device reset register.
     reset: u32,

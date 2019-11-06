@@ -68,7 +68,7 @@ use core::ops::Deref;
 
 use register::mmio::*;
 
-use crate::{i2c::I2cDevice, uart::Uart};
+use crate::{i2c::I2c, uart::Uart};
 
 /// The base address for Pinmux registers.
 const PINMUX_BASE: u32 = 0x7000_3000;
@@ -366,19 +366,31 @@ pub fn configure_uart(pinmux: &Pinmux, uart: &Uart) {
 }
 
 /// Configures an I²C device.
-pub fn configure_i2c(device: I2cDevice) {
-    let value = match device {
-        I2cDevice::I1 => 0,
-        I2cDevice::I2 => 1,
-        I2cDevice::I3 => 2,
-        I2cDevice::I4 => 3,
-        I2cDevice::I5 => 4,
-        I2cDevice::I6 => 5,
-    };
-
-    let scl_reg = unsafe { &(*((PINMUX_BASE + 0xBC + 8 * value) as *const WriteOnly<u32>)) };
-    let sda_reg = unsafe { &(*((PINMUX_BASE + 0xC0 + 8 * value) as *const WriteOnly<u32>)) };
-
-    scl_reg.set(INPUT);
-    sda_reg.set(INPUT);
+pub fn configure_i2c(pinmux: &Pinmux, device: &I2c) {
+    match device {
+        &I2c::C1 => {
+            pinmux.gen1_i2c_scl.set(INPUT);
+            pinmux.gen1_i2c_sda.set(INPUT);
+        }
+        &I2c::C2 => {
+            pinmux.gen2_i2c_scl.set(INPUT);
+            pinmux.gen2_i2c_sda.set(INPUT);
+        }
+        &I2c::C3 => {
+            pinmux.gen3_i2c_scl.set(INPUT);
+            pinmux.gen3_i2c_sda.set(INPUT);
+        }
+        &I2c::C4 => {
+            pinmux.cam_i2c_scl.set(INPUT);
+            pinmux.cam_i2c_sda.set(INPUT);
+        }
+        &I2c::C5 => {
+            pinmux.pwr_i2c_scl.set(INPUT);
+            pinmux.pwr_i2c_sda.set(INPUT);
+        }
+        &I2c::C6 => {
+            // Unused on the Switch.
+            // TODO(Vale): Nonetheless, figure this out.
+        }
+    }
 }

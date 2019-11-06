@@ -10,8 +10,6 @@
 #[macro_use]
 extern crate bitflags;
 
-extern crate byteorder;
-
 #[macro_use]
 extern crate enum_primitive;
 
@@ -99,8 +97,8 @@ fn config_gpios() {
     gpio!(E, 6).config(gpio::GpioConfig::Input);
     gpio!(H, 6).config(gpio::GpioConfig::Input);
 
-    pinmux::configure_i2c(i2c::I2cDevice::I1);
-    pinmux::configure_i2c(i2c::I2cDevice::I5);
+    pinmux::configure_i2c(pinmux, &i2c::I2c::C1);
+    pinmux::configure_i2c(pinmux, &i2c::I2c::C5);
     pinmux::configure_uart(pinmux, &uart::Uart::A);
 
     // Configure Volume Up/Down as inputs.

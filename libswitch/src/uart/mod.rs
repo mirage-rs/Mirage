@@ -22,14 +22,14 @@
 //!
 //! - The [`Registers`] struct along with its factory methods provide
 //! abstractions over the UART registers and the possibility to create
-//! pointers for each UART mapped at a different address.
+//! pointers to each UART mapped at a different address.
 //!
 //! - The [`Uart`] struct is an abstraction over a UART which holds
 //! the corresponding [`Clock`] for enabling the device and the
 //! [`Registers`] block to do communication.
 //!
 //! - [`Uart`] holds pre-defined constants which represent the UARTs
-//! A through E and should be used instead of creating instances of
+//! A through E and should be preferred over creating instances of
 //! the [`Uart`] struct manually.
 //!
 //! - [`Uart::init`] has to be called for each device before it can
