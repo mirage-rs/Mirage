@@ -61,6 +61,7 @@
 //! [`Pinmux`]: struct.Pinmux.html
 //! [`Pinmux::get`]: struct.Pinmux.html#method_get
 //! [`Deref`]: https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html
+//! [`Pinmux::new`]: struct.Pinmux.html#method_new
 //! [`configure_uart`]: fn.configure_uart.html
 //! [`configure_i2c`]: fn.configure_i2c.html
 
@@ -136,7 +137,7 @@ pub const SCHMT: u32 = (1 << 12);
 
 /// Representation of the Pinmux registers.
 #[repr(C)]
-struct Registers {
+pub struct Registers {
     pub sdmmc1_clk: ReadWrite<u32>,
     pub sdmmc1_cmd: ReadWrite<u32>,
     pub sdmmc1_dat3: ReadWrite<u32>,

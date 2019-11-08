@@ -9,7 +9,7 @@ const PMC_BASE: u32 = 0x7000_E400;
 
 /// Representation of the PMC registers.
 #[repr(C)]
-struct Registers {
+pub(crate) struct Registers {
     pub cntrl: ReadWrite<u32>,
     pub sec_disable: ReadWrite<u32>,
     pub pmc_swrst: ReadWrite<u32>,

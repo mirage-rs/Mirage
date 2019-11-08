@@ -41,33 +41,26 @@
 //! [`msleep`]: fn.msleep.html
 //! [`usleep`]: fn.usleep.html
 
-use register::mmio::ReadWrite;
-
 /// Base address for Timer registers.
 const TIMERS_BASE: u32 = 0x6000_5000;
 
 /// The `TIMERUS_CNTR_1US_0` register.
-pub(crate) const TIMERUS_CNTR_1US: &'static ReadWrite<u32> =
-    unsafe { &(*((TIMERS_BASE + 0x10) as *const ReadWrite<u32>)) };
+register!(TIMERUS_CNTR_1US, TIMERS_BASE + 0x10);
 
 /// The `TIMERUS_USEC_CFG_0` register.
-pub(crate) const TIMERUS_USEC_CFG: &'static ReadWrite<u32> =
-    unsafe { &(*((TIMERS_BASE + 0x14) as *const ReadWrite<u32>)) };
+register!(TIMERUS_USEC_CFG, TIMERS_BASE + 0x14);
 
 /// Base address for RTC registers.
 const RTC_BASE: u32 = 0x7000_E000;
 
 /// The `APBDEV_RTC_SECONDS_0` register.
-pub(crate) const RTC_SECONDS: &'static ReadWrite<u32> =
-    unsafe { &(*((RTC_BASE + 0x8) as *const ReadWrite<u32>)) };
+register!(RTC_SECONDS, RTC_BASE + 0x8);
 
 /// The `APBDEV_RTC_SHADOW_SECONDS_0` register.
-pub(crate) const RTC_SHADOW_SECONDS: &'static ReadWrite<u32> =
-    unsafe { &(*((RTC_BASE + 0xC) as *const ReadWrite<u32>)) };
+register!(RTC_SHADOW_SECONDS, RTC_BASE + 0xC);
 
 /// The `APBDEV_RTC_MILLI_SECONDS_0` register.
-pub(crate) const RTC_MILLI_SECONDS: &'static ReadWrite<u32> =
-    unsafe { &(*((RTC_BASE + 0x10) as *const ReadWrite<u32>)) };
+register!(RTC_MILLI_SECONDS, RTC_BASE + 0x10);
 
 /// Returns the current time in seconds.
 #[inline]

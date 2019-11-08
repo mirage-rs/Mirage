@@ -197,37 +197,37 @@ struct Registers {
 impl Registers {
     /// Factory method to create a pointer to the I²C 1 registers.
     #[inline]
-    pub fn get_1() -> &'static Self {
+    pub const fn get_1() -> &'static Self {
         unsafe { &*((I2C_1234_BASE + 0x000) as *const Registers) }
     }
 
     /// Factory method to create a pointer to the I²C 2 registers.
     #[inline]
-    pub fn get_2() -> &'static Self {
+    pub const fn get_2() -> &'static Self {
         unsafe { &*((I2C_1234_BASE + 0x400) as *const Registers) }
     }
 
     /// Factory method to create a pointer to the I²C 3 registers.
     #[inline]
-    pub fn get_3() -> &'static Self {
+    pub const fn get_3() -> &'static Self {
         unsafe { &*((I2C_1234_BASE + 0x500) as *const Registers) }
     }
 
     /// Factory method to create a pointer to the I²C 4 registers.
     #[inline]
-    pub fn get_4() -> &'static Self {
+    pub const fn get_4() -> &'static Self {
         unsafe { &*((I2C_1234_BASE + 0x700) as *const Registers) }
     }
 
     /// Factory method to create a pointer to the I²C 5 registers.
     #[inline]
-    pub fn get_5() -> &'static Self {
+    pub const fn get_5() -> &'static Self {
         unsafe { &*((I2C_56_BASE + 0x000) as *const Registers) }
     }
 
     /// Factory method to create a pointer to the I²C 6 registers.
     #[inline]
-    pub fn get_6() -> &'static Self {
+    pub const fn get_6() -> &'static Self {
         unsafe { &*((I2C_56_BASE + 0x100) as *const Registers) }
     }
 }

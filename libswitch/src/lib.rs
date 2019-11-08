@@ -5,6 +5,9 @@
 //! at own risk.
 
 #![no_std]
+#![feature(const_fn)]
+#![feature(const_raw_ptr_deref)]
+#![feature(const_transmute)]
 #![feature(optimize_attribute)]
 
 #[macro_use]
@@ -13,11 +16,17 @@ extern crate bitflags;
 #[macro_use]
 extern crate enum_primitive;
 
+#[macro_use]
+extern crate lazy_static;
+
 extern crate paste;
 
 extern crate register;
 
 use crate::gpio::*;
+
+#[macro_use]
+mod utils;
 
 pub mod button;
 pub mod clock;
@@ -122,7 +131,7 @@ fn config_se_brom() {
     unimplemented!();
 }
 
-/// Initializes the Switch hardware.
+/// Initializes the Switch hardware in an early bootrom context.
 pub fn hardware_init() {
     unimplemented!();
 }

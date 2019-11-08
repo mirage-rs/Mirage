@@ -16,7 +16,8 @@ sysroot_path = "target/sysroot"
 
 [dependencies]
 bitflags = "1.2.0"
-enum_primitive = { git = "https://github.com/roblabla/enum_primitive-rs", branch = "master" }
+enum_primitive = { git = "https://github.com/roblabla/enum_primitive-rs.git" }
+lazy_static = { version = "1.4.0", default-features = false, features = ["spin_no_std"] }
 paste = "0.1.6"
 register = "0.3.3"
 

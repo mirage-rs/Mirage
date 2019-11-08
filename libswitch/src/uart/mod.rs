@@ -288,31 +288,31 @@ struct Registers {
 impl Registers {
     /// Factory method to create a pointer to the UART A registers.
     #[inline]
-    pub fn get_a() -> &'static Self {
+    pub const fn get_a() -> &'static Self {
         unsafe { &*(UART_A_BASE as *const Registers) }
     }
 
     /// Factory method to create a pointer to the UART B registers.
     #[inline]
-    pub fn get_b() -> &'static Self {
+    pub const fn get_b() -> &'static Self {
         unsafe { &*(UART_B_BASE as *const Registers) }
     }
 
     /// Factory method to create a pointer to the UART C registers.
     #[inline]
-    pub fn get_c() -> &'static Self {
+    pub const fn get_c() -> &'static Self {
         unsafe { &*(UART_C_BASE as *const Registers) }
     }
 
     /// Factory method to create a pointer to the UART D registers.
     #[inline]
-    pub fn get_d() -> &'static Self {
+    pub const fn get_d() -> &'static Self {
         unsafe { &*(UART_D_BASE as *const Registers) }
     }
 
     /// Factory method to create a pointer to the UART E registers.
     #[inline]
-    pub fn get_e() -> &'static Self {
+    pub const fn get_e() -> &'static Self {
         unsafe { &*(UART_E_BASE as *const Registers) }
     }
 }

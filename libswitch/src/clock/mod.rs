@@ -54,32 +54,25 @@ use register::mmio::ReadWrite;
 const CLOCK_BASE: u32 = 0x6000_6000;
 
 /// The `CLK_RST_CONTROLLER_SPARE_REG0_0` register.
-pub(crate) const SPARE_REG0: &'static ReadWrite<u32> =
-    unsafe { &(*((CLOCK_BASE + 0x55C) as *const ReadWrite<u32>)) };
+register!(SPARE_REG0, CLOCK_BASE + 0x55C);
 
 /// The `CLK_RST_CONTROLLER_OSC_CTRL_0` register.
-pub(crate) const OSC_CTRL: &'static ReadWrite<u32> =
-    unsafe { &(*((CLOCK_BASE + 0x50) as *const ReadWrite<u32>)) };
+register!(OSC_CTRL, CLOCK_BASE + 0x50);
 
 /// The `CLK_RST_CONTROLLER_CLK_SYSTEM_RATE_0` register.
-pub(crate) const CLK_SYSTEM_RATE: &'static ReadWrite<u32> =
-    unsafe { &(*((CLOCK_BASE + 0x30) as *const ReadWrite<u32>)) };
+register!(CLK_SYSTEM_RATE, CLOCK_BASE + 0x30);
 
 /// The `CLK_RST_CONTROLLER_PLLMB_BASE_0` register.
-pub(crate) const PLLMB_BASE: &'static ReadWrite<u32> =
-    unsafe { &(*((CLOCK_BASE + 0x5E8) as *const ReadWrite<u32>)) };
+register!(PLLMB_BASE, CLOCK_BASE + 0x5E8);
 
 /// The `CLK_RST_CONTROLLER_CLK_SOURCE_SYS_0` register.
-pub(crate) const CLK_SOURCE_SYS: &'static ReadWrite<u32> =
-    unsafe { &(*((CLOCK_BASE + 0x400) as *const ReadWrite<u32>)) };
+register!(CLK_SOURCE_SYS, CLOCK_BASE + 0x400);
 
 /// The `CLK_RST_CONTROLLER_SCLK_BURST_POLICY_0` register.
-pub(crate) const SCLK_BURST_POLICY: &'static ReadWrite<u32> =
-    unsafe { &(*((CLOCK_BASE + 0x28) as *const ReadWrite<u32>)) };
+register!(SCLK_BURST_POLICY, CLOCK_BASE + 0x28);
 
 /// The `CLK_RST_CONTROLLER_SUPER_SCLK_DIVIDER_0` register.
-pub(crate) const SCLK_DIVIDER: &'static ReadWrite<u32> =
-    unsafe { &(*((CLOCK_BASE + 0x2C) as *const ReadWrite<u32>)) };
+register!(SCLK_DIVIDER, CLOCK_BASE + 0x2C);
 
 /// Representation of a device clock.
 #[derive(Clone, Copy, Debug, PartialEq)]

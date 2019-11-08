@@ -51,8 +51,7 @@
 
 use register::mmio::ReadWrite;
 
-use crate::clock::Clock;
-use crate::timer::get_milliseconds;
+use crate::{clock::Clock, timer::get_milliseconds};
 
 /// Base address for the TSEC registers.
 const TSEC_BASE: u32 = 0x5450_0000;
@@ -64,20 +63,16 @@ const SOR1_BASE: u32 = 0x5458_0000;
 const HOST1X_BASE: u32 = 0x5000_0000;
 
 /// The `SOR_NV_PDISP_SOR_DP_HDCP_BKSV_LSB_0` register.
-pub(crate) const SOR1_DP_HDCP_BKSV_LSB: &'static ReadWrite<u32> =
-    unsafe { &(*((SOR1_BASE + 0x1E8) as *const ReadWrite<u32>)) };
+register!(SOR1_DP_HDCP_BKSV_LSB, SOR1_BASE + 0x1E8);
 
 /// The `SOR_NV_PDISP_SOR_TMDS_HDCP_BKSV_LSB_0` register.
-pub(crate) const SOR1_TMDS_HDCP_BKSV_LSB: &'static ReadWrite<u32> =
-    unsafe { &(*((SOR1_BASE + 0x21C) as *const ReadWrite<u32>)) };
+register!(SOR1_TMDS_HDCP_BKSV_LSB, SOR1_BASE + 0x21C);
 
 /// The `SOR_NV_PDISP_SOR_TMDS_HDCP_CN_MSB_0` register.
-pub(crate) const SOR1_TMDS_HDCP_CN_MSB: &'static ReadWrite<u32> =
-    unsafe { &(*((SOR1_BASE + 0x208) as *const ReadWrite<u32>)) };
+register!(SOR1_TMDS_HDCP_CN_MSB, SOR1_BASE + 0x208);
 
 /// The `SOR_NV_PDISP_SOR_TMDS_HDCP_CN_LSB_0` register.
-pub(crate) const SOR1_TMDS_HDCP_CN_LSB: &'static ReadWrite<u32> =
-    unsafe { &(*((SOR1_BASE + 0x20C) as *const ReadWrite<u32>)) };
+register!(SOR1_TMDS_HDCP_CN_LSB, SOR1_BASE + 0x20C);
 
 /// Representation of the TSEC registers.
 #[repr(C)]
