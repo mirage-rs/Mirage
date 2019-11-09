@@ -46,7 +46,7 @@
 //! ```
 //!
 //! [`Registers`]: struct.Registers.html
-//! [`Registers::get`]: struct.Registers.html#method_get
+//! [`Registers::get`]: struct.Registers.html#method.get
 //! [`Tsec`]: struct.Tsec.html
 
 use register::mmio::ReadWrite;

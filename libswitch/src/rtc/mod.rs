@@ -11,10 +11,10 @@
 //! All the attributes are publicly accessible for people who
 //! want to do formatting or comparisons.
 //!
-//! - [`Rtc::new`] crates a new instance of this struct, using the
+//! - [`RtcTime::new`] crates a new instance of this struct, using the
 //! RTC values that were read over the I2C 5 controller.
 //!
-//! - The [Display] trait is implemented for a human-readable
+//! - The [`Display`] trait is implemented for a human-readable
 //! representation of the current point in time.
 //!
 //! # Example
@@ -28,6 +28,10 @@
 //!     println!("{:?}", time); // Saturday, November 09, 2019 17:39:36
 //! }
 //! ```
+//!
+//! [`RtcTime`]: struct.RtcTime.html
+//! [`RtcTime::new`]: struct.RtcTime.html#method.new
+//! [`Display`]: https://doc.rust-lang.org/core/fmt/trait.Display.html
 
 use core::fmt;
 

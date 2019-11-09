@@ -79,7 +79,7 @@
 //! ```
 //!
 //! [`GpioController`]: struct.GpioController.html
-//! [`GpioController::get`]: struct.GpioController.html#method_get
+//! [`GpioController::get`]: struct.GpioController.html#method.get
 //! [`GpioBank`]: struct.GpioBank.html
 //! [`Gpio`]: struct.Gpio.html
 //! [`GpioPort`]: struct.GpioPort.html

@@ -65,9 +65,9 @@
 //! [`Registers`]: struct.Registers.html
 //! [`I2c`]: struct.I2c.html
 //! [`Clock`]: ../clock/struct.Clock.html
-//! [`I2c::init`]: struct.I2c.html#method_init
-//! [`I2c::read`]: struct.I2c.html#method_read
-//! [`I2c::write`]: struct.I2c.html#method_write
+//! [`I2c::init`]: struct.I2c.html#method.init
+//! [`I2c::read`]: struct.I2c.html#method.read
+//! [`I2c::write`]: struct.I2c.html#method.write
 //! [`Sync`]: https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html
 //! [`send_pmic_cpu_shutdown_cmd`]: fn.send_pmic_cpu_shutdown_cmd.html
 //! [`read_ti_charger_bit_7`]: fn.read_ti_charger_bit_7.html

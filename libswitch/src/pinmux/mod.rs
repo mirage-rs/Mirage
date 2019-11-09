@@ -57,11 +57,11 @@
 //! ```
 //!
 //! [`Registers`]: struct.Registers.html
-//! [`Registers::get`]: struct.Registers.html#method_get
+//! [`Registers::get`]: struct.Registers.html#method.get
 //! [`Pinmux`]: struct.Pinmux.html
-//! [`Pinmux::get`]: struct.Pinmux.html#method_get
+//! [`Pinmux::get`]: struct.Pinmux.html#method.get
 //! [`Deref`]: https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html
-//! [`Pinmux::new`]: struct.Pinmux.html#method_new
+//! [`Pinmux::new`]: struct.Pinmux.html#method.new
 //! [`configure_uart`]: fn.configure_uart.html
 //! [`configure_i2c`]: fn.configure_i2c.html
 
