@@ -36,6 +36,7 @@ pub mod i2c;
 pub mod kfuse;
 pub mod pinmux;
 pub mod pmc;
+pub mod rtc;
 pub mod sysctr0;
 pub mod timer;
 pub mod tsec;

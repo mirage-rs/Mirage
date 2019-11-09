@@ -7,7 +7,7 @@ macro_rules! register {
         ::paste::item! {
             lazy_static! {
                 pub(crate) static ref $name: &'static ::register::mmio::ReadWrite<u32> =
-                    unsafe { &*($addr as *const ::register::mmio::ReadWrite<u32>) };
+                    unsafe { &*(($addr) as *const ::register::mmio::ReadWrite<u32>) };
             }
         }
     };

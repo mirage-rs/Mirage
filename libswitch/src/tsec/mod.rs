@@ -62,16 +62,12 @@ const SOR1_BASE: u32 = 0x5458_0000;
 /// Base address for HOST1X registers.
 const HOST1X_BASE: u32 = 0x5000_0000;
 
-/// The `SOR_NV_PDISP_SOR_DP_HDCP_BKSV_LSB_0` register.
 register!(SOR1_DP_HDCP_BKSV_LSB, SOR1_BASE + 0x1E8);
 
-/// The `SOR_NV_PDISP_SOR_TMDS_HDCP_BKSV_LSB_0` register.
 register!(SOR1_TMDS_HDCP_BKSV_LSB, SOR1_BASE + 0x21C);
 
-/// The `SOR_NV_PDISP_SOR_TMDS_HDCP_CN_MSB_0` register.
 register!(SOR1_TMDS_HDCP_CN_MSB, SOR1_BASE + 0x208);
 
-/// The `SOR_NV_PDISP_SOR_TMDS_HDCP_CN_LSB_0` register.
 register!(SOR1_TMDS_HDCP_CN_LSB, SOR1_BASE + 0x20C);
 
 /// Representation of the TSEC registers.

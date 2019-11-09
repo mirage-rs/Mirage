@@ -44,22 +44,17 @@
 /// Base address for Timer registers.
 const TIMERS_BASE: u32 = 0x6000_5000;
 
-/// The `TIMERUS_CNTR_1US_0` register.
 register!(TIMERUS_CNTR_1US, TIMERS_BASE + 0x10);
 
-/// The `TIMERUS_USEC_CFG_0` register.
 register!(TIMERUS_USEC_CFG, TIMERS_BASE + 0x14);
 
 /// Base address for RTC registers.
 const RTC_BASE: u32 = 0x7000_E000;
 
-/// The `APBDEV_RTC_SECONDS_0` register.
 register!(RTC_SECONDS, RTC_BASE + 0x8);
 
-/// The `APBDEV_RTC_SHADOW_SECONDS_0` register.
 register!(RTC_SHADOW_SECONDS, RTC_BASE + 0xC);
 
-/// The `APBDEV_RTC_MILLI_SECONDS_0` register.
 register!(RTC_MILLI_SECONDS, RTC_BASE + 0x10);
 
 /// Returns the current time in seconds.
