@@ -44,9 +44,9 @@
 //! ```
 //!
 //! [`Clock`]: struct.Clock.html
-//! [`Clock::enable`]: struct.Clock.html#method_enable
-//! [`Clock::disable`]: struct.Clock.html#method_disable
-//! [`Clock::is_enabled`]: struct.Clock.html#method_is_enabled
+//! [`Clock::enable`]: struct.Clock.html#method.enable
+//! [`Clock::disable`]: struct.Clock.html#method.disable
+//! [`Clock::is_enabled`]: struct.Clock.html#method.is_enabled
 
 use register::mmio::ReadWrite;
 

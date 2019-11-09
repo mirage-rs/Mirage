@@ -65,9 +65,9 @@
 //! [`Registers`]: struct.Registers.html
 //! [`Uart`]: struct.Uart.html
 //! [`Clock`]: ../clock/struct.Clock.html
-//! [`Uart::init`]: struct.Uart.html#method_init
-//! [`Uart::read`]: struct.Uart.html#method_read
-//! [`Uart::write`]: struct.Uart.html#method_write
+//! [`Uart::init`]: struct.Uart.html#method.init
+//! [`Uart::read`]: struct.Uart.html#method.read
+//! [`Uart::write`]: struct.Uart.html#method.write
 //! [`Write`]: https://doc.rust-lang.org/nightly/core/fmt/trait.Write.html
 //! [`Send`]: https://doc.rust-lang.org/nightly/core/marker/trait.Send.html
 //! [`Sync`]: https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html
