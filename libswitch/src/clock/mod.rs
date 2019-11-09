@@ -67,6 +67,16 @@ register!(SCLK_BURST_POLICY, CLOCK_BASE + 0x28);
 
 register!(SCLK_DIVIDER, CLOCK_BASE + 0x2C);
 
+register!(CLK_SOURCE_EMC, CLOCK_BASE + 0x19C);
+
+register!(CLK_ENB_H_SET, CLOCK_BASE + 0x328);
+
+register!(CLK_ENB_X_SET, CLOCK_BASE + 0x284);
+
+register!(RST_DEV_H_CLR, CLOCK_BASE + 0x30C);
+
+register!(LVL2_CLK_GATE_OVRD, CLOCK_BASE + 0x3A4);
+
 /// Representation of a device clock.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Clock {
