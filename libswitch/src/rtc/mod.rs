@@ -14,7 +14,7 @@
 //! - [`RtcTime::new`] crates a new instance of this struct, using the
 //! RTC values that were read over the I2C 5 controller.
 //!
-//! - The [Display] trait is implemented for a human-readable
+//! - The [`Display`] trait is implemented for a human-readable
 //! representation of the current point in time.
 //!
 //! # Example
