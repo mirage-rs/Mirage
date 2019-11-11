@@ -23,6 +23,8 @@ extern crate paste;
 
 extern crate register;
 
+use core::ptr::write_bytes;
+
 use crate::gpio::*;
 
 #[macro_use]
@@ -38,10 +40,14 @@ pub mod mc;
 pub mod pinmux;
 pub mod pmc;
 pub mod rtc;
+pub mod se;
 pub mod sysctr0;
 pub mod timer;
 pub mod tsec;
 pub mod uart;
+
+/// The global instance of the Security Engine.
+pub const SECURITY_ENGINE: se::SecurityEngine = se::SecurityEngine::new();
 
 fn config_oscillators() {
     let pmc = &pmc::Pmc::new();
@@ -130,7 +136,32 @@ fn mbist_workaround() {
 }
 
 fn config_se_brom() {
-    unimplemented!();
+    let fuse_chip = unsafe { &*fuse::FuseChip::get() };
+    let pmc = &pmc::Pmc::new();
+
+    // Bootrom part we skipped.
+    let sbk = [
+        fuse_chip.private_key[0].get() as u8,
+        fuse_chip.private_key[1].get() as u8,
+        fuse_chip.private_key[2].get() as u8,
+        fuse_chip.private_key[3].get() as u8,
+    ];
+    SECURITY_ENGINE.set_aes_keyslot(0xE, &sbk);
+
+    SECURITY_ENGINE.lock_sbk();
+
+    // Without this, TZRAM will behave weirdly later on.
+    unsafe {
+        write_bytes(0x7C010000 as *mut u32, 0, 0x10000);
+    }
+
+    pmc.crypto_op.set(0);
+
+    SECURITY_ENGINE.lock_ssk();
+
+    // Clear the boot reason to avoid problems later.
+    pmc.scratch200.set(0);
+    pmc.reset_status.set(0);
 }
 
 /// Initializes the Switch hardware in an early bootrom context.
