@@ -26,7 +26,16 @@ use core::ptr::write_bytes;
 
 use register::mmio::ReadWrite;
 
-use crate::gpio::*;
+use crate::{
+    clock::{Car, Clock},
+    gpio::{Gpio, GpioConfig},
+    i2c::*,
+    pinmux::*,
+    pmc::Pmc,
+    se::SecurityEngine,
+    timer::usleep,
+    uart::Uart,
+};
 
 #[macro_use]
 mod utils;
@@ -72,9 +81,9 @@ register!(I2S5_CG, I2S_BASE + 0x488);
 register!(I2S5_CTRL, I2S_BASE + 0x4A0);
 
 /// The global instance of the Security Engine.
-pub const SECURITY_ENGINE: se::SecurityEngine = se::SecurityEngine::new();
+pub const SECURITY_ENGINE: SecurityEngine = SecurityEngine::new();
 
-fn config_oscillators(car: &clock::Car, pmc: &pmc::Pmc) {
+fn config_oscillators(car: &Car, pmc: &Pmc) {
     // Set CLK_M_DIVISOR to 2.
     car.spare_reg0.set((car.spare_reg0.get() & 0xFFFF_FFF3) | 4);
     // Set counter frequency.
@@ -113,51 +122,43 @@ fn config_oscillators(car: &clock::Car, pmc: &pmc::Pmc) {
     car.clk_sys_rate.set(2);
 }
 
-fn config_gpios(pinmux: &pinmux::Pinmux) {
+fn config_gpios(pinmux: &Pinmux) {
     pinmux.uart2_tx.set(0);
     pinmux.uart3_tx.set(0);
 
     // Set Joy-Con IsAttached direction.
-    pinmux.pe6.set(pinmux::INPUT);
-    pinmux.ph6.set(pinmux::INPUT);
-
-    // Set pin mode for Joy-Con IsAttached and UART_B/C TX pins.
-    gpio!(G, 0).set_mode(gpio::GpioMode::GPIO);
-    gpio!(D, 1).set_mode(gpio::GpioMode::GPIO);
-
-    // Set Joy-Con IsAttached mode.
-    gpio!(E, 6).set_mode(gpio::GpioMode::GPIO);
-    gpio!(H, 6).set_mode(gpio::GpioMode::GPIO);
+    pinmux.pe6.set(INPUT);
+    pinmux.ph6.set(INPUT);
 
     // Enable input logic for Joy-Con IsAttached and UART_B/C TX pins.
-    gpio!(G, 0).config(gpio::GpioConfig::Input);
-    gpio!(D, 1).config(gpio::GpioConfig::Input);
-    gpio!(E, 6).config(gpio::GpioConfig::Input);
-    gpio!(H, 6).config(gpio::GpioConfig::Input);
+    gpio!(G, 0).config(GpioConfig::Input);
+    gpio!(D, 1).config(GpioConfig::Input);
+    gpio!(E, 6).config(GpioConfig::Input);
+    gpio!(H, 6).config(GpioConfig::Input);
 
-    pinmux::configure_i2c(pinmux, &i2c::I2c::C1);
-    pinmux::configure_i2c(pinmux, &i2c::I2c::C5);
-    pinmux::configure_uart(pinmux, &uart::Uart::A);
+    pinmux.configure_i2c(&I2c::C1);
+    pinmux.configure_i2c(&I2c::C5);
+    pinmux.configure_uart(&Uart::A);
 
     // Configure Volume Up/Down as inputs.
-    gpio::Gpio::BUTTON_VOL_UP.config(gpio::GpioConfig::Input);
-    gpio::Gpio::BUTTON_VOL_DOWN.config(gpio::GpioConfig::Input);
+    Gpio::BUTTON_VOL_UP.config(GpioConfig::Input);
+    Gpio::BUTTON_VOL_DOWN.config(GpioConfig::Input);
 }
 
-fn config_pmc_scratch(pmc: &pmc::Pmc) {
+fn config_pmc_scratch(pmc: &Pmc) {
     pmc.scratch20.set(pmc.scratch20.get() & 0xFFF3_FFFF);
     pmc.scratch190.set(pmc.scratch190.get() & 0xFFFF_FFFE);
     pmc.secure_scratch21.set(pmc.secure_scratch21.get() | 0x10);
 }
 
-fn mbist_workaround(car: &clock::Car) {
+fn mbist_workaround(car: &Car) {
     car.clk_source_sor1
         .set((car.clk_source_sor1.get() | 0x8000) & 0xFFFF_BFFF);
     car.plld_base.set(car.plld_base.get() | 0x4080_0000);
     car.rst_dev_y_clr.set(0x40);
     car.rst_dev_x_clr.set(0x40000);
     car.rst_dev_l_clr.set(0x1800_0000);
-    timer::usleep(2);
+    usleep(2);
 
     // Setup I2S.
     I2S1_CTRL.set(I2S1_CTRL.get() | 0x400);
@@ -176,7 +177,7 @@ fn mbist_workaround(car: &clock::Car) {
         dc_com_dsc_top_ctl.set(dc_com_dsc_top_ctl.get() | 4);
         (*((0x5434_0000 + 0x8C) as *const ReadWrite<u32>)).set(0xFFFF_FFFF);
     }
-    timer::usleep(2);
+    usleep(2);
 
     // Set devices in reset.
     car.rst_dev_y_set.set(0x40);
@@ -211,10 +212,11 @@ fn mbist_workaround(car: &clock::Car) {
         .set((car.clk_source_nvenc.get() & 0x1FFF_FFFF) | 0x8000_0000);
 }
 
-fn config_se_brom(pmc: &pmc::Pmc) {
+fn config_se_brom(pmc: &Pmc) {
     let fuse_chip = unsafe { &*fuse::FuseChip::get() };
 
     // Bootrom part we skipped.
+    // TODO(Vale): Do the private_key parts even fit an u8?
     let sbk = [
         fuse_chip.private_key[0].get() as u8,
         fuse_chip.private_key[1].get() as u8,
@@ -231,6 +233,7 @@ fn config_se_brom(pmc: &pmc::Pmc) {
     }
 
     pmc.crypto_op.set(0);
+    SECURITY_ENGINE.config_brom();
 
     SECURITY_ENGINE.lock_ssk();
 
@@ -241,9 +244,9 @@ fn config_se_brom(pmc: &pmc::Pmc) {
 
 /// Initializes the Switch hardware in an early bootrom context.
 pub fn hardware_init() {
-    let car = &clock::Car::new();
-    let pinmux = &pinmux::Pinmux::new();
-    let pmc = &pmc::Pmc::new();
+    let car = &Car::new();
+    let pinmux = &Pinmux::new();
+    let pmc = &Pmc::new();
 
     // Bootrom stuff that was skipped by going through RCM.
     config_se_brom(pmc);
@@ -259,7 +262,7 @@ pub fn hardware_init() {
     mbist_workaround(car);
 
     // Reboot SE.
-    clock::Clock::SE.enable();
+    Clock::SE.enable();
 
     // Initialize the fuse driver.
     fuse::init();
@@ -279,62 +282,60 @@ pub fn hardware_init() {
     config_gpios(pinmux);
 
     // Reboot CL-DVFS.
-    clock::Clock::CL_DVFS.enable();
+    Clock::CL_DVFS.enable();
 
     // Reboot I2C1.
-    clock::Clock::I2C_1.enable();
+    Clock::I2C_1.enable();
 
     // Reboot I2C5.
-    clock::Clock::I2C_5.enable();
+    Clock::I2C_5.enable();
 
     // Reboot TZRAM.
-    clock::Clock::TZRAM.enable();
+    Clock::TZRAM.enable();
 
     // Initialize I2C 1.
-    i2c::I2c::C1.init();
+    I2c::C1.init();
 
     // Initialize I2C 5.
-    i2c::I2c::C5.init();
+    I2c::C5.init();
 
     // Configure the PMIC.
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x4, 0x40)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x4, 0x40)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x41, 0x60)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x41, 0x60)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x43, 0x38)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x43, 0x38)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x44, 0x3A)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x44, 0x3A)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x45, 0x38)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x45, 0x38)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x4A, 0xF)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x4A, 0xF)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x4E, 0xC7)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x4E, 0xC7)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x4F, 0x4F)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x4F, 0x4F)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x50, 0x29)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x50, 0x29)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x52, 0x1B)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x52, 0x1B)
         .unwrap();
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x56, 0x22)
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x56, 0x22)
         .unwrap();
 
     // Configure SD0 voltage.
-    i2c::I2c::C5
-        .write_byte(i2c::MAX77620_PWR_I2C_ADDR, 0x16, 42)
-        .unwrap();
+    I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x16, 42).unwrap();
 
     // Configure and lock PMC scratch registers.
     config_pmc_scratch(pmc);

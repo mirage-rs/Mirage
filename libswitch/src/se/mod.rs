@@ -169,14 +169,20 @@ impl SecurityEngine {
 
     /// Locks the SBK from being read.
     #[inline]
-    pub fn lock_sbk(&self) {
+    pub(crate) fn lock_sbk(&self) {
         self.registers.AES_KEYSLOT_FLAGS[0xE].set(0x7E);
     }
 
     /// Locks the SSK from being read.
     #[inline]
-    pub fn lock_ssk(&self) {
+    pub(crate) fn lock_ssk(&self) {
         self.registers.AES_KEYSLOT_FLAGS[0xF].set(0x7E);
+    }
+
+    /// Sets the `INT_STATUS_REG` to `0x1F`.
+    #[inline]
+    pub(crate) fn config_brom(&self) {
+        self.registers.INT_STATUS_REG.set(0x1F);
     }
 
     /// Checks the ERR_STATUS_REG and panics if the value isn't zero.

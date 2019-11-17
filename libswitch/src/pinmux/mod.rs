@@ -328,70 +328,70 @@ impl Pinmux {
     pub fn new() -> Self {
         Pinmux
     }
-}
 
-/// Configures an UART device.
-pub fn configure_uart(pinmux: &Pinmux, uart: &Uart) {
-    match uart {
-        &Uart::A => {
-            pinmux.uart1_tx.set(0);
-            pinmux.uart1_rx.set(INPUT | PULL_UP);
-            pinmux.uart1_rts.set(0);
-            pinmux.uart1_cts.set(INPUT | PULL_DOWN);
-        }
-        &Uart::B => {
-            pinmux.uart2_tx.set(0);
-            pinmux.uart2_rx.set(INPUT | PULL_UP);
-            pinmux.uart2_rts.set(0);
-            pinmux.uart2_cts.set(INPUT | PULL_DOWN);
-        }
-        &Uart::C => {
-            pinmux.uart3_tx.set(0);
-            pinmux.uart3_rx.set(INPUT | PULL_UP);
-            pinmux.uart3_rts.set(0);
-            pinmux.uart3_cts.set(INPUT | PULL_DOWN);
-        }
-        &Uart::D => {
-            pinmux.uart4_tx.set(0);
-            pinmux.uart4_rx.set(INPUT | PULL_UP);
-            pinmux.uart4_rts.set(0);
-            pinmux.uart4_cts.set(INPUT | PULL_DOWN);
-        }
-        &Uart::E => {
-            pinmux.dap1_fs.set(0);
-            pinmux.dap1_din.set(INPUT | PULL_UP);
-            pinmux.dap1_dout.set(0);
-            pinmux.dap1_sclk.set(INPUT | PULL_DOWN);
+    /// Configures an UART device.
+    pub fn configure_uart(&self, uart: &Uart) {
+        match uart {
+            &Uart::A => {
+                self.uart1_tx.set(0);
+                self.uart1_rx.set(INPUT | PULL_UP);
+                self.uart1_rts.set(0);
+                self.uart1_cts.set(INPUT | PULL_DOWN);
+            },
+            &Uart::B => {
+                self.uart2_tx.set(0);
+                self.uart2_rx.set(INPUT | PULL_UP);
+                self.uart2_rts.set(0);
+                self.uart2_cts.set(INPUT | PULL_DOWN);
+            },
+            &Uart::C => {
+                self.uart3_tx.set(0);
+                self.uart3_rx.set(INPUT | PULL_UP);
+                self.uart3_rts.set(0);
+                self.uart3_cts.set(INPUT | PULL_DOWN);
+            },
+            &Uart::D => {
+                self.uart4_tx.set(0);
+                self.uart4_rx.set(INPUT | PULL_UP);
+                self.uart4_rts.set(0);
+                self.uart4_cts.set(INPUT | PULL_DOWN);
+            },
+            &Uart::E => {
+                self.dap1_fs.set(0);
+                self.dap1_din.set(INPUT | PULL_UP);
+                self.dap1_dout.set(0);
+                self.dap1_sclk.set(INPUT | PULL_DOWN);
+            },
         }
     }
-}
 
-/// Configures an I²C device.
-pub fn configure_i2c(pinmux: &Pinmux, device: &I2c) {
-    match device {
-        &I2c::C1 => {
-            pinmux.gen1_i2c_scl.set(INPUT);
-            pinmux.gen1_i2c_sda.set(INPUT);
-        }
-        &I2c::C2 => {
-            pinmux.gen2_i2c_scl.set(INPUT);
-            pinmux.gen2_i2c_sda.set(INPUT);
-        }
-        &I2c::C3 => {
-            pinmux.gen3_i2c_scl.set(INPUT);
-            pinmux.gen3_i2c_sda.set(INPUT);
-        }
-        &I2c::C4 => {
-            pinmux.cam_i2c_scl.set(INPUT);
-            pinmux.cam_i2c_sda.set(INPUT);
-        }
-        &I2c::C5 => {
-            pinmux.pwr_i2c_scl.set(INPUT);
-            pinmux.pwr_i2c_sda.set(INPUT);
-        }
-        &I2c::C6 => {
-            // Unused on the Switch.
-            // TODO(Vale): Nonetheless, figure this out.
+    /// Configures an I²C device.
+    pub fn configure_i2c(&self, device: &I2c) {
+        match device {
+            &I2c::C1 => {
+                self.gen1_i2c_scl.set(INPUT);
+                self.gen1_i2c_sda.set(INPUT);
+            },
+            &I2c::C2 => {
+                self.gen2_i2c_scl.set(INPUT);
+                self.gen2_i2c_sda.set(INPUT);
+            },
+            &I2c::C3 => {
+                self.gen3_i2c_scl.set(INPUT);
+                self.gen3_i2c_sda.set(INPUT);
+            },
+            &I2c::C4 => {
+                self.cam_i2c_scl.set(INPUT);
+                self.cam_i2c_sda.set(INPUT);
+            },
+            &I2c::C5 => {
+                self.pwr_i2c_scl.set(INPUT);
+                self.pwr_i2c_sda.set(INPUT);
+            },
+            &I2c::C6 => {
+                // Unused on the Switch.
+                // TODO(Vale): Nonetheless, figure this out.
+            },
         }
     }
 }

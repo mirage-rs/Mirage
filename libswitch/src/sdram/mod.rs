@@ -47,10 +47,10 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
     car.pllm_misc1.set(params.pllm_setup_control.get());
     car.pllm_misc2.set(0);
     car.pllm_base.set(
-        ((params.pllm_feedback_divider.get() << 8)
+        (params.pllm_feedback_divider.get() << 8)
             | params.pllm_input_divider.get()
             | 0x4000_0000
-            | ((params.pllm_post_divider.get() & 0xFFFF) << 20)),
+            | ((params.pllm_post_divider.get() & 0xFFFF) << 20),
     );
 
     let mut timeout = false;
@@ -67,8 +67,8 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
     }
 
     car.clk_source_emc.set(
-        (((params.mc_emem_arb_misc0.get() >> 11) & 0x10000)
-            | (params.emc_clock_source.get() & 0xFFFE_FFFF)),
+        ((params.mc_emem_arb_misc0.get() >> 11) & 0x10000)
+            | (params.emc_clock_source.get() & 0xFFFE_FFFF),
     );
 
     if params.emc_clock_source_dll.get() != 0 {
@@ -120,7 +120,7 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
         (*((0x7001B000 + 3208) as *const ReadWrite<u32>))
             .set(params.emc_pmacro_brick_mapping2.get());
         (*((0x7001B000 + 816) as *const ReadWrite<u32>))
-            .set(((params.emc_pmacro_brick_ctrl_rfu1.get() & 0x1120112) | 0x1EED_1EED));
+            .set((params.emc_pmacro_brick_ctrl_rfu1.get() & 0x1120112) | 0x1EED_1EED);
         (*((0x7001B000 + 1520) as *const ReadWrite<u32>)).set(params.emc_config_sample_delay.get());
         (*((0x7001B000 + 1480) as *const ReadWrite<u32>)).set(params.emc_fbio_cfg8.get());
         (*((0x7001B000 + 1028) as *const ReadWrite<u32>)).set(params.emc_swizzle_rank0_byte0.get());
@@ -170,12 +170,12 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
         (*((0x7001B000 + 1468) as *const ReadWrite<u32>)).set(params.emc_quse_brlshft2.get());
         (*((0x7001B000 + 1476) as *const ReadWrite<u32>)).set(params.emc_quse_brlshft3.get());
         (*((0x7001B000 + 816) as *const ReadWrite<u32>))
-            .set(((params.emc_pmacro_brick_ctrl_rfu1.get() & 0x1BF01BF) | 0x1E40_1E40));
+            .set((params.emc_pmacro_brick_ctrl_rfu1.get() & 0x1BF01BF) | 0x1E40_1E40);
         (*((0x7001B000 + 3136) as *const ReadWrite<u32>)).set(params.emc_pmacro_pad_cfg_ctrl.get());
         (*((0x7001B000 + 792) as *const ReadWrite<u32>))
             .set(params.emc_pmacro_cmd_brick_ctrl_fdpd.get());
         (*((0x7001B000 + 820) as *const ReadWrite<u32>))
-            .set((params.emc_pmacro_brick_ctrl_rfu2.get() & 0xFF7F_FF7F));
+            .set(params.emc_pmacro_brick_ctrl_rfu2.get() & 0xFF7F_FF7F);
         (*((0x7001B000 + 796) as *const ReadWrite<u32>))
             .set(params.emc_pmacro_data_brick_ctrl_fdpd.get());
         (*((0x7001B000 + 3132) as *const ReadWrite<u32>))
@@ -332,7 +332,7 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
         (*((0x7001B000 + 3112) as *const ReadWrite<u32>))
             .set(params.emc_pmacro_ddll_short_cmd_2.get());
         (*((0x7001B000 + 3176) as *const ReadWrite<u32>))
-            .set(((params.emc_pmacro_common_pad_tx_ctrl.get() & 1) | 0xE));
+            .set((params.emc_pmacro_common_pad_tx_ctrl.get() & 1) | 0xE);
 
         if params.emc_bct_spare4.get() != 0 {
             params.emc_bct_spare4.set(params.emc_bct_spare5.get());
@@ -525,12 +525,12 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
         }
 
         pmc.io_dpd3_req
-            .set((((4 * params.emc_pmc_scratch1.get() >> 2) + 0x4000_0000) & 0xCFFF_0000));
+            .set(((4 * params.emc_pmc_scratch1.get() >> 2) + 0x4000_0000) & 0xCFFF_0000);
         usleep(params.pmc_io_dpd3_req_wait.get());
 
         if params.emc_auto_cal_interval.get() == 0 {
             (*((0x7001B000 + 676) as *const ReadWrite<u32>))
-                .set((params.emc_auto_cal_config.get() | 0x200));
+                .set(params.emc_auto_cal_config.get() | 0x200);
         }
 
         (*((0x7001B000 + 820) as *const ReadWrite<u32>))
@@ -539,7 +539,7 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
         if params.emc_zcal_warm_cold_boot_enables.get() & 1 != 0 {
             if params.memory_type.get() == 2 {
                 (*((0x7001B000 + 740) as *const ReadWrite<u32>))
-                    .set((8 * params.emc_zcal_wait_cnt.get()));
+                    .set(8 * params.emc_zcal_wait_cnt.get());
             }
 
             if params.memory_type.get() == 3 {
@@ -555,9 +555,8 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
         usleep(params.pmc_ddr_ctrl_wait.get());
 
         if params.memory_type.get() == 2 {
-            (*((0x7001B000 + 36) as *const ReadWrite<u32>)).set(
-                ((params.emc_pin_gpio_enable.get() << 16) | (params.emc_pin_gpio.get() << 12)),
-            );
+            (*((0x7001B000 + 36) as *const ReadWrite<u32>))
+                .set((params.emc_pin_gpio_enable.get() << 16) | (params.emc_pin_gpio.get() << 12));
             usleep(params.emc_pin_extra_wait.get() + 200);
             (*((0x7001B000 + 36) as *const ReadWrite<u32>)).set(
                 ((params.emc_pin_gpio_enable.get() << 16) | (params.emc_pin_gpio.get() << 12))
@@ -567,9 +566,8 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
         }
 
         if params.memory_type.get() == 3 {
-            (*((0x7001B000 + 36) as *const ReadWrite<u32>)).set(
-                ((params.emc_pin_gpio_enable.get() << 16) | (params.emc_pin_gpio.get() << 12)),
-            );
+            (*((0x7001B000 + 36) as *const ReadWrite<u32>))
+                .set((params.emc_pin_gpio_enable.get() << 16) | (params.emc_pin_gpio.get() << 12));
             usleep(params.emc_pin_extra_wait.get() + 200);
             (*((0x7001B000 + 36) as *const ReadWrite<u32>)).set(
                 ((params.emc_pin_gpio_enable.get() << 16) | (params.emc_pin_gpio.get() << 12))
@@ -579,14 +577,13 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
         }
 
         (*((0x7001B000 + 36) as *const ReadWrite<u32>)).set(
-            (((params.emc_pin_gpio_enable.get() << 16) | (params.emc_pin_gpio.get() << 12))
-                + 0x101),
+            ((params.emc_pin_gpio_enable.get() << 16) | (params.emc_pin_gpio.get() << 12)) + 0x101,
         );
         usleep(params.emc_pin_program_wait.get());
 
         if params.memory_type.get() != 3 {
             (*((0x7001B000 + 220) as *const ReadWrite<u32>))
-                .set(((params.emc_dev_select.get() << 30) + 1));
+                .set((params.emc_dev_select.get() << 30) + 1);
         }
 
         if params.memory_type.get() == 1 {
@@ -614,14 +611,14 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
                     .set(params.emc_zcal_init_dev0.get());
                 usleep(params.emc_zcal_init_wait.get());
                 (*((0x7001B000 + 748) as *const ReadWrite<u32>))
-                    .set((params.emc_zcal_init_dev0.get() ^ 3));
+                    .set(params.emc_zcal_init_dev0.get() ^ 3);
 
                 if params.emc_dev_select.get() & 2 == 0 {
                     (*((0x7001B000 + 748) as *const ReadWrite<u32>))
                         .set(params.emc_zcal_init_dev1.get());
                     usleep(params.emc_zcal_init_wait.get());
                     (*((0x7001B000 + 748) as *const ReadWrite<u32>))
-                        .set((params.emc_zcal_init_dev1.get() ^ 3));
+                        .set(params.emc_zcal_init_dev1.get() ^ 3);
                 }
             }
         }
@@ -642,20 +639,20 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
 
         if params.emc_extra_refresh_num.get() != 0 {
             (*((0x7001B000 + 212) as *const ReadWrite<u32>)).set(
-                (((1 << params.emc_extra_refresh_num.get() << 8) - 0xFD)
-                    | (params.emc_pin_gpio.get() << 30)),
+                ((1 << params.emc_extra_refresh_num.get() << 8) - 0xFD)
+                    | (params.emc_pin_gpio.get() << 30),
             );
         }
 
         (*((0x7001B000 + 32) as *const ReadWrite<u32>))
-            .set((params.emc_dev_select.get() | 0x80000000));
+            .set(params.emc_dev_select.get() | 0x80000000);
         (*((0x7001B000 + 992) as *const ReadWrite<u32>)).set(params.emc_dyn_self_ref_control.get());
         (*((0x7001B000 + 1524) as *const ReadWrite<u32>)).set(params.emc_cfg_update.get());
         (*((0x7001B000 + 12) as *const ReadWrite<u32>)).set(params.emc_cfg.get());
         (*((0x7001B000 + 784) as *const ReadWrite<u32>)).set(params.emc_fdpd_ctrl_dq.get());
         (*((0x7001B000 + 788) as *const ReadWrite<u32>)).set(params.emc_fdpd_ctrl_cmd.get());
         (*((0x7001B000 + 984) as *const ReadWrite<u32>)).set(params.emc_sel_dpd_ctrl.get());
-        (*((0x7001B000 + 256) as *const ReadWrite<u32>)).set((params.emc_fbio_spare.get() | 2));
+        (*((0x7001B000 + 256) as *const ReadWrite<u32>)).set(params.emc_fbio_spare.get() | 2);
         (*((0x7001B000 + 40) as *const ReadWrite<u32>)).set(1);
         (*((0x7001B000 + 1368) as *const ReadWrite<u32>)).set(params.emc_cfg_pipe_clk.get());
         (*((0x7001B000 + 1240) as *const ReadWrite<u32>))
@@ -663,8 +660,8 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &Parameters) {
 
         let ahb_arbitration_xbar_ctrl_0 = &*((0x6000C000 + 0xE0) as *const ReadWrite<u32>);
         ahb_arbitration_xbar_ctrl_0.set(
-            ((ahb_arbitration_xbar_ctrl_0.get() & 0xFFFE_FFFF)
-                | ((params.ahb_arbitration_xbar_ctrl_meminit_done.get() & 0xFFFF) << 16)),
+            (ahb_arbitration_xbar_ctrl_0.get() & 0xFFFE_FFFF)
+                | ((params.ahb_arbitration_xbar_ctrl_meminit_done.get() & 0xFFFF) << 16),
         );
 
         (*((0x70019000 + 1616) as *const ReadWrite<u32>))
@@ -695,7 +692,7 @@ pub fn init(car: &Car, pmc: &Pmc) {
     pmc.ddr_pwr.set(pmc.ddr_pwr.get());
     pmc.no_iopower.set(params.pmc_no_io_power.get());
     pmc.reg_short.set(params.pmc_reg_short.get());
-    pmc.ddr_cntrl.set(params.pmc_ddr_cntrl.get());
+    pmc.ddr_cntrl.set(params.pmc_ddr_ctrl.get());
 
     if params.emc_bct_spare0.get() != 0 {
         params.emc_bct_spare0.set(params.emc_bct_spare0.get());
