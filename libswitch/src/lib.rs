@@ -41,6 +41,7 @@ pub mod mc;
 pub mod pinmux;
 pub mod pmc;
 pub mod rtc;
+pub mod sdram;
 pub mod se;
 pub mod sysctr0;
 pub mod timer;
@@ -342,7 +343,8 @@ pub fn hardware_init() {
     car.sclk_brst_pol
         .set((car.sclk_brst_pol.get() & 0xFFFF_8888) | 0x3333);
 
-    // TODO(Vale): Initialize SDRAM.
+    // Initialize SDRAM.
+    sdram::init(car, pmc);
 
     // TODO(Vale): Save SDRAM LP0 parameters.
 }
