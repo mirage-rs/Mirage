@@ -9,7 +9,7 @@ const PMC_BASE: u32 = 0x7000_E400;
 
 /// Representation of the PMC registers.
 #[repr(C)]
-pub(crate) struct Registers {
+pub struct Registers {
     pub cntrl: ReadWrite<u32>,
     pub sec_disable: ReadWrite<u32>,
     pub pmc_swrst: ReadWrite<u32>,
@@ -564,13 +564,13 @@ pub(crate) struct Registers {
 impl Registers {
     /// Factory method to create a pointer to the PMC registers.
     #[inline]
-    pub fn get() -> *const Self {
+    pub const fn get() -> *const Self {
         PMC_BASE as *const _
     }
 }
 
 /// Representation of the PMC.
-pub(crate) struct Pmc;
+pub struct Pmc;
 
 impl Deref for Pmc {
     type Target = Registers;

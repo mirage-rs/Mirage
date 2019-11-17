@@ -61,7 +61,7 @@ const CLOCK_BASE: u32 = 0x6000_6000;
 /// Representation of the CAR registers.
 #[allow(non_snake_case)]
 #[repr(C)]
-pub(crate) struct Registers {
+pub struct Registers {
     pub rst_src: ReadWrite<u32>,
 
     pub rst_dev_l: ReadWrite<u32>,
@@ -484,7 +484,7 @@ impl Registers {
 }
 
 /// Representation of the CAR.
-pub(crate) struct Car;
+pub struct Car;
 
 impl Car {
     /// Creates a new Car object.

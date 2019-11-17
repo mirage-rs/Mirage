@@ -49,6 +49,7 @@ pub mod kfuse;
 pub mod mc;
 pub mod pinmux;
 pub mod pmc;
+pub mod power;
 pub mod rtc;
 pub mod sdram;
 pub mod se;
@@ -80,8 +81,10 @@ register!(I2S5_CG, I2S_BASE + 0x488);
 
 register!(I2S5_CTRL, I2S_BASE + 0x4A0);
 
-/// The global instance of the Security Engine.
-pub const SECURITY_ENGINE: SecurityEngine = SecurityEngine::new();
+lazy_static! {
+    /// The global instance of the Security Engine.
+    pub static ref SECURITY_ENGINE: SecurityEngine = SecurityEngine::new();
+}
 
 fn config_oscillators(car: &Car, pmc: &Pmc) {
     // Set CLK_M_DIVISOR to 2.
