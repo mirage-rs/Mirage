@@ -248,6 +248,48 @@ pub enum SdmmcController {
     Sdmmc4,
 }
 
+/// SDMMC partition types.
+pub enum SdmmcPartition {
+    InvalidPartition = -1,
+    UserPartition = 0,
+    Boot0Partition = 1,
+    Boot1Partition = 2,
+    RpmbPartition = 3,
+}
+
+/// SDMMC voltage presets.
+pub enum SdmmcBusVoltage {
+    VoltageNone = 0,
+    Voltage1V8,
+    Voltage3V3,
+}
+
+/// SDMMC bus width presets.
+pub enum SdmmcBusWidth {
+    Width1Bit = 0,
+    Width4Bit,
+    Width8Bit,
+}
+
+/// SDMMC bus speed presets.
+pub enum SdmmcBusSpeed {
+    MmcInit = 0,
+    MmcLegacy,
+    MmcHs,
+    MmcHs200,
+    MmcHs400,
+    SdInit,
+    SdLegacy,
+    SdHs,
+    UhsSdr12,
+    UhsSdr25,
+    UhsSdr50,
+    UhsSdr104,
+    UhsReserved,
+    UhsDdr50,
+    MmcDdr52,
+}
+
 /// Representation of the SDMMC registers.
 #[allow(non_snake_case)]
 #[repr(C)]
