@@ -240,6 +240,14 @@ pub const SDMMC_RSP_SPI_R5: SpiCommandResponse =
 pub const SDMMC_RSP_SPI_R7: SpiCommandResponse =
     SpiCommandResponse::SDMMC_RSP_SPI_S1 | SpiCommandResponse::SDMMC_RSP_SPI_B4;
 
+/// Representation of the SDMMC controllers.
+pub enum SdmmcController {
+    Sdmmc1 = 0,
+    Sdmmc2,
+    Sdmmc3,
+    Sdmmc4,
+}
+
 /// Representation of the SDMMC registers.
 #[allow(non_snake_case)]
 #[repr(C)]
@@ -328,7 +336,7 @@ struct Registers {
 
 impl Registers {
     /// Factory method to create a pointer to a given SDMMC controller register block.
-    pub const fn get(index: u32) -> *const Self {
-        (SDMMC_BASE + index * 0x200) as *const _
+    pub const fn get(controller: SdmmcController) -> *const Self {
+        (SDMMC_BASE + controller as u32 * 0x200) as *const _
     }
 }
