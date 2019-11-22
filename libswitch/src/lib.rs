@@ -51,6 +51,7 @@ pub mod pinmux;
 pub mod pmc;
 pub mod power;
 pub mod rtc;
+pub mod sdmmc;
 pub mod sdram;
 pub mod se;
 pub mod sysctr0;
