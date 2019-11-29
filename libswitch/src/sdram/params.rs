@@ -1,4 +1,4 @@
-#[repr(C)]
+#[repr(packed)]
 #[derive(Clone, Copy)]
 pub struct Parameters {
     pub memory_type: u32,

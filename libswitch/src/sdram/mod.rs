@@ -12,7 +12,7 @@
 //! [`init`]: fn.init.html
 //! [`config_sdram`]: fn.config_sdram.html
 
-use core::ptr::write_volatile;
+use core::{mem::transmute_copy, ptr::write_volatile};
 
 use register::mmio::ReadWrite;
 
@@ -619,9 +619,9 @@ fn config_sdram(car: &Car, pmc: &Pmc, params: &mut Parameters) {
 /// Retrieves the SDRAM parameters.
 pub fn get_parameters() -> Parameters {
     // TODO(Vale): LZ77 compression of the config values.
-    let parameters = DRAM_CONFIG[get_sdram_id()].as_ptr() as *const Parameters;
+    let parameters: Parameters = unsafe { transmute_copy(&DRAM_CONFIG[get_sdram_id()]) };
 
-    unsafe { *parameters }
+    parameters
 }
 
 /// Initializes and configures the SDRAM.
