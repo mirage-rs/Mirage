@@ -8,7 +8,7 @@ use crate::{
     pmc::Pmc,
     timer::{get_microseconds, usleep},
 };
-use super::display_config::Config;
+use super::display_config::*;
 
 static mut DISPLAY_VERSION: u32 = 0;
 
@@ -95,9 +95,9 @@ pub fn initialize() {
         (*((0x700E_3000 + 0x60) as *const ReadWrite<u32>)).set(0);
     }
 
-    Config::CLOCK_1.execute(CLOCK_BASE as *mut u32);
-    Config::DISPLAY_A_1.execute(DI_BASE as *mut u32);
-    Config::DSI_INIT.execute(DSI_BASE as *mut u32);
+    execute(CLOCK_BASE as *mut u32, &CLOCK_1);
+    execute(DI_BASE as *mut u32, &DISPLAY_A_1);
+    execute(DSI_BASE as *mut u32, &DSI_INIT);
 
     usleep(10_000);
 
@@ -125,7 +125,7 @@ pub fn initialize() {
         DISPLAY_VERSION = (*((DSI_BASE + 0x9) as *const ReadWrite<u32>)).get();
 
         if DISPLAY_VERSION == 0x10 {
-            Config::DSI_VER_10_2.execute(DSI_BASE as *mut u32);
+            execute(DSI_BASE as *mut u32, &DSI_VER_10_2);
         }
 
         (*((DSI_BASE + 0xA) as *const ReadWrite<u32>)).set(0x1105);
@@ -138,21 +138,21 @@ pub fn initialize() {
 
         usleep(20_000);
 
-        Config::DSI_1.execute(DSI_BASE as *mut u32);
-        Config::CLOCK_2.execute(CLOCK_BASE as *mut u32);
+        execute(DSI_BASE as *mut u32, &DSI_1);
+        execute(CLOCK_BASE as *mut u32, &CLOCK_2);
 
         (*((DI_BASE + 0x42E) as *const ReadWrite<u32>)).set(4);
-        Config::DSI_2.execute(DSI_BASE as *mut u32);
+        execute(DSI_BASE as *mut u32, &DSI_2);
 
         usleep(10_000);
 
-        Config::MIPI_CAL_1.execute(MIPI_CAL_BASE as *mut u32);
-        Config::DSI_3.execute(DSI_BASE as *mut u32);
-        Config::MIPI_CAL_2.execute(MIPI_CAL_BASE as *mut u32);
+        execute(MIPI_CAL_BASE as *mut u32, &MIPI_CAL_1);
+        execute(DSI_BASE as *mut u32, &DSI_3);
+        execute(MIPI_CAL_BASE as *mut u32, &MIPI_CAL_2);
 
         usleep(10_000);
 
-        Config::DISPLAY_A_2.execute(DI_BASE as *mut u32);
+        execute(DI_BASE as *mut u32, &DISPLAY_A_2);
     }
 }
 
@@ -171,13 +171,13 @@ pub fn finish() {
         (*((DI_BASE + 0x40) as *const ReadWrite<u32>)).set(0x5);
         (*((DSI_BASE + 0x4E) as *const ReadWrite<u32>)).set(0);
 
-        Config::DISPLAY_A_3.execute(DI_BASE as *mut u32);
-        Config::DSI_4.execute(DSI_BASE as *mut u32);
+        execute(DI_BASE as *mut u32, &DISPLAY_A_3);
+        execute(DSI_BASE as *mut u32, &DSI_4);
 
         usleep(10_000);
 
         if DISPLAY_VERSION == 0x10 {
-            Config::DSI_VER_10_2.execute(DSI_BASE as *mut u32);
+            execute(DSI_BASE as *mut u32, &DSI_VER_10_2);
         }
 
         (*((DSI_BASE + 0xA) as *const ReadWrite<u32>)).set(0x1005);
@@ -221,7 +221,7 @@ pub fn finish() {
 
 /// Shows a single color on the display.
 pub fn color_screen(color: u32) {
-    Config::ONE_COLOR.execute(DI_BASE as *mut u32);
+    execute(DI_BASE as *mut u32, &ONE_COLOR);
 
     // Configure display to show a single color.
     unsafe {
@@ -250,13 +250,14 @@ pub fn set_backlight(enable: bool) {
 /// Initializes display in full 1280x720 resolution.
 /// (B8G8R8A8, line stride 768, framebuffer size = 1280*768*4 bytes).
 pub fn initialize_framebuffer(address: u32) -> *const u32 {
-    let mut config = Config::FRAMEBUFFER.clone();
+    let mut config: [ConfigTable; 32] = [ConfigTable::new(); 32];
+    config.copy_from_slice(&FRAMEBUFFER);
 
     let lfb_address = address as *const u32;
-    config.tables[19].value = address;
+    config[19].value = address;
 
     // This configures the framebuffer @ address with a resolution of 1280x720 (line stride 768).
-    config.execute(DI_BASE as *mut u32);
+    execute(DI_BASE as *mut u32, &config);
 
     lfb_address
 }
