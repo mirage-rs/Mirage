@@ -40,6 +40,7 @@ use crate::{
 #[macro_use]
 mod utils;
 
+pub mod apb_misc;
 pub mod button;
 pub mod clock;
 pub mod fuse;

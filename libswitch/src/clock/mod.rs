@@ -58,6 +58,16 @@ use register::mmio::ReadWrite;
 /// Base address for clock registers.
 const CLOCK_BASE: u32 = 0x6000_6000;
 
+pub const CLK_L_SDMMC1: u32 = (1 << 14);
+pub const CLK_L_SDMMC2: u32 = (1 << 9);
+pub const CLK_U_SDMMC3: u32 = (1 << 5);
+pub const CLK_L_SDMMC4: u32 = (1 << 15);
+
+pub const CLK_SOURCE_MASK: u32 = (0b111 << 29);
+pub const CLK_SOURCE_FIRST: u32 = (0b000 << 29);
+pub const CLK_DIVIDER_MASK: u32 = (0xff << 0);
+pub const CLK_DIVIDER_UNITY: u32 = (0x00 << 0);
+
 /// Representation of the CAR registers.
 #[allow(non_snake_case)]
 #[repr(C)]
