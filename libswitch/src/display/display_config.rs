@@ -1,7 +1,5 @@
 use core::ptr::write_volatile;
 
-use register::mmio::ReadWrite;
-
 /// Wrapper around a display configuration value.
 #[derive(Clone, Copy, Debug)]
 struct ConfigTable {
@@ -17,15 +15,15 @@ pub struct Config<'a> {
 }
 
 macro_rules! config_table {
-    ($offset:ident, $value:ident) => {
+    ($offset:tt, $value:tt) => {
         ConfigTable {
-            offset: offset,
-            value: value,
+            offset: $offset,
+            value: $value,
         }
     }
 }
 
-impl Config {
+impl<'a> Config<'a> {
     pub const CLOCK_1: Self = Config {
         tables: &[
             config_table!(0x4E, 0x40000000),
@@ -257,7 +255,6 @@ impl Config {
             config_table!(0x10, 0),
             config_table!(0x11, 6),
             config_table!(0x12, 0x1E0),
-            config_table!(0x12, 0x1E0),
             config_table!(0xB, 0x1),
             config_table!(0x10, 0x103032),
             config_table!(0xF, 0x33),
@@ -267,11 +264,11 @@ impl Config {
         ],
     };
 
-    pub const MIPI_CALL_1: Self = Config {
+    pub const MIPI_CAL_1: Self = Config {
         tables: &[
             config_table!(0x18, 0),
-            config_table!(0x02, 0xF3F10000),
-            config_table!(0x16, 0),
+            config_table!(0x2, 0xF3F10000),
+            config_table!(0x16, 1),
             config_table!(0x18, 0),
             config_table!(0x18, 0x10010),
             config_table!(0x17, 0x300),
@@ -516,6 +513,7 @@ impl Config {
             config_table!(0x13, 0),
             config_table!(0x14, 0),
             config_table!(0x1A, 0),
+        ]
     };
 
     pub const DSI_VER_10_2: Self = Config {
@@ -547,8 +545,8 @@ impl Config {
     };
 }
 
-impl Config {
-    pub fn execute(&self, base: *const u32) {
+impl<'a> Config<'a> {
+    pub fn execute(&self, base: *mut u32) {
         for table in self.tables {
             unsafe {
                 write_volatile(base.offset(table.offset as isize), table.value);

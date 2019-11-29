@@ -56,7 +56,7 @@ use core::ops::Deref;
 use register::mmio::ReadWrite;
 
 /// Base address for clock registers.
-const CLOCK_BASE: u32 = 0x6000_6000;
+pub(crate) const CLOCK_BASE: u32 = 0x6000_6000;
 
 pub const CLK_L_SDMMC1: u32 = (1 << 14);
 pub const CLK_L_SDMMC2: u32 = (1 << 9);
