@@ -249,6 +249,14 @@ pub fn set_backlight(enable: bool) {
 
 /// Initializes display in full 1280x720 resolution.
 /// (B8G8R8A8, line stride 768, framebuffer size = 1280*768*4 bytes).
-pub fn initialize_framebuffer(address: u32) -> u32 {
-    unimplemented!();
+pub fn initialize_framebuffer(address: u32) -> *const u32 {
+    let mut config = Config::FRAMEBUFFER.clone();
+
+    let lfb_address = address as *const u32;
+    config.tables[19].value = address;
+
+    // This configures the framebuffer @ address with a resolution of 1280x720 (line stride 768).
+    config.execute(DI_BASE as *mut u32);
+
+    lfb_address
 }

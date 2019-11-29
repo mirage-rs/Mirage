@@ -4,14 +4,14 @@ use core::ptr::write_volatile;
 #[derive(Clone, Copy, Debug)]
 struct ConfigTable {
     /// The offset to write the value to.
-    offset: u32,
+    pub offset: u32,
     /// The actual configuration value.
-    value: u32,
+    pub value: u32,
 }
 
 #[derive(Clone, Debug)]
 pub struct Config<'a> {
-    tables: &'a [ConfigTable],
+    pub tables: &'a mut [ConfigTable],
 }
 
 macro_rules! config_table {
