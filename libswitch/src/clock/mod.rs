@@ -56,7 +56,7 @@ use core::ops::Deref;
 use register::mmio::ReadWrite;
 
 /// Base address for clock registers.
-const CLOCK_BASE: u32 = 0x6000_6000;
+pub(crate) const CLOCK_BASE: u32 = 0x6000_6000;
 
 pub const CLK_L_SDMMC1: u32 = (1 << 14);
 pub const CLK_L_SDMMC2: u32 = (1 << 9);
@@ -846,7 +846,7 @@ impl Clock {
         self.set_enable(false);
     }
 
-    /// Indicates whether the clock is enabled or not.
+    /// Whether the clock is enabled or not.
     pub fn is_enabled(&self) -> bool {
         let enable_reg = unsafe { &(*((CLOCK_BASE + self.enable) as *const ReadWrite<u32>)) };
         let mask = (1 << (self.index & 0x1F)) as u32;
