@@ -30,6 +30,7 @@ mod utils;
 
 pub mod button;
 pub mod clock;
+pub mod display;
 pub mod fuse;
 pub mod gpio;
 pub mod i2c;
