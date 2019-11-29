@@ -367,34 +367,46 @@ pub fn config_carveout_finalize() {
 }
 
 pub fn enable_ahb_redirect() {
-    clock::LVL2_CLK_GATE_OVRD.set((clock::LVL2_CLK_GATE_OVRD.get() & 0xFFF7_FFFF) | 0x80000);
+    let car = &clock::Car::new();
+
+    car.lvl2_clk_gate_ovrd
+        .set((car.lvl2_clk_gate_ovrd.get() & 0xFFF7_FFFF) | 0x80000);
 
     IRAM_BOM.set(0x4000_0000);
     IRAM_TOM.set(0x4003_F000);
 }
 
 pub fn disable_ahb_redirect() {
+    let car = &clock::Car::new();
+
     IRAM_BOM.set(0xFFFF_F000);
     IRAM_TOM.set(0);
 
-    clock::LVL2_CLK_GATE_OVRD.set(clock::LVL2_CLK_GATE_OVRD.get() & 0xFFF7_FFFF);
+    car.lvl2_clk_gate_ovrd
+        .set(car.lvl2_clk_gate_ovrd.get() & 0xFFF7_FFFF);
 }
 
 pub fn enable_mc() {
+    let car = &clock::Car::new();
+
     // Set EMC clock source.
-    clock::CLK_SOURCE_EMC.set((clock::CLK_SOURCE_EMC.get() & 0x1FFF_FFFF) | 0x4000_0000);
+    car.clk_source_emc
+        .set((car.clk_source_emc.get() & 0x1FFF_FFFF) | 0x4000_0000);
 
     // Enable MIPI CAL clock.
-    clock::CLK_ENB_H_SET.set((clock::CLK_ENB_H_SET.get() & 0xFDFF_FFFF) | 0x2000000);
+    car.clk_enb_h_set
+        .set((car.clk_enb_h_set.get() & 0xFDFF_FFFF) | 0x2000000);
 
     // Enable MC clock.
-    clock::CLK_ENB_H_SET.set((clock::CLK_ENB_H_SET.get() & 0xFFFF_FFFE) | 1);
+    car.clk_enb_h_set
+        .set((car.clk_enb_h_set.get() & 0xFFFF_FFFE) | 1);
 
     // Enable EMC DLL clock.
-    clock::CLK_ENB_X_SET.set((clock::CLK_ENB_X_SET.get() & 0xFFFF_BFFF) | 0x4000);
+    car.clk_enb_x_set
+        .set((car.clk_enb_x_set.get() & 0xFFFF_BFFF) | 0x4000);
 
     // Clear EMC and MC reset.
-    clock::RST_DEV_H_CLR.set(0x2000001);
+    car.rst_dev_h_clr.set(0x2000001);
     usleep(5);
 
     disable_ahb_redirect();

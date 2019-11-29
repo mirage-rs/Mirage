@@ -75,6 +75,14 @@ pub fn get_microseconds() -> u32 {
     TIMERUS_CNTR_1US.get()
 }
 
+/// Gets the time that has passed since a given [`get_microseconds`].
+///
+/// [`get_microseconds`]: fn.get_microseconds.html
+#[inline]
+pub fn get_time_since(base: u32) -> u32 {
+    get_microseconds() - base
+}
+
 /// Sleeps for a given duration in seconds.
 #[inline]
 pub fn sleep(duration: u32) {

@@ -13,8 +13,9 @@
 //!
 //! # Implementation
 //!
-//! - Most of the CAR registers were ignored as they aren't required.
-//! A few ones however are exposed as global constants within the crate.
+//! - The [`Car`] struct can be used to access the CAR [`Registers`]
+//! by creating a reference to a object. It is only exposed within
+//! the crate.
 //!
 //! - The [`Clock`] struct is an abstraction of a device clock which
 //! holds all the important configuration values for controlling it.
@@ -43,39 +44,472 @@
 //! }
 //! ```
 //!
+//! [`Car`]: struct.Car.html
+//! [`Registers`]: struct.Registers.html
 //! [`Clock`]: struct.Clock.html
 //! [`Clock::enable`]: struct.Clock.html#method.enable
 //! [`Clock::disable`]: struct.Clock.html#method.disable
 //! [`Clock::is_enabled`]: struct.Clock.html#method.is_enabled
+
+use core::ops::Deref;
 
 use register::mmio::ReadWrite;
 
 /// Base address for clock registers.
 const CLOCK_BASE: u32 = 0x6000_6000;
 
-register!(SPARE_REG0, CLOCK_BASE + 0x55C);
+pub const CLK_L_SDMMC1: u32 = (1 << 14);
+pub const CLK_L_SDMMC2: u32 = (1 << 9);
+pub const CLK_U_SDMMC3: u32 = (1 << 5);
+pub const CLK_L_SDMMC4: u32 = (1 << 15);
 
-register!(OSC_CTRL, CLOCK_BASE + 0x50);
+pub const CLK_SOURCE_MASK: u32 = (0b111 << 29);
+pub const CLK_SOURCE_FIRST: u32 = (0b000 << 29);
+pub const CLK_DIVIDER_MASK: u32 = (0xff << 0);
+pub const CLK_DIVIDER_UNITY: u32 = (0x00 << 0);
 
-register!(CLK_SYSTEM_RATE, CLOCK_BASE + 0x30);
+/// Representation of the CAR registers.
+#[allow(non_snake_case)]
+#[repr(C)]
+pub struct Registers {
+    pub rst_src: ReadWrite<u32>,
 
-register!(PLLMB_BASE, CLOCK_BASE + 0x5E8);
+    pub rst_dev_l: ReadWrite<u32>,
+    pub rst_dev_h: ReadWrite<u32>,
+    pub rst_dev_u: ReadWrite<u32>,
 
-register!(CLK_SOURCE_SYS, CLOCK_BASE + 0x400);
+    pub clk_out_enb_l: ReadWrite<u32>,
+    pub clk_out_enb_h: ReadWrite<u32>,
+    pub clk_out_enb_u: ReadWrite<u32>,
 
-register!(SCLK_BURST_POLICY, CLOCK_BASE + 0x28);
+    _0x1C: ReadWrite<u32>,
+    pub cclk_brst_pol: ReadWrite<u32>,
+    pub super_cclk_div: ReadWrite<u32>,
+    pub sclk_brst_pol: ReadWrite<u32>,
+    pub super_sclk_div: ReadWrite<u32>,
+    pub clk_sys_rate: ReadWrite<u32>,
+    pub prog_dly_clk: ReadWrite<u32>,
+    pub aud_sync_clk_rate: ReadWrite<u32>,
+    _0x3C: ReadWrite<u32>,
+    pub cop_clk_skip_plcy: ReadWrite<u32>,
+    pub clk_mask_arm: ReadWrite<u32>,
+    pub misc_clk_enb: ReadWrite<u32>,
+    pub clk_cpu_cmplx: ReadWrite<u32>,
+    pub osc_ctrl: ReadWrite<u32>,
+    pub pll_lfsr: ReadWrite<u32>,
+    pub osc_freq_det: ReadWrite<u32>,
+    pub osc_freq_det_stat: ReadWrite<u32>,
+    _0x60: [ReadWrite<u32>; 2],
+    pub plle_ss_cntl: ReadWrite<u32>,
+    pub plle_misc1: ReadWrite<u32>,
+    _0x70: [ReadWrite<u32>; 4],
 
-register!(SCLK_DIVIDER, CLOCK_BASE + 0x2C);
+    pub pllc_base: ReadWrite<u32>,
+    pub pllc_out: ReadWrite<u32>,
+    pub pllc_misc0: ReadWrite<u32>,
+    pub pllc_misc1: ReadWrite<u32>,
 
-register!(CLK_SOURCE_EMC, CLOCK_BASE + 0x19C);
+    pub pllm_base: ReadWrite<u32>,
+    pub pllm_out: ReadWrite<u32>,
+    pub pllm_misc1: ReadWrite<u32>,
+    pub pllm_misc2: ReadWrite<u32>,
 
-register!(CLK_ENB_H_SET, CLOCK_BASE + 0x328);
+    pub pllp_base: ReadWrite<u32>,
+    pub pllp_outa: ReadWrite<u32>,
+    pub pllp_outb: ReadWrite<u32>,
+    pub pllp_misc: ReadWrite<u32>,
 
-register!(CLK_ENB_X_SET, CLOCK_BASE + 0x284);
+    pub plla_base: ReadWrite<u32>,
+    pub plla_out: ReadWrite<u32>,
+    pub plla_misc0: ReadWrite<u32>,
+    pub plla_misc1: ReadWrite<u32>,
 
-register!(RST_DEV_H_CLR, CLOCK_BASE + 0x30C);
+    pub pllu_base: ReadWrite<u32>,
+    pub pllu_out: ReadWrite<u32>,
+    pub pllu_misc1: ReadWrite<u32>,
+    pub pllu_misc2: ReadWrite<u32>,
 
-register!(LVL2_CLK_GATE_OVRD, CLOCK_BASE + 0x3A4);
+    pub plld_base: ReadWrite<u32>,
+    pub plld_out: ReadWrite<u32>,
+    pub plld_misc1: ReadWrite<u32>,
+    pub plld_misc2: ReadWrite<u32>,
+
+    pub pllx_base: ReadWrite<u32>,
+    pub pllx_misc: ReadWrite<u32>,
+
+    pub plle_base: ReadWrite<u32>,
+    pub plle_misc: ReadWrite<u32>,
+    pub plle_ss_cntl1: ReadWrite<u32>,
+    pub plle_ss_cntl2: ReadWrite<u32>,
+
+    pub lvl2_clk_gate_ovra: ReadWrite<u32>,
+    pub lvl2_clk_gate_ovrb: ReadWrite<u32>,
+
+    pub clk_source_i2s2: ReadWrite<u32>,
+    pub clk_source_i2s3: ReadWrite<u32>,
+    pub clk_source_spdif_out: ReadWrite<u32>,
+    pub clk_source_spdif_in: ReadWrite<u32>,
+    pub clk_source_pwm: ReadWrite<u32>,
+    _0x114: ReadWrite<u32>,
+    pub clk_source_spi2: ReadWrite<u32>,
+    pub clk_source_spi3: ReadWrite<u32>,
+    _0x120: ReadWrite<u32>,
+    pub clk_source_i2c1: ReadWrite<u32>,
+    pub clk_source_i2c5: ReadWrite<u32>,
+    _0x12c: [ReadWrite<u32>; 2],
+    pub clk_source_spi1: ReadWrite<u32>,
+    pub clk_source_disp1: ReadWrite<u32>,
+    pub clk_source_disp2: ReadWrite<u32>,
+    _0x140: ReadWrite<u32>,
+    pub clk_source_isp: ReadWrite<u32>,
+    pub clk_source_vi: ReadWrite<u32>,
+    _0x14c: ReadWrite<u32>,
+    pub clk_source_sdmmc1: ReadWrite<u32>,
+    pub clk_source_sdmmc2: ReadWrite<u32>,
+    _0x158: [ReadWrite<u32>; 3],
+    pub clk_source_sdmmc4: ReadWrite<u32>,
+    _0x168: [ReadWrite<u32>; 4],
+    pub clk_source_uarta: ReadWrite<u32>,
+    pub clk_source_uartb: ReadWrite<u32>,
+    pub clk_source_host1x: ReadWrite<u32>,
+    _0x184: [ReadWrite<u32>; 5],
+    pub clk_source_i2c2: ReadWrite<u32>,
+    pub clk_source_emc: ReadWrite<u32>,
+    pub clk_source_uartc: ReadWrite<u32>,
+    _0x1a4: ReadWrite<u32>,
+    pub clk_source_vi_sensor: ReadWrite<u32>,
+    _0x1ac: [ReadWrite<u32>; 2],
+    pub clk_source_spi4: ReadWrite<u32>,
+    pub clk_source_i2c3: ReadWrite<u32>,
+    pub clk_source_sdmmc3: ReadWrite<u32>,
+    pub clk_source_uartd: ReadWrite<u32>,
+    _0x1c4: [ReadWrite<u32>; 2],
+    pub clk_source_owr: ReadWrite<u32>,
+    _0x1d0: ReadWrite<u32>,
+    pub clk_source_csite: ReadWrite<u32>,
+    pub clk_source_i2s1: ReadWrite<u32>,
+    pub clk_source_dtv: ReadWrite<u32>,
+    _0x1e0: [ReadWrite<u32>; 5],
+    pub clk_source_tsec: ReadWrite<u32>,
+    _0x1f8: ReadWrite<u32>,
+
+    pub clk_spare2: ReadWrite<u32>,
+    _0x200: [ReadWrite<u32>; 32],
+
+    pub clk_out_enb_x: ReadWrite<u32>,
+    pub clk_enb_x_set: ReadWrite<u32>,
+    pub clk_enb_x_clr: ReadWrite<u32>,
+
+    pub rst_devices_x: ReadWrite<u32>,
+    pub rst_dev_x_set: ReadWrite<u32>,
+    pub rst_dev_x_clr: ReadWrite<u32>,
+
+    pub clk_out_enb_y: ReadWrite<u32>,
+    pub clk_enb_y_set: ReadWrite<u32>,
+    pub clk_enb_y_clr: ReadWrite<u32>,
+
+    pub rst_devices_y: ReadWrite<u32>,
+    pub rst_dev_y_set: ReadWrite<u32>,
+    pub rst_dev_y_clr: ReadWrite<u32>,
+
+    _0x2b0: [ReadWrite<u32>; 17],
+    pub dfll_base: ReadWrite<u32>,
+    _0x2f8: [ReadWrite<u32>; 2],
+
+    pub rst_dev_l_set: ReadWrite<u32>,
+    pub rst_dev_l_clr: ReadWrite<u32>,
+    pub rst_dev_h_set: ReadWrite<u32>,
+    pub rst_dev_h_clr: ReadWrite<u32>,
+    pub rst_dev_u_set: ReadWrite<u32>,
+    pub rst_dev_u_clr: ReadWrite<u32>,
+
+    _0x318: [ReadWrite<u32>; 2],
+
+    pub clk_enb_l_set: ReadWrite<u32>,
+    pub clk_enb_l_clr: ReadWrite<u32>,
+    pub clk_enb_h_set: ReadWrite<u32>,
+    pub clk_enb_h_clr: ReadWrite<u32>,
+    pub clk_enb_u_set: ReadWrite<u32>,
+    pub clk_enb_u_clr: ReadWrite<u32>,
+
+    _0x338: ReadWrite<u32>,
+    pub ccplex_pg_sm_ovrd: ReadWrite<u32>,
+    pub rst_cpu_cmplx_set: ReadWrite<u32>,
+    pub rst_cpu_cmplx_clr: ReadWrite<u32>,
+
+    pub clk_cpu_cmplx_set: ReadWrite<u32>,
+    pub clk_cpu_cmplx_clr: ReadWrite<u32>,
+
+    _0x350: [ReadWrite<u32>; 2],
+    pub rst_dev_v: ReadWrite<u32>,
+    pub rst_dev_w: ReadWrite<u32>,
+    pub clk_out_enb_v: ReadWrite<u32>,
+    pub clk_out_enb_w: ReadWrite<u32>,
+    pub cclkg_brst_pol: ReadWrite<u32>,
+    pub super_cclkg_div: ReadWrite<u32>,
+    pub cclklp_brst_pol: ReadWrite<u32>,
+    pub super_cclkp_div: ReadWrite<u32>,
+    pub clk_cpug_cmplx: ReadWrite<u32>,
+    pub clk_cpulp_cmplx: ReadWrite<u32>,
+    pub cpu_softrst_ctrl: ReadWrite<u32>,
+    pub cpu_softrst_ctrl1: ReadWrite<u32>,
+    pub cpu_softrst_ctrl2: ReadWrite<u32>,
+    _0x38c: [ReadWrite<u32>; 5],
+    pub lvl2_clk_gate_ovrc: ReadWrite<u32>,
+    pub lvl2_clk_gate_ovrd: ReadWrite<u32>,
+    _0x3a8: [ReadWrite<u32>; 2],
+
+    _0x3b0: ReadWrite<u32>,
+    pub clk_source_mselect: ReadWrite<u32>,
+    pub clk_source_tsensor: ReadWrite<u32>,
+    pub clk_source_i2s4: ReadWrite<u32>,
+    pub clk_source_i2s5: ReadWrite<u32>,
+    pub clk_source_i2c4: ReadWrite<u32>,
+    _0x3c8: [ReadWrite<u32>; 2],
+    pub clk_source_ahub: ReadWrite<u32>,
+    _0x3d4: [ReadWrite<u32>; 4],
+    pub clk_source_hda2codec_2x: ReadWrite<u32>,
+    pub clk_source_actmon: ReadWrite<u32>,
+    pub clk_source_extperiph1: ReadWrite<u32>,
+    pub clk_source_extperiph2: ReadWrite<u32>,
+    pub clk_source_extperiph3: ReadWrite<u32>,
+    _0x3f8: ReadWrite<u32>,
+    pub clk_source_i2c_slow: ReadWrite<u32>,
+    pub clk_source_sys: ReadWrite<u32>,
+    pub clk_source_ispb: ReadWrite<u32>,
+    _0x408: [ReadWrite<u32>; 2],
+    pub clk_source_sor1: ReadWrite<u32>,
+    pub clk_source_sor0: ReadWrite<u32>,
+    _0x418: [ReadWrite<u32>; 2],
+    pub clk_source_sata_oob: ReadWrite<u32>,
+    pub clk_source_sata: ReadWrite<u32>,
+    pub clk_source_hda: ReadWrite<u32>,
+    _0x42c: ReadWrite<u32>,
+
+    pub rst_dev_v_set: ReadWrite<u32>,
+    pub rst_dev_v_clr: ReadWrite<u32>,
+    pub rst_dev_w_set: ReadWrite<u32>,
+    pub rst_dev_w_clr: ReadWrite<u32>,
+
+    pub clk_enb_v_set: ReadWrite<u32>,
+    pub clk_enb_v_clr: ReadWrite<u32>,
+    pub clk_enb_w_set: ReadWrite<u32>,
+    pub clk_enb_w_clr: ReadWrite<u32>,
+
+    pub rst_cpug_cmplx_set: ReadWrite<u32>,
+    pub rst_cpug_cmplx_clr: ReadWrite<u32>,
+    pub rst_cpulp_cmplx_set: ReadWrite<u32>,
+    pub rst_cpulp_cmplx_clr: ReadWrite<u32>,
+    pub clk_cpug_cmplx_set: ReadWrite<u32>,
+    pub clk_cpug_cmplx_clr: ReadWrite<u32>,
+    pub clk_cpulp_cmplx_set: ReadWrite<u32>,
+    pub clk_cpulp_cmplx_clr: ReadWrite<u32>,
+    pub cpu_cmplx_status: ReadWrite<u32>,
+    _0x474: ReadWrite<u32>,
+    pub intstatus: ReadWrite<u32>,
+    pub intmask: ReadWrite<u32>,
+    pub utmip_pll_cfg0: ReadWrite<u32>,
+    pub utmip_pll_cfg1: ReadWrite<u32>,
+    pub utmip_pll_cfg2: ReadWrite<u32>,
+
+    pub plle_aux: ReadWrite<u32>,
+    pub sata_pll_cfg0: ReadWrite<u32>,
+    pub sata_pll_cfg1: ReadWrite<u32>,
+    pub pcie_pll_cfg0: ReadWrite<u32>,
+
+    pub prog_audio_dly_clk: ReadWrite<u32>,
+    pub audio_sync_clk_i2s0: ReadWrite<u32>,
+    pub audio_sync_clk_i2s1: ReadWrite<u32>,
+    pub audio_sync_clk_i2s2: ReadWrite<u32>,
+    pub audio_sync_clk_i2s3: ReadWrite<u32>,
+    pub audio_sync_clk_i2s4: ReadWrite<u32>,
+    pub audio_sync_clk_spdif: ReadWrite<u32>,
+
+    pub plld2_base: ReadWrite<u32>,
+    pub plld2_misc: ReadWrite<u32>,
+    pub utmip_pll_cfg3: ReadWrite<u32>,
+    pub pllrefe_base: ReadWrite<u32>,
+    pub pllrefe_misc: ReadWrite<u32>,
+    pub pllrefe_out: ReadWrite<u32>,
+    pub cpu_finetrim_byp: ReadWrite<u32>,
+    pub cpu_finetrim_select: ReadWrite<u32>,
+    pub cpu_finetrim_dr: ReadWrite<u32>,
+    pub cpu_finetrim_df: ReadWrite<u32>,
+    pub cpu_finetrim_f: ReadWrite<u32>,
+    pub cpu_finetrim_r: ReadWrite<u32>,
+    pub pllc2_base: ReadWrite<u32>,
+    pub pllc2_misc0: ReadWrite<u32>,
+    pub pllc2_misc1: ReadWrite<u32>,
+    pub pllc2_misc2: ReadWrite<u32>,
+    pub pllc2_misc3: ReadWrite<u32>,
+    pub pllc3_base: ReadWrite<u32>,
+    pub pllc3_misc0: ReadWrite<u32>,
+    pub pllc3_misc1: ReadWrite<u32>,
+    pub pllc3_misc2: ReadWrite<u32>,
+    pub pllc3_misc3: ReadWrite<u32>,
+    pub pllx_misc1: ReadWrite<u32>,
+    pub pllx_misc2: ReadWrite<u32>,
+    pub pllx_misc3: ReadWrite<u32>,
+    pub xusbio_pll_cfg0: ReadWrite<u32>,
+    pub xusbio_pll_cfg1: ReadWrite<u32>,
+    pub plle_aux1: ReadWrite<u32>,
+    pub pllp_reshift: ReadWrite<u32>,
+    pub utmipll_hw_pwrdn_cfg0: ReadWrite<u32>,
+    pub pllu_hw_pwrdn_cfg0: ReadWrite<u32>,
+    pub xusb_pll_cfg0: ReadWrite<u32>,
+    _0x538: ReadWrite<u32>,
+    pub clk_cpu_misc: ReadWrite<u32>,
+    pub clk_cpug_misc: ReadWrite<u32>,
+    pub clk_cpulp_misc: ReadWrite<u32>,
+    pub pllx_hw_ctrl_cfg: ReadWrite<u32>,
+    pub pllx_sw_ramp_cfg: ReadWrite<u32>,
+    pub pllx_hw_ctrl_status: ReadWrite<u32>,
+    pub lvl2_clk_gate_ovre: ReadWrite<u32>,
+    pub super_gr3d_clk_div: ReadWrite<u32>,
+    pub spare_reg0: ReadWrite<u32>,
+    pub audio_sync_clk_dmic1: ReadWrite<u32>,
+    pub audio_sync_clk_dmic2: ReadWrite<u32>,
+
+    _0x568: [ReadWrite<u32>; 2],
+    pub plld2_ss_cfg: ReadWrite<u32>,
+    pub plld2_ss_ctrl1: ReadWrite<u32>,
+    pub plld2_ss_ctrl2: ReadWrite<u32>,
+    _0x57c: [ReadWrite<u32>; 5],
+
+    pub plldp_base: ReadWrite<u32>,
+    pub plldp_misc: ReadWrite<u32>,
+    pub plldp_ss_cfg: ReadWrite<u32>,
+    pub plldp_ss_ctrl1: ReadWrite<u32>,
+    pub plldp_ss_ctrl2: ReadWrite<u32>,
+    pub pllc4_base: ReadWrite<u32>,
+    pub pllc4_misc: ReadWrite<u32>,
+    _0x5ac: [ReadWrite<u32>; 6],
+    pub clk_spare0: ReadWrite<u32>,
+    pub clk_spare1: ReadWrite<u32>,
+    pub gpu_isob_ctrl: ReadWrite<u32>,
+    pub pllc_misc2: ReadWrite<u32>,
+    pub pllc_misc3: ReadWrite<u32>,
+    pub plla_misc2: ReadWrite<u32>,
+    _0x5dc: [ReadWrite<u32>; 2],
+    pub pllc4_out: ReadWrite<u32>,
+    pub pllmb_base: ReadWrite<u32>,
+    pub pllmb_misc1: ReadWrite<u32>,
+    pub pllx_misc4: ReadWrite<u32>,
+    pub pllx_misc5: ReadWrite<u32>,
+    _0x5f8: [ReadWrite<u32>; 2],
+
+    pub clk_source_xusb_core_host: ReadWrite<u32>,
+    pub clk_source_xusb_falcon: ReadWrite<u32>,
+    pub clk_source_xusb_fs: ReadWrite<u32>,
+    pub clk_source_xusb_core_dev: ReadWrite<u32>,
+    pub clk_source_xusb_ss: ReadWrite<u32>,
+    pub clk_source_cilab: ReadWrite<u32>,
+    pub clk_source_cilcd: ReadWrite<u32>,
+    pub clk_source_cilef: ReadWrite<u32>,
+    pub clk_source_dsia_lp: ReadWrite<u32>,
+    pub clk_source_dsib_lp: ReadWrite<u32>,
+    pub clk_source_entropy: ReadWrite<u32>,
+    pub clk_source_dvfs_ref: ReadWrite<u32>,
+    pub clk_source_dvfs_soc: ReadWrite<u32>,
+    _0x634: [ReadWrite<u32>; 3],
+    pub clk_source_emc_latency: ReadWrite<u32>,
+    pub clk_source_soc_therm: ReadWrite<u32>,
+    _0x648: ReadWrite<u32>,
+    pub clk_source_dmic1: ReadWrite<u32>,
+    pub clk_source_dmic2: ReadWrite<u32>,
+    _0x654: ReadWrite<u32>,
+    pub clk_source_vi_sensor2: ReadWrite<u32>,
+    pub clk_source_i2c6: ReadWrite<u32>,
+    pub clk_source_mipibif: ReadWrite<u32>,
+    pub clk_source_emc_dll: ReadWrite<u32>,
+    _0x668: ReadWrite<u32>,
+    pub clk_source_uart_fst_mipi_cal: ReadWrite<u32>,
+    _0x670: [ReadWrite<u32>; 2],
+    pub clk_source_vic: ReadWrite<u32>,
+
+    pub pllp_outc: ReadWrite<u32>,
+    pub pllp_misc1: ReadWrite<u32>,
+    _0x684: [ReadWrite<u32>; 2],
+    pub emc_div_clk_shaper_ctrl: ReadWrite<u32>,
+    pub emc_pllc_shaper_ctrl: ReadWrite<u32>,
+
+    pub clk_source_sdmmc_legacy_tm: ReadWrite<u32>,
+    pub clk_source_nvdec: ReadWrite<u32>,
+    pub clk_source_nvjpg: ReadWrite<u32>,
+    pub clk_source_nvenc: ReadWrite<u32>,
+
+    pub plla1_base: ReadWrite<u32>,
+    pub plla1_misc0: ReadWrite<u32>,
+    pub plla1_misc1: ReadWrite<u32>,
+    pub plla1_misc2: ReadWrite<u32>,
+    pub plla1_misc3: ReadWrite<u32>,
+    pub audio_sync_clk_dmic3: ReadWrite<u32>,
+
+    pub clk_source_dmic3: ReadWrite<u32>,
+    pub clk_source_ape: ReadWrite<u32>,
+    pub clk_source_qspi: ReadWrite<u32>,
+    pub clk_source_vi_i2c: ReadWrite<u32>,
+    pub clk_source_usb2_hsic_trk: ReadWrite<u32>,
+    pub clk_source_pex_sata_usb_rx_byp: ReadWrite<u32>,
+    pub clk_source_maud: ReadWrite<u32>,
+    pub clk_source_tsecb: ReadWrite<u32>,
+
+    pub clk_cpug_misc1: ReadWrite<u32>,
+    pub aclk_burst_policy: ReadWrite<u32>,
+    pub super_aclk_divider: ReadWrite<u32>,
+
+    pub nvenc_super_clk_divider: ReadWrite<u32>,
+    pub vi_super_clk_divider: ReadWrite<u32>,
+    pub vic_super_clk_divider: ReadWrite<u32>,
+    pub nvdec_super_clk_divider: ReadWrite<u32>,
+    pub isp_super_clk_divider: ReadWrite<u32>,
+    pub ispb_super_clk_divider: ReadWrite<u32>,
+    pub nvjpg_super_clk_divider: ReadWrite<u32>,
+    pub se_super_clk_divider: ReadWrite<u32>,
+    pub tsec_super_clk_divider: ReadWrite<u32>,
+    pub tsecb_super_clk_divider: ReadWrite<u32>,
+
+    pub clk_source_uartape: ReadWrite<u32>,
+    pub clk_cpug_misc2: ReadWrite<u32>,
+    pub clk_source_dbgapb: ReadWrite<u32>,
+    pub clk_ccplex_cc4_ret_clk_enb: ReadWrite<u32>,
+    pub actmon_cpu_clk: ReadWrite<u32>,
+    pub clk_source_emc_safe: ReadWrite<u32>,
+    pub sdmmc2_pllc4_out0_shaper_ctrl: ReadWrite<u32>,
+    pub sdmmc2_pllc4_out1_shaper_ctrl: ReadWrite<u32>,
+    pub sdmmc2_pllc4_out2_shaper_ctrl: ReadWrite<u32>,
+    pub sdmmc2_div_clk_shaper_ctrl: ReadWrite<u32>,
+    pub sdmmc4_pllc4_out0_shaper_ctrl: ReadWrite<u32>,
+    pub sdmmc4_pllc4_out1_shaper_ctrl: ReadWrite<u32>,
+    pub sdmmc4_pllc4_out2_shaper_ctrl: ReadWrite<u32>,
+    pub sdmmc4_div_clk_shaper_ctrl: ReadWrite<u32>,
+}
+
+impl Registers {
+    /// Factory method to create a pointer to the CAR registers.
+    #[inline]
+    pub const fn get() -> *const Self {
+        CLOCK_BASE as *const _
+    }
+}
+
+/// Representation of the CAR.
+pub struct Car;
+
+impl Car {
+    /// Creates a new Car object.
+    pub fn new() -> Self {
+        Car
+    }
+}
+
+impl Deref for Car {
+    type Target = Registers;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*Registers::get() }
+    }
+}
 
 /// Representation of a device clock.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -386,6 +820,9 @@ impl Clock {
 
     /// Enables the clock.
     pub fn enable(&self) {
+        // Put clock into reset.
+        self.set_reset(true);
+
         // Disable clock.
         self.disable();
 

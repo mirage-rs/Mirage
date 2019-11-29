@@ -277,6 +277,42 @@ pub fn hardware_sense() {
     wait_idle();
 }
 
+/// Reads the SKU info register from the shadow cache.
+pub fn read_sku_info() -> u32 {
+    let fuse_chip = unsafe { &*FuseChip::get() };
+
+    fuse_chip.sku_info.get()
+}
+
+/// Reads the bootrom patch version from a register in the shadow cache.
+pub fn read_bootrom_patch_version() -> u32 {
+    let fuse_chip = unsafe { &*FuseChip::get() };
+
+    fuse_chip.soc_speedo_1.get()
+}
+
+/// Reads a spare bit register from the shadow cache.
+pub fn read_spare_bit(index: usize) -> u32 {
+    let fuse_chip = unsafe { &*FuseChip::get() };
+
+    if index < 32 {
+        return fuse_chip.spare_bit[index].get();
+    } else {
+        return 0;
+    }
+}
+
+/// Reads a reserved ODM register from the shadow cache.
+pub fn read_reserved_odm(index: usize) -> u32 {
+    let fuse_chip = unsafe { &*FuseChip::get() };
+
+    if index < 8 {
+        return fuse_chip.reserved_odm[index].get();
+    } else {
+        return 0;
+    }
+}
+
 /// Retrieves the Device ID from the shadow cache.
 pub fn get_device_id() -> u64 {
     let fuse_chip = unsafe { &*FuseChip::get() };

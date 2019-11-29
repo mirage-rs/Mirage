@@ -251,9 +251,9 @@ pub struct Gpio {
 #[macro_export]
 macro_rules! gpio {
     ($port:ident, $pin:tt) => {
-        Gpio {
-            port: GpioPort::$port,
-            pin: ::paste::expr!(GpioPin::[<P $pin>]),
+        $crate::gpio::Gpio {
+            port: $crate::gpio::GpioPort::$port,
+            pin: ::paste::expr!($crate::gpio::GpioPin::[<P $pin>]),
         }
     }
 }
@@ -364,10 +364,10 @@ impl Gpio {
         match mode {
             GpioMode::GPIO => {
                 value |= mask;
-            }
+            },
             GpioMode::SFIO => {
                 value &= !mask;
-            }
+            },
         }
 
         // Set the new value.
@@ -407,10 +407,10 @@ impl Gpio {
         match direction {
             GpioDirection::Output => {
                 value |= mask;
-            }
+            },
             GpioDirection::Input => {
                 value &= !mask;
-            }
+            },
         }
 
         // Set the new value.
@@ -427,15 +427,15 @@ impl Gpio {
         match config {
             GpioConfig::Input => {
                 self.set_direction(GpioDirection::Input);
-            }
+            },
             GpioConfig::OutputLow => {
                 self.set_direction(GpioDirection::Output);
                 self.write(GpioLevel::Low);
-            }
+            },
             GpioConfig::OutputHigh => {
                 self.set_direction(GpioDirection::Output);
                 self.write(GpioLevel::High);
-            }
+            },
         }
     }
 
@@ -455,10 +455,10 @@ impl Gpio {
         match level {
             GpioLevel::High => {
                 value |= mask;
-            }
+            },
             GpioLevel::Low => {
                 value &= !mask;
-            }
+            },
         }
 
         // Set the new value.
