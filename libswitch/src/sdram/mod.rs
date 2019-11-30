@@ -16,6 +16,7 @@ use core::{mem::transmute_copy, ptr::write_volatile};
 
 use register::mmio::ReadWrite;
 
+use self::{config::DRAM_CONFIG, params::Parameters};
 use crate::{
     clock::Car,
     fuse::read_reserved_odm,
@@ -23,8 +24,6 @@ use crate::{
     pmc::Pmc,
     timer::{get_microseconds, usleep},
 };
-use config::DRAM_CONFIG;
-use params::Parameters;
 
 mod config;
 mod params;

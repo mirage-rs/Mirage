@@ -1,5 +1,6 @@
-#[repr(packed)]
+/// SDRAM parameters.
 #[derive(Clone, Copy)]
+#[repr(packed)]
 pub struct Parameters {
     pub memory_type: u32,
 
