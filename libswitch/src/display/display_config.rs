@@ -1,5 +1,8 @@
 use core::ptr::write_volatile;
 
+/// The framebuffer memory address.
+pub const FRAMEBUFFER_ADDRESS: u32 = 0xC000_0000;
+
 /// Wrapper around a display configuration value.
 #[derive(Clone, Copy, PartialEq)]
 pub struct ConfigTable {
@@ -28,23 +31,25 @@ macro_rules! config_table {
             offset: $offset,
             value: $value,
         }
-    }
+    };
 }
 
-pub const CLOCK_1: [ConfigTable; 4] = [
-    config_table!(0x4E, 0x40000000),
-    config_table!(0x34, 0x4830A001),
+/// Clock config.
+pub const DISPLAY_CONFIG_1: [ConfigTable; 4] = [
+    config_table!(0x4E, 0x4000_0000),
+    config_table!(0x34, 0x4830_A001),
     config_table!(0x36, 0x20),
     config_table!(0x37, 0x2D0AAA),
 ];
 
-pub const DISPLAY_A_1: [ConfigTable; 64] = [
+/// Display A config.
+pub const DISPLAY_CONFIG_2: [ConfigTable; 94] = [
     config_table!(0x40, 0),
     config_table!(0x41, 0x100),
-    config_table!(0x41, 1),
-    config_table!(0x043, 0x54),
+    config_table!(0x41, 0x1),
+    config_table!(0x43, 0x54),
     config_table!(0x41, 0x100),
-    config_table!(0x41, 1),
+    config_table!(0x41, 0x1),
     config_table!(0x42, 0x10),
     config_table!(0x42, 0x20),
     config_table!(0x42, 0x40),
@@ -60,10 +65,40 @@ pub const DISPLAY_A_1: [ConfigTable; 64] = [
     config_table!(0x42, 0x10),
     config_table!(0x700, 0),
     config_table!(0x42, 0x10),
-    config_table!(0x70E, 0),
+    config_table!(0x70e, 0),
     config_table!(0x700, 0),
     config_table!(0x42, 0x10),
     config_table!(0x42, 0x10),
+    config_table!(0x611, 0xF0),
+    config_table!(0x612, 0x12A),
+    config_table!(0x613, 0),
+    config_table!(0x614, 0x198),
+    config_table!(0x615, 0x39B),
+    config_table!(0x616, 0x32F),
+    config_table!(0x617, 0x204),
+    config_table!(0x618, 0),
+    config_table!(0x42, 0x20),
+    config_table!(0x700, 0),
+    config_table!(0x42, 0x20),
+    config_table!(0x70e, 0),
+    config_table!(0x700, 0),
+    config_table!(0x42, 0x20),
+    config_table!(0x42, 0x20),
+    config_table!(0x611, 0xF0),
+    config_table!(0x612, 0x12A),
+    config_table!(0x613, 0),
+    config_table!(0x614, 0x198),
+    config_table!(0x615, 0x39B),
+    config_table!(0x616, 0x32F),
+    config_table!(0x617, 0x204),
+    config_table!(0x618, 0),
+    config_table!(0x42, 0x40),
+    config_table!(0x700, 0),
+    config_table!(0x42, 0x40),
+    config_table!(0x70e, 0),
+    config_table!(0x700, 0),
+    config_table!(0x42, 0x40),
+    config_table!(0x42, 0x40),
     config_table!(0x611, 0xF0),
     config_table!(0x612, 0x12A),
     config_table!(0x613, 0),
@@ -79,20 +114,20 @@ pub const DISPLAY_A_1: [ConfigTable; 64] = [
     config_table!(0x42, 0x40),
     config_table!(0x700, 0),
     config_table!(0x430, 0x8),
-    config_table!(0x42F, 0),
+    config_table!(0x42f, 0x0),
     config_table!(0x307, 0x1000000),
     config_table!(0x309, 0),
     config_table!(0x4E4, 0),
     config_table!(0x300, 0),
     config_table!(0x41, 0xF00),
-    config_table!(0x41, 0xF0),
+    config_table!(0x41, 0xF),
     config_table!(0x42, 0x10),
     config_table!(0x716, 0x10000FF),
     config_table!(0x42, 0x20),
     config_table!(0x716, 0x10000FF),
     config_table!(0x42, 0x40),
     config_table!(0x716, 0x10000FF),
-    config_table!(0x031, 0),
+    config_table!(0x31, 0),
     config_table!(0x42, 0x10),
     config_table!(0x700, 0),
     config_table!(0x42, 0x20),
@@ -105,7 +140,8 @@ pub const DISPLAY_A_1: [ConfigTable; 64] = [
     config_table!(0x41, 0xF),
 ];
 
-pub const DSI_INIT: [ConfigTable; 60] = [
+/// DSI Init config.
+pub const DISPLAY_CONFIG_3: [ConfigTable; 60] = [
     config_table!(0xA, 0),
     config_table!(0xC, 0),
     config_table!(0xD, 0),
@@ -114,8 +150,8 @@ pub const DSI_INIT: [ConfigTable; 60] = [
     config_table!(0x1C, 0),
     config_table!(0x1D, 0),
     config_table!(0x1E, 0),
-    config_table!(0x1C5, 0),
     config_table!(0x33, 0),
+    config_table!(0x23, 0),
     config_table!(0x25, 0),
     config_table!(0x27, 0),
     config_table!(0x29, 0),
@@ -142,12 +178,12 @@ pub const DSI_INIT: [ConfigTable; 60] = [
     config_table!(0x3D, 0x40A0E05),
     config_table!(0x3E, 0x30109),
     config_table!(0x3F, 0x190A14),
-    config_table!(0x44, 0x2000ffff),
+    config_table!(0x44, 0x2000_FFFF),
     config_table!(0x45, 0x7652000),
     config_table!(0x46, 0),
     config_table!(0x4B, 0),
-    config_table!(0xB, 1),
-    config_table!(0xB, 1),
+    config_table!(0xB, 0x1),
+    config_table!(0xB, 0x1),
     config_table!(0xB, 0),
     config_table!(0xB, 0),
     config_table!(0x4F, 0),
@@ -155,8 +191,8 @@ pub const DSI_INIT: [ConfigTable; 60] = [
     config_table!(0x3D, 0x40A0E05),
     config_table!(0x3E, 0x30118),
     config_table!(0x3F, 0x190A14),
-    config_table!(0x44, 0x2000ffff),
-    config_table!(0x45, 0x13432000),
+    config_table!(0x44, 0x2000_FFFF),
+    config_table!(0x45, 0x1343_2000),
     config_table!(0x46, 0),
     config_table!(0xF, 0x102003),
     config_table!(0x10, 0x31),
@@ -168,7 +204,8 @@ pub const DSI_INIT: [ConfigTable; 60] = [
     config_table!(0x1A, 0),
 ];
 
-pub const DSI_VER_10_1: [ConfigTable; 43] = [
+/// DSI config (if version == 0x10).
+pub const DISPLAY_CONFIG_4: [ConfigTable; 43] = [
     config_table!(0xA, 0x439),
     config_table!(0xA, 0x9483FFB9),
     config_table!(0x13, 0x2),
@@ -214,40 +251,43 @@ pub const DSI_VER_10_1: [ConfigTable; 43] = [
     config_table!(0x13, 0x2),
 ];
 
-pub const DSI_1: [ConfigTable; 21] = [
-    config_table!(0x4F, 0x0),
+/// DSI config.
+pub const DISPLAY_CONFIG_5: [ConfigTable; 21] = [
+    config_table!(0x4F, 0),
     config_table!(0x3C, 0x6070601),
     config_table!(0x3D, 0x40A0E05),
     config_table!(0x3E, 0x30172),
     config_table!(0x3F, 0x190A14),
-    config_table!(0x44, 0x20000A40),
-    config_table!(0x45, 0x5A2F2000),
-    config_table!(0x46, 0x0),
-    config_table!(0x23, 0x40000208),
-    config_table!(0x27, 0x40000308),
-    config_table!(0x2B, 0x40000308),
-    config_table!(0x25, 0x40000308),
-    config_table!(0x29, 0x3F3B2B08),
+    config_table!(0x44, 0x2000_0A40),
+    config_table!(0x45, 0x5A2F_2000),
+    config_table!(0x46, 0),
+    config_table!(0x23, 0x4000_0208),
+    config_table!(0x27, 0x4000_0308),
+    config_table!(0x2B, 0x4000_0308),
+    config_table!(0x25, 0x4000_0308),
+    config_table!(0x29, 0x3F3B_2B08),
     config_table!(0x2A, 0x2CC),
-    config_table!(0x2D, 0x3F3B2B08),
+    config_table!(0x2D, 0x3F3B_2B08),
     config_table!(0x2E, 0x2CC),
     config_table!(0x34, 0xCE0000),
     config_table!(0x35, 0x87001A2),
     config_table!(0x36, 0x190),
     config_table!(0x37, 0x190),
-    config_table!(0xF, 0x0),
+    config_table!(0xF, 0),
 ];
 
-pub const CLOCK_2: [ConfigTable; 3] = [
-    config_table!(0x34, 0x4810C001),
+/// Clock config.
+pub const DISPLAY_CONFIG_6: [ConfigTable; 3] = [
+    config_table!(0x34, 0x4810_C001),
     config_table!(0x36, 0x20),
     config_table!(0x37, 0x2DFC00),
 ];
 
-pub const DSI_2: [ConfigTable; 10] = [
+/// DSI config.
+pub const DISPLAY_CONFIG_7: [ConfigTable; 10] = [
     config_table!(0x13, 0),
     config_table!(0x10, 0),
-    config_table!(0x11, 6),
+    config_table!(0x11, 0x6),
     config_table!(0x12, 0x1E0),
     config_table!(0xB, 0x1),
     config_table!(0x10, 0x103032),
@@ -257,93 +297,51 @@ pub const DSI_2: [ConfigTable; 10] = [
     config_table!(0xF, 0x23),
 ];
 
-pub const MIPI_CAL_1: [ConfigTable; 6] = [
+/// MIPI CAL config.
+pub const DISPLAY_CONFIG_8: [ConfigTable; 6] = [
     config_table!(0x18, 0),
-    config_table!(0x2, 0xF3F10000),
-    config_table!(0x16, 1),
+    config_table!(0x2, 0xF3F1_0000),
+    config_table!(0x16, 0x1),
     config_table!(0x18, 0),
     config_table!(0x18, 0x10010),
     config_table!(0x17, 0x300),
 ];
 
-pub const DSI_3: [ConfigTable; 4] = [
+/// DSI config.
+pub const DISPLAY_CONFIG_9: [ConfigTable; 4] = [
     config_table!(0x4F, 0),
     config_table!(0x50, 0),
     config_table!(0x51, 0x3333),
     config_table!(0x52, 0),
 ];
 
-pub const MIPI_CAL_2: [ConfigTable; 16] = [
-    config_table!(0x0E, 0x200200),
-    config_table!(0x0F, 0x200200),
+/// MIPI CAL config.
+pub const DISPLAY_CONFIG_10: [ConfigTable; 16] = [
+    config_table!(0xE, 0x200200),
+    config_table!(0xF, 0x200200),
     config_table!(0x19, 0x200002),
     config_table!(0x1A, 0x200002),
-    config_table!(0x05, 0),
-    config_table!(0x06, 0),
-    config_table!(0x07, 0),
-    config_table!(0x08, 0),
-    config_table!(0x09, 0),
-    config_table!(0x0A, 0),
+    config_table!(0x5, 0),
+    config_table!(0x6, 0),
+    config_table!(0x7, 0),
+    config_table!(0x8, 0),
+    config_table!(0x9, 0),
+    config_table!(0xA, 0),
     config_table!(0x10, 0),
     config_table!(0x11, 0),
     config_table!(0x1A, 0),
     config_table!(0x1C, 0),
-    config_table!(0x1C, 0),
-    config_table!(0, 0x2A000001),
+    config_table!(0x1D, 0),
+    config_table!(0, 0x2A00_0001),
 ];
 
-pub const ONE_COLOR: [ConfigTable; 8] = [
-    config_table!(0x42, 0x10),
-    config_table!(0x700, 0),
-    config_table!(0x42, 0x20),
-    config_table!(0x700, 0),
-    config_table!(0x42, 0x40),
-    config_table!(0x700, 0),
-    config_table!(0x402, 0x2000_0000),
-    config_table!(0x32, 0x20),
-];
-
-pub const FRAMEBUFFER: [ConfigTable; 32] = [
-    config_table!(0x42, 0x40),
-    config_table!(0x700, 0),
-    config_table!(0x42, 0x20),
-    config_table!(0x700, 0),
-    config_table!(0x42, 0x10),
-    config_table!(0x700, 0),
-    config_table!(0x402, 0x2000_0000),
-    config_table!(0x703, 0xC),
-    config_table!(0x700, 0),
-    config_table!(0x700, 0),
-    config_table!(0x704, 0),
-    config_table!(0x707, 0),
-    config_table!(0x708, 0),
-    config_table!(0x706, 0x5000_B40),
-    config_table!(0x709, 0x1000_1000),
-    config_table!(0x705, 0x5000_2D0),
-    config_table!(0x70A, 0x5A00_B40),
-    config_table!(0x702, 0),
-    config_table!(0x80B, 0),
-    config_table!(0x800, 0xC000_0000),
-    config_table!(0x806, 0),
-    config_table!(0x808, 0),
-    config_table!(0x700, 0),
-    config_table!(0x402, 0x2000_0000),
-    config_table!(0x700, 0),
-    config_table!(0x402, 0x2000_0000),
-    config_table!(0x700, 0),
-    config_table!(0x402, 0x2000_0000),
-    config_table!(0x700, 0x4000_0000),
-    config_table!(0x32, 0x20),
-    config_table!(0x41, 0x300),
-    config_table!(0x41, 0x3),
-];
-
-pub const DISPLAY_A_2: [ConfigTable; 113] = [
+/// Display A config.
+pub const DISPLAY_CONFIG_11: [ConfigTable; 113] = [
     config_table!(0x40, 0),
     config_table!(0x42, 0x10),
     config_table!(0x700, 0),
     config_table!(0x42, 0x10),
-    config_table!(0x70e, 0),
+    config_table!(0x70E, 0),
     config_table!(0x700, 0),
     config_table!(0x42, 0x10),
     config_table!(0x42, 0x10),
@@ -358,7 +356,7 @@ pub const DISPLAY_A_2: [ConfigTable; 113] = [
     config_table!(0x42, 0x20),
     config_table!(0x700, 0),
     config_table!(0x42, 0x20),
-    config_table!(0x70e, 0),
+    config_table!(0x70E, 0),
     config_table!(0x700, 0),
     config_table!(0x42, 0x20),
     config_table!(0x42, 0x20),
@@ -373,7 +371,7 @@ pub const DISPLAY_A_2: [ConfigTable; 113] = [
     config_table!(0x42, 0x40),
     config_table!(0x700, 0),
     config_table!(0x42, 0x40),
-    config_table!(0x70e, 0),
+    config_table!(0x70E, 0),
     config_table!(0x700, 0),
     config_table!(0x42, 0x40),
     config_table!(0x42, 0x40),
@@ -392,7 +390,7 @@ pub const DISPLAY_A_2: [ConfigTable; 113] = [
     config_table!(0x42, 0x40),
     config_table!(0x700, 0),
     config_table!(0x430, 0x8),
-    config_table!(0x42f, 0x0),
+    config_table!(0x42F, 0x0),
     config_table!(0x307, 0x1000000),
     config_table!(0x309, 0),
     config_table!(0x4E4, 0),
@@ -413,7 +411,7 @@ pub const DISPLAY_A_2: [ConfigTable; 113] = [
     config_table!(0x42, 0x40),
     config_table!(0x700, 0),
     config_table!(0x402, 0),
-    config_table!(0x32, 0x0),
+    config_table!(0x32, 0),
     config_table!(0x41, 0xF00),
     config_table!(0x41, 0xF),
     config_table!(0x40, 0),
@@ -422,12 +420,12 @@ pub const DISPLAY_A_2: [ConfigTable; 113] = [
     config_table!(0x407, 0x10048),
     config_table!(0x408, 0x90048),
     config_table!(0x409, 0x50002D0),
-    config_table!(0x40a, 0xA0088),
+    config_table!(0x40A, 0xA0088),
     config_table!(0x431, 0x10001),
     config_table!(0x303, 0),
     config_table!(0x432, 0x5),
-    config_table!(0x42f, 0x0),
-    config_table!(0x42e, 0),
+    config_table!(0x42F, 0x0),
+    config_table!(0x42E, 0),
     config_table!(0x31, 0),
     config_table!(0x42, 0x10),
     config_table!(0x700, 0),
@@ -440,7 +438,7 @@ pub const DISPLAY_A_2: [ConfigTable; 113] = [
     config_table!(0x41, 0x100),
     config_table!(0x41, 0x1),
     config_table!(0x40, 0x5),
-    config_table!(0x40a, 0xA0088),
+    config_table!(0x40A, 0xA0088),
     config_table!(0x40, 0),
     config_table!(0x41, 0x100),
     config_table!(0x41, 0x1),
@@ -449,18 +447,19 @@ pub const DISPLAY_A_2: [ConfigTable; 113] = [
     config_table!(0x41, 0x100),
     config_table!(0x41, 0x1),
     config_table!(0x40, 0),
-    config_table!(0x42e, 4),
+    config_table!(0x42E, 0x4),
     config_table!(0x430, 0x8),
     config_table!(0x31, 0),
 ];
 
-pub const DISPLAY_A_3: [ConfigTable; 17] = [
-    config_table!(0x40a, 0xA0088),
+/// Display A config.
+pub const DISPLAY_CONFIG_12: [ConfigTable; 17] = [
+    config_table!(0x40A, 0xA0088),
     config_table!(0x38, 0),
     config_table!(0x40, 0),
     config_table!(0x39, 0),
     config_table!(0x28, 0),
-    config_table!(0x32, 0x0),
+    config_table!(0x32, 0),
     config_table!(0x41, 0x100),
     config_table!(0x41, 0x1),
     config_table!(0x41, 0x100),
@@ -474,43 +473,45 @@ pub const DISPLAY_A_3: [ConfigTable; 17] = [
     config_table!(0x41, 0x1),
 ];
 
-pub const DSI_4: [ConfigTable; 16] = [
+/// DSI config.
+pub const DISPLAY_CONFIG_13: [ConfigTable; 16] = [
     config_table!(0xB, 0),
     config_table!(0x4F, 0),
     config_table!(0x3C, 0x6070601),
     config_table!(0x3D, 0x40A0E05),
-    config_table!(0x3E, 0x30118),
+    config_table!(0x3E, 0x30109),
     config_table!(0x3F, 0x190A14),
-    config_table!(0x44, 0x2000FFFF),
-    config_table!(0x45, 0x13432000),
+    config_table!(0x44, 0x2000_FFFF),
+    config_table!(0x45, 0x7652000),
     config_table!(0x46, 0),
     config_table!(0xF, 0x102003),
     config_table!(0x10, 0x31),
-    config_table!(0xB, 0x1),
+    config_table!(0xB, 1),
     config_table!(0x12, 0x40),
     config_table!(0x13, 0),
     config_table!(0x14, 0),
     config_table!(0x1A, 0),
 ];
 
-pub const DSI_VER_10_2: [ConfigTable; 22] = [
+/// DSI config (if ver == 0x10).
+pub const DISPLAY_CONFIG_14: [ConfigTable; 22] = [
     config_table!(0xA, 0x439),
-    config_table!(0xA, 0x9483FFB9),
+    config_table!(0xA, 0x9483_FFB9),
     config_table!(0x13, 0x2),
     config_table!(0xA, 0x2139),
-    config_table!(0xA, 0x191919D5),
-    config_table!(0xA, 0x19191919),
-    config_table!(0xA, 0x19191919),
-    config_table!(0xA, 0x19191919),
-    config_table!(0xA, 0x19191919),
-    config_table!(0xA, 0x19191919),
-    config_table!(0xA, 0x19191919),
-    config_table!(0xA, 0x19191919),
+    config_table!(0xA, 0x1919_19D5),
+    config_table!(0xA, 0x1919_1919),
+    config_table!(0xA, 0x1919_1919),
+    config_table!(0xA, 0x1919_1919),
+    config_table!(0xA, 0x1919_1919),
+    config_table!(0xA, 0x1919_1919),
+    config_table!(0xA, 0x1919_1919),
+    config_table!(0xA, 0x1919_1919),
     config_table!(0xA, 0x19),
     config_table!(0x13, 0x2),
     config_table!(0xA, 0xB39),
-    config_table!(0xA, 0x4F0F41B1),
-    config_table!(0xA, 0xF179A433),
+    config_table!(0xA, 0x4F0F_41B1),
+    config_table!(0xA, 0xF179_A433),
     config_table!(0xA, 0x2D81),
     config_table!(0x13, 0x2),
     config_table!(0xA, 0x439),
@@ -518,11 +519,57 @@ pub const DSI_VER_10_2: [ConfigTable; 22] = [
     config_table!(0x13, 0x2),
 ];
 
+/// Display A config.
+pub const DISPLAY_ONE_COLOR: [ConfigTable; 8] = [
+    config_table!(0x42, 0x10),
+    config_table!(0x700, 0),
+    config_table!(0x42, 0x20),
+    config_table!(0x700, 0),
+    config_table!(0x42, 0x40),
+    config_table!(0x700, 0),
+    config_table!(0x402, 0x2000_0000),
+    config_table!(0x32, 0x20),
+];
+
+/// Display A config.
+pub const DISPLAY_FRAMEBUFFER: [ConfigTable; 32] = [
+    config_table!(0x42, 0x40),
+    config_table!(0x700, 0),
+    config_table!(0x42, 0x20),
+    config_table!(0x700, 0),
+    config_table!(0x42, 0x10),
+    config_table!(0x700, 0),
+    config_table!(0x402, 0x2000_0000),
+    config_table!(0x703, 0xC),
+    config_table!(0x700, 0),
+    config_table!(0x700, 0),
+    config_table!(0x704, 0),
+    config_table!(0x707, 0),
+    config_table!(0x708, 0),
+    config_table!(0x706, 0x5000B40),
+    config_table!(0x709, 0x1000_1000),
+    config_table!(0x705, 0x50002D0),
+    config_table!(0x70A, 0x6000C00),
+    config_table!(0x702, 0),
+    config_table!(0x80B, 0),
+    config_table!(0x800, FRAMEBUFFER_ADDRESS),
+    config_table!(0x806, 0),
+    config_table!(0x808, 0),
+    config_table!(0x700, 0),
+    config_table!(0x402, 0x2000_0000),
+    config_table!(0x700, 0),
+    config_table!(0x402, 0x2000_0000),
+    config_table!(0x700, 0),
+    config_table!(0x402, 0x2000_0000),
+    config_table!(0x700, 0x4000_0000),
+    config_table!(0x32, 0x20),
+    config_table!(0x41, 0x300),
+    config_table!(0x41, 0x3),
+];
+
 /// Executes a given configuration at the base memory address.
-pub fn execute(base: *mut u32, config: &[ConfigTable]) {
+pub unsafe fn execute(base: *mut u32, config: &[ConfigTable]) {
     for table in config {
-        unsafe {
-            write_volatile(base.offset(table.offset as isize), table.value);
-        }
+        write_volatile(base.offset(table.offset as isize), table.value);
     }
 }

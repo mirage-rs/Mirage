@@ -9,8 +9,9 @@
 //! rate and drive a different resolution panel.
 
 pub use display::*;
+pub use display_config::FRAMEBUFFER_ADDRESS;
 
-mod display_config;
 mod display;
+mod display_config;
 
 // TODO: Implement Framebuffer wrapper to print content to the screen.

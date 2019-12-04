@@ -1,5 +1,6 @@
 use register::mmio::ReadWrite;
 
+use super::display_config::*;
 use crate::{
     clock::{Car, CLOCK_BASE},
     gpio::{Gpio, GpioDirection, GpioLevel, GpioMode},
@@ -8,7 +9,6 @@ use crate::{
     pmc::Pmc,
     timer::{get_microseconds, usleep},
 };
-use super::display_config::*;
 
 static mut DISPLAY_VERSION: u32 = 0;
 
@@ -23,7 +23,7 @@ const MIPI_CAL_BASE: u32 = 0x700E_3000;
 
 /// Waits for DSI to be updated.
 unsafe fn dsi_wait(timeout: u32, offset: u32, mask: u32) {
-    let register = &*((DSI_BASE + offset) as *const ReadWrite<u32>);
+    let register = &*((DSI_BASE + offset * 4) as *const ReadWrite<u32>);
     let end = get_microseconds() + timeout;
 
     while get_microseconds() < end && register.get() & mask != 0 {
@@ -39,8 +39,12 @@ pub fn initialize() {
     let pmc = &Pmc::new();
 
     // Power on.
-    I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x23, 0xD0).unwrap();
-    I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x3D, 0x9).unwrap();
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x23, 0xD0)
+        .unwrap();
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x3D, 0x9)
+        .unwrap();
 
     // Enable MIPI CAL, DSI, DISP1, HOST1X, UART_FST_MIPI_CAL, DSIA LP clocks.
     car.rst_dev_h_clr.set(0x1010000);
@@ -92,12 +96,12 @@ pub fn initialize() {
 
     unsafe {
         // Configure display interface and display.
-        (*((0x700E_3000 + 0x60) as *const ReadWrite<u32>)).set(0);
-    }
+        (*((MIPI_CAL_BASE + 0x60) as *const ReadWrite<u32>)).set(0);
 
-    execute(CLOCK_BASE as *mut u32, &CLOCK_1);
-    execute(DI_BASE as *mut u32, &DISPLAY_A_1);
-    execute(DSI_BASE as *mut u32, &DSI_INIT);
+        execute(CLOCK_BASE as *mut u32, &DISPLAY_CONFIG_1);
+        execute(DI_BASE as *mut u32, &DISPLAY_CONFIG_2);
+        execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_3);
+    }
 
     usleep(10_000);
 
@@ -107,52 +111,52 @@ pub fn initialize() {
     usleep(60_000);
 
     unsafe {
-        (*((DSI_BASE + 0x3F) as *const ReadWrite<u32>)).set(0x50204);
-        (*((DSI_BASE + 0xA) as *const ReadWrite<u32>)).set(0x337);
-        (*((DSI_BASE + 0x13) as *const ReadWrite<u32>)).set(1 << 1);
+        (*((DSI_BASE + 0x3F * 4) as *const ReadWrite<u32>)).set(0x50204);
+        (*((DSI_BASE + 0xA * 4) as *const ReadWrite<u32>)).set(0x337);
+        (*((DSI_BASE + 0x13 * 4) as *const ReadWrite<u32>)).set(1 << 1);
 
         dsi_wait(250_000, 0x13, 0x3);
 
-        (*((DSI_BASE + 0xA) as *const ReadWrite<u32>)).set(0x406);
-        (*((DSI_BASE + 0x13) as *const ReadWrite<u32>)).set(1 << 1);
+        (*((DSI_BASE + 0xA * 4) as *const ReadWrite<u32>)).set(0x406);
+        (*((DSI_BASE + 0x13 * 4) as *const ReadWrite<u32>)).set(1 << 1);
         dsi_wait(250_000, 0x13, 0x3);
 
-        (*((DSI_BASE + 0xF) as *const ReadWrite<u32>)).set(0x200B);
+        (*((DSI_BASE + 0xF * 4) as *const ReadWrite<u32>)).set(0x200B);
         dsi_wait(150_000, 0xF, 1 << 3);
 
         usleep(5_000);
 
-        DISPLAY_VERSION = (*((DSI_BASE + 0x9) as *const ReadWrite<u32>)).get();
+        DISPLAY_VERSION = (*((DSI_BASE + 0x9 * 4) as *const ReadWrite<u32>)).get();
 
         if DISPLAY_VERSION == 0x10 {
-            execute(DSI_BASE as *mut u32, &DSI_VER_10_2);
+            execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_4);
         }
 
-        (*((DSI_BASE + 0xA) as *const ReadWrite<u32>)).set(0x1105);
-        (*((DSI_BASE + 0x13) as *const ReadWrite<u32>)).set(1 << 1);
+        (*((DSI_BASE + 0xA * 4) as *const ReadWrite<u32>)).set(0x1105);
+        (*((DSI_BASE + 0x13 * 4) as *const ReadWrite<u32>)).set(1 << 1);
 
         usleep(180_000);
 
-        (*((DSI_BASE + 0xA) as *const ReadWrite<u32>)).set(0x2905);
-        (*((DSI_BASE + 0x13) as *const ReadWrite<u32>)).set(1 << 1);
+        (*((DSI_BASE + 0xA * 4) as *const ReadWrite<u32>)).set(0x2905);
+        (*((DSI_BASE + 0x13 * 4) as *const ReadWrite<u32>)).set(1 << 1);
 
         usleep(20_000);
 
-        execute(DSI_BASE as *mut u32, &DSI_1);
-        execute(CLOCK_BASE as *mut u32, &CLOCK_2);
+        execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_5);
+        execute(CLOCK_BASE as *mut u32, &DISPLAY_CONFIG_6);
 
-        (*((DI_BASE + 0x42E) as *const ReadWrite<u32>)).set(4);
-        execute(DSI_BASE as *mut u32, &DSI_2);
-
-        usleep(10_000);
-
-        execute(MIPI_CAL_BASE as *mut u32, &MIPI_CAL_1);
-        execute(DSI_BASE as *mut u32, &DSI_3);
-        execute(MIPI_CAL_BASE as *mut u32, &MIPI_CAL_2);
+        (*((DI_BASE + 0x42E * 4) as *const ReadWrite<u32>)).set(4);
+        execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_7);
 
         usleep(10_000);
 
-        execute(DI_BASE as *mut u32, &DISPLAY_A_2);
+        execute(MIPI_CAL_BASE as *mut u32, &DISPLAY_CONFIG_8);
+        execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_9);
+        execute(MIPI_CAL_BASE as *mut u32, &DISPLAY_CONFIG_10);
+
+        usleep(10_000);
+
+        execute(DI_BASE as *mut u32, &DISPLAY_CONFIG_11);
     }
 }
 
@@ -162,29 +166,29 @@ pub fn finish() {
     let pinmux = &Pinmux::new();
 
     // Disable backlight.
-    set_backlight(false);
+    hide_backlight();
 
     unsafe {
-        (*((DSI_BASE + 0x4E) as *const ReadWrite<u32>)).set(1);
-        (*((DSI_BASE + 0xA) as *const ReadWrite<u32>)).set(0x2805);
+        (*((DSI_BASE + 0x4E * 4) as *const ReadWrite<u32>)).set(1);
+        (*((DSI_BASE + 0xA * 4) as *const ReadWrite<u32>)).set(0x2805);
 
-        (*((DI_BASE + 0x40) as *const ReadWrite<u32>)).set(0x5);
-        (*((DSI_BASE + 0x4E) as *const ReadWrite<u32>)).set(0);
+        (*((DI_BASE + 0x40 * 4) as *const ReadWrite<u32>)).set(0x5);
+        (*((DSI_BASE + 0x4E * 4) as *const ReadWrite<u32>)).set(0);
 
-        execute(DI_BASE as *mut u32, &DISPLAY_A_3);
-        execute(DSI_BASE as *mut u32, &DSI_4);
+        execute(DI_BASE as *mut u32, &DISPLAY_CONFIG_12);
+        execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_13);
 
         usleep(10_000);
 
         if DISPLAY_VERSION == 0x10 {
-            execute(DSI_BASE as *mut u32, &DSI_VER_10_2);
+            execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_14);
         }
 
-        (*((DSI_BASE + 0xA) as *const ReadWrite<u32>)).set(0x1005);
-        (*((DSI_BASE + 0x13) as *const ReadWrite<u32>)).set(1 << 1);
-
-        usleep(50_000);
+        (*((DSI_BASE + 0xA * 4) as *const ReadWrite<u32>)).set(0x1005);
+        (*((DSI_BASE + 0x13 * 4) as *const ReadWrite<u32>)).set(1 << 1);
     }
+
+    usleep(50_000);
 
     // Disable Backlight RST.
     Gpio::LCD_BL_RST.write(GpioLevel::Low);
@@ -208,56 +212,79 @@ pub fn finish() {
     car.clk_enb_l_clr.set(0x1800_0000);
 
     unsafe {
-        (*((DSI_BASE + 0x4B) as *const ReadWrite<u32>)).set(0x10F010F);
-        (*((DSI_BASE + 0xB) as *const ReadWrite<u32>)).set(0);
+        (*((DSI_BASE + 0x4B * 4) as *const ReadWrite<u32>)).set(0x10F010F);
+        (*((DSI_BASE + 0xB * 4) as *const ReadWrite<u32>)).set(0);
     }
 
     // Backlight PWM.
     Gpio::LCD_BL_PWM.set_mode(GpioMode::SFIO);
 
-    pinmux.lcd_bl_pwm.set((pinmux.lcd_bl_pwm.get() & !TRISTATE) | TRISTATE);
-    pinmux.lcd_bl_pwm.set(((pinmux.lcd_bl_pwm.get() >> 2) << 2) | 1);
+    pinmux
+        .lcd_bl_pwm
+        .set((pinmux.lcd_bl_pwm.get() & !TRISTATE) | TRISTATE);
+    pinmux
+        .lcd_bl_pwm
+        .set(((pinmux.lcd_bl_pwm.get() >> 2) << 2) | 1);
 }
 
 /// Shows a single color on the display.
 pub fn color_screen(color: u32) {
-    execute(DI_BASE as *mut u32, &ONE_COLOR);
+    unsafe {
+        execute(DI_BASE as *mut u32, &DISPLAY_ONE_COLOR);
+    }
 
     // Configure display to show a single color.
     unsafe {
-        let cmd_state_control_reg = &*((DI_BASE + 0x41) as *const ReadWrite<u32>);
+        let cmd_state_control_reg = &*((DI_BASE + 0x41 * 4) as *const ReadWrite<u32>);
 
-        (*((DI_BASE + 0xB80) as *const ReadWrite<u32>)).set(0);
-        (*((DI_BASE + 0xD80) as *const ReadWrite<u32>)).set(0);
-        (*((DI_BASE + 0xF80) as *const ReadWrite<u32>)).set(0);
-        (*((DI_BASE + 0x4E4) as *const ReadWrite<u32>)).set(color);
+        (*((DI_BASE + 0xB80 * 4) as *const ReadWrite<u32>)).set(0);
+        (*((DI_BASE + 0xD80 * 4) as *const ReadWrite<u32>)).set(0);
+        (*((DI_BASE + 0xF80 * 4) as *const ReadWrite<u32>)).set(0);
+        (*((DI_BASE + 0x4E4 * 4) as *const ReadWrite<u32>)).set(color);
         cmd_state_control_reg.set((cmd_state_control_reg.get() & 0xFFFF_FFFE) | (1 << 0));
     }
 
     usleep(35_000);
 
-    set_backlight(true);
+    display_backlight();
 }
 
 /// Turns the backlight on/off.
-pub fn set_backlight(enable: bool) {
-    let level = if enable { GpioLevel::High } else { GpioLevel::Low };
+#[inline]
+fn set_backlight(enable: bool) {
+    let level = if enable {
+        GpioLevel::High
+    } else {
+        GpioLevel::Low
+    };
 
-   // Enable backlight PWM.
+    // Enable backlight PWM.
     Gpio::LCD_BL_PWM.write(level);
+}
+
+/// Displays the backlight.
+#[inline]
+pub fn display_backlight() {
+    set_backlight(true);
+}
+
+/// Disables the backlight.
+#[inline]
+pub fn hide_backlight() {
+    set_backlight(false);
 }
 
 /// Initializes display in full 1280x720 resolution.
 /// (B8G8R8A8, line stride 768, framebuffer size = 1280*768*4 bytes).
-pub fn initialize_framebuffer(address: u32) -> *const u32 {
+pub fn initialize_framebuffer(address: u32) {
     let mut config: [ConfigTable; 32] = [ConfigTable::new(); 32];
-    config.copy_from_slice(&FRAMEBUFFER);
+    config.copy_from_slice(&DISPLAY_FRAMEBUFFER);
 
     let lfb_address = address as *const u32;
     config[19].value = address;
 
     // This configures the framebuffer @ address with a resolution of 1280x720 (line stride 768).
-    execute(DI_BASE as *mut u32, &config);
-
-    lfb_address
+    unsafe {
+        execute(DI_BASE as *mut u32, &config);
+    }
 }
