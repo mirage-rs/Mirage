@@ -63,7 +63,7 @@
 //! # Usage
 //!
 //! ``` no_run
-//! use mmio::{Mmio, VolatileStorage};
+//! use mirage_mmio::{Mmio, VolatileStorage};
 //!
 //! // A struct that represents a memory-mapped register block.
 //! // Needs to be made repr(C) so the fields get aligned correctly.
