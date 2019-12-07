@@ -254,3 +254,54 @@ where
         f.debug_struct("Mmio").field("value", &self.read()).finish()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    extern crate alloc;
+
+    use alloc::format;
+
+    use crate::Mmio;
+
+    /// Tests volatile reads from registers for correctness.
+    #[test]
+    fn read_register() {
+        let x: i32 = 50;
+        let register = unsafe { Mmio::new(&x as *const i32) };
+
+        assert_eq!(50, x);
+        assert_eq!(50, register.read());
+        assert_eq!(x, register.read());
+    }
+
+    /// Tests volatile writes to registers for correctness.
+    #[test]
+    fn write_to_register() {
+        let x: i32 = 50;
+        let register = unsafe { Mmio::new(&x as *const i32) };
+
+        assert_eq!(x, register.read());
+
+        register.write(500);
+
+        assert_ne!(50, x);
+        assert_eq!(500, x);
+        assert_eq!(500, register.read());
+    }
+
+    /// Verifies the correctness of debug output.
+    #[test]
+    fn debug_register() {
+        let x: i32 = 50;
+        let register = unsafe { Mmio::new(&x as *const i32) };
+
+        // Since the Debug trait obtains the representation of
+        // the value field by calling `register.read()`, this
+        // also asserts that the values of `x` and
+        // `register.read()` are equal.
+        assert_eq!(
+            format!("Mmio {{ value: {} }}", x),
+            format!("{:?}", register)
+        );
+    }
+}
