@@ -39,6 +39,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "mmio"
+version = "0.1.0"
+dependencies = [
+ "num-traits 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "num-traits"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"

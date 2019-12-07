@@ -1,0 +1,12 @@
+[package]
+name = "mmio"
+version = "0.1.0"
+authors = ["Valentin B. <valentin.be@protonmail.com>"]
+license = "Apache-2.0/MIT"
+edition = "2018"
+
+[dependencies]
+
+[dependencies.num-traits]
+version = "0.2"
+default-features = false
