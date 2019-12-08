@@ -137,6 +137,7 @@ impl<T: PrimInt> RegisterCell<T> {
     /// Undefined Behavior for falsy pointers.
     ///
     /// [`RegisterCell`]: struct.RegisterCell.html
+    #[allow(dead_code)]
     pub const unsafe fn new(value: T) -> Self {
         RegisterCell {
             register: UnsafeCell::new(value),
