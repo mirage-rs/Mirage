@@ -41,38 +41,45 @@
 //! [`msleep`]: fn.msleep.html
 //! [`usleep`]: fn.usleep.html
 
+use mirage_mmio::Mmio;
+
 /// Base address for Timer registers.
-const TIMERS_BASE: u32 = 0x6000_5000;
+pub(crate) const TIMERS_BASE: u32 = 0x6000_5000;
 
-register!(TIMERUS_CNTR_1US, TIMERS_BASE + 0x10);
+pub(crate) const TIMERUS_CNTR_1US: Mmio<u32> =
+    unsafe { Mmio::new((TIMERS_BASE + 0x10) as *const _) };
 
-register!(TIMERUS_USEC_CFG, TIMERS_BASE + 0x14);
+pub(crate) const TIMERUS_USEC_CFG: Mmio<u32> =
+    unsafe { Mmio::new((TIMERS_BASE + 0x14) as *const _) };
 
 /// Base address for RTC registers.
-const RTC_BASE: u32 = 0x7000_E000;
+pub(crate) const RTC_BASE: u32 = 0x7000_E000;
 
-register!(RTC_SECONDS, RTC_BASE + 0x8);
+pub(crate) const RTC_SECONDS: Mmio<u32> =
+    unsafe { Mmio::new((RTC_BASE + 0x8) as *const _) };
 
-register!(RTC_SHADOW_SECONDS, RTC_BASE + 0xC);
+pub(crate) const RTC_SHADOW_SECONDS: Mmio<u32> =
+    unsafe { Mmio::new((RTC_BASE + 0xC) as *const _) };
 
-register!(RTC_MILLI_SECONDS, RTC_BASE + 0x10);
+pub(crate) const RTC_MILLI_SECONDS: Mmio<u32> =
+    unsafe { Mmio::new((RTC_BASE + 0x10) as *const _) };
 
 /// Returns the current time in seconds.
 #[inline]
 pub fn get_seconds() -> u32 {
-    RTC_SECONDS.get()
+    RTC_SECONDS.read()
 }
 
 /// Returns the current time in milliseconds.
 #[inline]
 pub fn get_milliseconds() -> u32 {
-    RTC_MILLI_SECONDS.get() | (RTC_SHADOW_SECONDS.get() << 10)
+    RTC_MILLI_SECONDS.read() | (RTC_SHADOW_SECONDS.read() << 10)
 }
 
 /// Returns the current time in microseconds.
 #[inline]
 pub fn get_microseconds() -> u32 {
-    TIMERUS_CNTR_1US.get()
+    TIMERUS_CNTR_1US.read()
 }
 
 /// Gets the time that has passed since a given [`get_microseconds`].

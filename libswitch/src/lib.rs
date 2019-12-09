@@ -6,7 +6,6 @@
 
 #![no_std]
 #![feature(const_fn)]
-#![feature(const_raw_ptr_deref)]
 #![feature(optimize_attribute)]
 
 #[macro_use]
@@ -15,30 +14,26 @@ extern crate bitflags;
 #[macro_use]
 extern crate enum_primitive;
 
-#[macro_use]
-extern crate lazy_static;
+extern crate mirage_mmio;
 
 extern crate paste;
 
-extern crate register;
-
 use core::ptr::write_bytes;
 
-use register::mmio::ReadWrite;
+use mirage_mmio::{Mmio, VolatileStorage};
 
 use crate::{
     clock::{Car, Clock},
+    fuse::FuseChip,
     gpio::{Gpio, GpioConfig},
     i2c::*,
     pinmux::*,
     pmc::Pmc,
     se::SecurityEngine,
+    sysctr0::Sysctr0Registers,
     timer::usleep,
     uart::Uart,
 };
-
-#[macro_use]
-mod utils;
 
 pub mod apb_misc;
 pub mod button;
@@ -66,77 +61,73 @@ pub mod uart;
 /// Base address for I2S registers.
 const I2S_BASE: u32 = 0x702D_1000;
 
-register!(I2S1_CG, I2S_BASE + 0x88);
+const I2S1_CG: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0x88) as *const _) };
 
-register!(I2S1_CTRL, I2S_BASE + 0xA0);
+const I2S1_CTRL: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0xA0) as *const _) };
 
-register!(I2S2_CG, I2S_BASE + 0x188);
+const I2S2_CG: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0x188) as *const _) };
 
-register!(I2S2_CTRL, I2S_BASE + 0x1A0);
+const I2S2_CTRL: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0x1A0) as *const _) };
 
-register!(I2S3_CG, I2S_BASE + 0x288);
+const I2S3_CG: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0x288) as *const _) };
 
-register!(I2S3_CTRL, I2S_BASE + 0x2A0);
+const I2S3_CTRL: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0x2A0) as *const _) };
 
-register!(I2S4_CG, I2S_BASE + 0x388);
+const I2S4_CG: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0x388) as *const _) };
 
-register!(I2S4_CTRL, I2S_BASE + 0x3A0);
+const I2S4_CTRL: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0x3A0) as *const _) };
 
-register!(I2S5_CG, I2S_BASE + 0x488);
+const I2S5_CG: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0x488) as *const _) };
 
-register!(I2S5_CTRL, I2S_BASE + 0x4A0);
+const I2S5_CTRL: Mmio<u32> = unsafe { Mmio::new((I2S_BASE + 0x4A0) as *const _) };
 
-lazy_static! {
-    /// The global instance of the Security Engine.
-    pub static ref SECURITY_ENGINE: SecurityEngine = SecurityEngine::new();
-}
+/// The global instance of the Security Engine.
+const SECURITY_ENGINE: SecurityEngine = SecurityEngine::new();
 
 fn config_oscillators(car: &Car, pmc: &Pmc) {
+    let sysctr0 = unsafe { Sysctr0Registers::get() };
+
     // Set CLK_M_DIVISOR to 2.
-    car.spare_reg0.set((car.spare_reg0.get() & 0xFFFF_FFF3) | 4);
+    car.spare_reg0.write((car.spare_reg0.read() & 0xFFFF_FFF3) | 4);
     // Set counter frequency.
-    sysctr0::CNTFID0.set(19200000);
+    sysctr0.CNTFID0.write(19200000);
     // For 19.2MHz clk_m.
-    timer::TIMERUS_USEC_CFG.set(0x45F);
+    timer::TIMERUS_USEC_CFG.write(0x45F);
 
     // Set OSC to 38.4MHz and drive strength.
-    car.osc_ctrl.set(0x5000_0071);
+    car.osc_ctrl.write(0x5000_0071);
 
     // // Set LP0 OSC drive strength.
-    pmc.osc_edpd_over
-        .set((pmc.osc_edpd_over.get() & 0xFFFF_FF81) | 0xE);
-    pmc.osc_edpd_over
-        .set((pmc.osc_edpd_over.get() & 0xFFBF_FFFF) | 0x400000);
-    pmc.cntrl2.set((pmc.cntrl2.get() & 0xFFFF_EFFF) | 0x1000);
+    pmc.osc_edpd_over.write((pmc.osc_edpd_over.read() & 0xFFFF_FF81) | 0xE);
+    pmc.osc_edpd_over.write((pmc.osc_edpd_over.read() & 0xFFBF_FFFF) | 0x400000);
+    pmc.cntrl2.write((pmc.cntrl2.read() & 0xFFFF_EFFF) | 0x1000);
     // LP0 EMC2TMC_CFG_XM2COMP_PU_VREF_SEL_RANGE.
-    pmc.scratch188
-        .set((pmc.scratch188.get() & 0xFCFF_FFFF) | 0x2000000);
+    pmc.scratch188.write((pmc.scratch188.read() & 0xFCFF_FFFF) | 0x2000000);
 
     // // Set HCLK div to 2 and PCLK div to 1.
-    car.clk_sys_rate.set(0x10);
+    car.clk_sys_rate.write(0x10);
     // Disable PLLMB.
-    car.pllmb_base.set(car.pllmb_base.get() & 0xBFFF_FFFF);
+    car.pllmb_base.write(car.pllmb_base.read() & 0xBFFF_FFFF);
 
-    pmc.tsc_mult
-        .set((pmc.tsc_mult.get() & 0xFFFF_0000) | 0x249F); //0x249F = 19200000 * (16 / 32.768 kHz)
+    pmc.tsc_mult.write((pmc.tsc_mult.read() & 0xFFFF_0000) | 0x249F); //0x249F = (16 / 32.768 kHz)
 
     // Set SCLK div to 1.
-    car.clk_source_sys.set(0);
+    car.clk_source_sys.write(0);
     // Set clk source to Run and PLLP_OUT2 (204MHz).
-    car.sclk_brst_pol.set(0x2000_4444);
+    car.sclk_brst_pol.write(0x2000_4444);
     // Enable SUPER_SDIV to 1.
-    car.super_sclk_div.set(0x8000_0000);
+    car.super_sclk_div.write(0x8000_0000);
     // Set HCLK div to 1 and PCLK div to 3.
-    car.clk_sys_rate.set(2);
+    car.clk_sys_rate.write(2);
 }
 
 fn config_gpios(pinmux: &Pinmux) {
-    pinmux.uart2_tx.set(0);
-    pinmux.uart3_tx.set(0);
+    pinmux.uart2_tx.write(0);
+    pinmux.uart3_tx.write(0);
 
     // Set Joy-Con IsAttached direction.
-    pinmux.pe6.set(INPUT);
-    pinmux.ph6.set(INPUT);
+    pinmux.pe6.write(INPUT);
+    pinmux.ph6.write(INPUT);
 
     // Enable input logic for Joy-Con IsAttached and UART_B/C TX pins.
     gpio!(G, 0).config(GpioConfig::Input);
@@ -154,82 +145,77 @@ fn config_gpios(pinmux: &Pinmux) {
 }
 
 fn config_pmc_scratch(pmc: &Pmc) {
-    pmc.scratch20.set(pmc.scratch20.get() & 0xFFF3_FFFF);
-    pmc.scratch190.set(pmc.scratch190.get() & 0xFFFF_FFFE);
-    pmc.secure_scratch21.set(pmc.secure_scratch21.get() | 0x10);
+    pmc.scratch20.write(pmc.scratch20.read() & 0xFFF3_FFFF);
+    pmc.scratch190.write(pmc.scratch190.read() & 0xFFFF_FFFE);
+    pmc.secure_scratch21.write(pmc.secure_scratch21.read() | 0x10);
 }
 
 fn mbist_workaround(car: &Car) {
-    car.clk_source_sor1
-        .set((car.clk_source_sor1.get() | 0x8000) & 0xFFFF_BFFF);
-    car.plld_base.set(car.plld_base.get() | 0x4080_0000);
-    car.rst_dev_y_clr.set(0x40);
-    car.rst_dev_x_clr.set(0x40000);
-    car.rst_dev_l_clr.set(0x1800_0000);
+    car.clk_source_sor1.write((car.clk_source_sor1.read() | 0x8000) & 0xFFFF_BFFF);
+    car.plld_base.write(car.plld_base.read() | 0x4080_0000);
+    car.rst_dev_y_clr.write(0x40);
+    car.rst_dev_x_clr.write(0x40000);
+    car.rst_dev_l_clr.write(0x1800_0000);
     usleep(2);
 
     // Setup I2S.
-    I2S1_CTRL.set(I2S1_CTRL.get() | 0x400);
-    I2S1_CG.set(I2S1_CG.get() & 0xFFFF_FFFE);
-    I2S2_CTRL.set(I2S2_CTRL.get() | 0x400);
-    I2S2_CG.set(I2S2_CG.get() & 0xFFFF_FFFE);
-    I2S3_CTRL.set(I2S3_CTRL.get() | 0x400);
-    I2S3_CG.set(I2S3_CG.get() & 0xFFFF_FFFE);
-    I2S4_CTRL.set(I2S4_CTRL.get() | 0x400);
-    I2S4_CG.set(I2S4_CG.get() & 0xFFFF_FFFE);
-    I2S5_CTRL.set(I2S5_CTRL.get() | 0x400);
-    I2S5_CG.set(I2S5_CG.get() & 0xFFFF_FFFE);
+    I2S1_CTRL.write(I2S1_CTRL.read() | 0x400);
+    I2S1_CG.write(I2S1_CG.read() & 0xFFFF_FFFE);
+    I2S2_CTRL.write(I2S2_CTRL.read() | 0x400);
+    I2S2_CG.write(I2S2_CG.read() & 0xFFFF_FFFE);
+    I2S3_CTRL.write(I2S3_CTRL.read() | 0x400);
+    I2S3_CG.write(I2S3_CG.read() & 0xFFFF_FFFE);
+    I2S4_CTRL.write(I2S4_CTRL.read() | 0x400);
+    I2S4_CG.write(I2S4_CG.read() & 0xFFFF_FFFE);
+    I2S5_CTRL.write(I2S5_CTRL.read() | 0x400);
+    I2S5_CG.write(I2S5_CG.read() & 0xFFFF_FFFE);
 
     unsafe {
-        let dc_com_dsc_top_ctl = &*((0x5420_0000 + 0x33E * 4) as *const ReadWrite<u32>);
-        dc_com_dsc_top_ctl.set(dc_com_dsc_top_ctl.get() | 4);
-        (*((0x5434_0000 + 0x8C) as *const ReadWrite<u32>)).set(0xFFFF_FFFF);
+        let dc_com_dsc_top_ctl = Mmio::new((0x5420_0000 + 0x33E * 4) as *const u32);
+        dc_com_dsc_top_ctl.write(dc_com_dsc_top_ctl.read() | 4);
+        Mmio::new((0x5434_0000 + 0x8C) as *const u32).write(0xFFFF_FFFF);
     }
     usleep(2);
 
     // Set devices in reset.
-    car.rst_dev_y_set.set(0x40);
-    car.rst_dev_l_set.set(0x1800_0000);
-    car.rst_dev_x_set.set(0x40000);
+    car.rst_dev_y_set.write(0x40);
+    car.rst_dev_l_set.write(0x1800_0000);
+    car.rst_dev_x_set.write(0x40000);
 
     // Clock out enables.
-    car.clk_out_enb_h.set(0xC0);
-    car.clk_out_enb_l.set(0x8000_0130);
-    car.clk_out_enb_u.set(0x1F00200);
-    car.clk_out_enb_v.set(0x8040_0808);
-    car.clk_out_enb_w.set(0x4020_00FC);
-    car.clk_out_enb_x.set(0x2300_0780);
-    car.clk_out_enb_y.set(0x300);
+    car.clk_out_enb_h.write(0xC0);
+    car.clk_out_enb_l.write(0x8000_0130);
+    car.clk_out_enb_u.write(0x1F00200);
+    car.clk_out_enb_v.write(0x8040_0808);
+    car.clk_out_enb_w.write(0x4020_00FC);
+    car.clk_out_enb_x.write(0x2300_0780);
+    car.clk_out_enb_y.write(0x300);
 
     // LVL2 clock gate overrides.
-    car.lvl2_clk_gate_ovra.set(0);
-    car.lvl2_clk_gate_ovrb.set(0);
-    car.lvl2_clk_gate_ovrc.set(0);
-    car.lvl2_clk_gate_ovrd.set(0);
-    car.lvl2_clk_gate_ovre.set(0);
+    car.lvl2_clk_gate_ovra.write(0);
+    car.lvl2_clk_gate_ovrb.write(0);
+    car.lvl2_clk_gate_ovrc.write(0);
+    car.lvl2_clk_gate_ovrd.write(0);
+    car.lvl2_clk_gate_ovre.write(0);
 
     // Configure clock sources.
-    car.plld_base.set(car.plld_base.get() & 0x1F7F_FFFF);
-    car.clk_source_sor1
-        .set(car.clk_source_sor1.get() & 0xFFFF_3FFF);
-    car.clk_source_vi
-        .set((car.clk_source_vi.get() & 0x1FFF_FFFF) | 0x8000_0000);
-    car.clk_source_host1x
-        .set((car.clk_source_host1x.get() & 0x1FFF_FFFF) | 0x8000_0000);
-    car.clk_source_nvenc
-        .set((car.clk_source_nvenc.get() & 0x1FFF_FFFF) | 0x8000_0000);
+    car.plld_base.write(car.plld_base.read() & 0x1F7F_FFFF);
+    car.clk_source_sor1.write(car.clk_source_sor1.read() & 0xFFFF_3FFF);
+    car.clk_source_vi.write((car.clk_source_vi.read() & 0x1FFF_FFFF) | 0x8000_0000);
+    car.clk_source_host1x.write((car.clk_source_host1x.read() & 0x1FFF_FFFF) | 0x8000_0000);
+    car.clk_source_nvenc.write((car.clk_source_nvenc.read() & 0x1FFF_FFFF) | 0x8000_0000);
 }
 
 fn config_se_brom(pmc: &Pmc) {
-    let fuse_chip = unsafe { &*fuse::FuseChip::get() };
+    let fuse_chip = unsafe { FuseChip::get() };
 
     // Bootrom part we skipped.
     // TODO(Vale): Do the private_key parts even fit an u8?
     let sbk = [
-        fuse_chip.private_key[0].get() as u8,
-        fuse_chip.private_key[1].get() as u8,
-        fuse_chip.private_key[2].get() as u8,
-        fuse_chip.private_key[3].get() as u8,
+        fuse_chip.private_key[0].read() as u8,
+        fuse_chip.private_key[1].read() as u8,
+        fuse_chip.private_key[2].read() as u8,
+        fuse_chip.private_key[3].read() as u8,
     ];
     SECURITY_ENGINE.set_aes_keyslot(0xE, &sbk);
 
@@ -240,31 +226,30 @@ fn config_se_brom(pmc: &Pmc) {
         write_bytes(0x7C010000 as *mut u32, 0, 0x10000);
     }
 
-    pmc.crypto_op.set(0);
+    pmc.crypto_op.write(0);
     SECURITY_ENGINE.config_brom();
 
     SECURITY_ENGINE.lock_ssk();
 
     // Clear the boot reason to avoid problems later.
-    pmc.scratch200.set(0);
-    pmc.reset_status.set(0);
+    pmc.scratch200.write(0);
+    pmc.reset_status.write(0);
 }
 
 /// Initializes the Switch hardware in an early bootrom context.
 pub fn hardware_init() {
-    let car = &Car::new();
-    let pinmux = &Pinmux::new();
-    let pmc = &Pmc::new();
+    let car = unsafe { Car::get() };
+    let pinmux = unsafe { Pinmux::get() };
+    let pmc = unsafe { Pmc::get() };
 
     // Bootrom stuff that was skipped by going through RCM.
     config_se_brom(pmc);
 
     unsafe {
-        let ahb_spare_reg_0 = &*((0x6000_C000 + 0x110) as *const ReadWrite<u32>);
-        ahb_spare_reg_0.set(ahb_spare_reg_0.get() & 0xFFFF_FF9F);
+        let ahb_spare_reg = Mmio::new((0x6000_C000 + 0x110) as *const u32);
+        ahb_spare_reg.write(ahb_spare_reg.read() & 0xFFFF_FF9F);
     }
-    pmc.scratch49
-        .set(((pmc.scratch49.get() >> 1) << 1) & 0xFFFF_FFFD);
+    pmc.scratch49.write(((pmc.scratch49.read() >> 1) << 1) & 0xFFFF_FFFD);
 
     // Apply the memory built-in self test workaround.
     mbist_workaround(car);
@@ -283,7 +268,7 @@ pub fn hardware_init() {
 
     // Disable pinmux tristate input clamping.
     unsafe {
-        (*((0x7000_0000 + 0x40) as *const ReadWrite<u32>)).set(0);
+        Mmio::new((0x7000_0000 + 0x40) as *const u32).write(0);
     }
 
     // Configure GPIOs.
@@ -291,12 +276,6 @@ pub fn hardware_init() {
 
     // Reboot CL-DVFS.
     Clock::CL_DVFS.enable();
-
-    // Reboot I2C1.
-    Clock::I2C_1.enable();
-
-    // Reboot I2C5.
-    Clock::I2C_5.enable();
 
     // Reboot TZRAM.
     Clock::TZRAM.enable();
@@ -343,14 +322,15 @@ pub fn hardware_init() {
         .unwrap();
 
     // Configure SD0 voltage.
-    I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x16, 42).unwrap();
+    I2c::C5
+        .write_byte(MAX77620_PWR_I2C_ADDR, 0x16, 42)
+        .unwrap();
 
     // Configure and lock PMC scratch registers.
     config_pmc_scratch(pmc);
 
     // Set super clock burst policy.
-    car.sclk_brst_pol
-        .set((car.sclk_brst_pol.get() & 0xFFFF_8888) | 0x3333);
+    car.sclk_brst_pol.write((car.sclk_brst_pol.read() & 0xFFFF_8888) | 0x3333);
 
     // Initialize SDRAM.
     sdram::init(car, pmc);

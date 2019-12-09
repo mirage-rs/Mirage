@@ -20,13 +20,13 @@
 //! [`LineControl`], [`LineStatus`], [`VendorStatus`] are abstractions
 //! over possible values in these UART registers.
 //!
-//! - The [`Registers`] struct along with its factory methods provide
-//! abstractions over the UART registers and the possibility to create
-//! pointers to each UART mapped at a different address.
+//! - The [`Registers`] struct provides abstraction over the UART
+//! registers and the possibility to create pointers to each UART
+//! mapped at a different address.
 //!
 //! - The [`Uart`] struct is an abstraction over a UART which holds
-//! the corresponding [`Clock`] for enabling the device and the
-//! [`Registers`] block to do communication.
+//! the corresponding [`Clock`] for enabling the device and a pointer
+//! to the respective [`Registers`] block to do communication.
 //!
 //! - [`Uart`] holds pre-defined constants which represent the UARTs
 //! A through E and should be preferred over creating instances of
@@ -47,6 +47,8 @@
 //! # Example
 //!
 //! ```
+//! use core::fmt::Write;
+//!
 //! use mirage_libswitch::uart::Uart;
 //!
 //! fn main() {
@@ -77,20 +79,20 @@ use core::{
     marker::{Send, Sync},
 };
 
-use register::mmio::ReadWrite;
+use mirage_mmio::Mmio;
 
 use crate::{clock::Clock, timer::usleep};
 
 /// Base address for the UART A registers.
-const UART_A_BASE: u32 = 0x7000_6000;
+pub(crate) const UART_A_BASE: u32 = 0x7000_6000;
 /// Base address for the UART B registers.
-const UART_B_BASE: u32 = 0x7000_6040;
+pub(crate) const UART_B_BASE: u32 = 0x7000_6040;
 /// Base address for the UART C registers.
-const UART_C_BASE: u32 = 0x7000_6200;
+pub(crate) const UART_C_BASE: u32 = 0x7000_6200;
 /// Base address for the UART D registers.
-const UART_D_BASE: u32 = 0x7000_6300;
+pub(crate) const UART_D_BASE: u32 = 0x7000_6300;
 /// Base address for the UART E registers.
-const UART_E_BASE: u32 = 0x7000_6400;
+pub(crate) const UART_E_BASE: u32 = 0x7000_6400;
 
 bitflags! {
     /// Representation of the `UART_IIR_FCR_0` register.
@@ -255,73 +257,41 @@ bitflags! {
 /// Representation of the UART registers.
 #[allow(non_snake_case)]
 #[repr(C)]
-struct Registers {
+pub struct Registers {
     /// The `UART_THR_DLAB_0_0` register.
-    pub THR_DLAB: ReadWrite<u32>,
+    pub THR_DLAB: Mmio<u32>,
     /// The `UART_IER_DLAB_0_0` register.
-    pub IER_DLAB: ReadWrite<u32>,
+    pub IER_DLAB: Mmio<u32>,
     /// The `UART_IIR_FCR_0` register.
-    pub IIR_FCR: ReadWrite<u32>,
+    pub IIR_FCR: Mmio<u32>,
     /// The `UART_LCR_0` register.
-    pub LCR: ReadWrite<u32>,
+    pub LCR: Mmio<u32>,
     /// The `UART_MCR_0` register.
-    pub MCR: ReadWrite<u32>,
+    pub MCR: Mmio<u32>,
     /// The `UART_LSR_0` register.
-    pub LSR: ReadWrite<u32>,
+    pub LSR: Mmio<u32>,
     /// The `UART_MSR_0` register.
-    pub MSR: ReadWrite<u32>,
+    pub MSR: Mmio<u32>,
     /// The `UART_SPR_0` register.
-    pub SPR: ReadWrite<u32>,
+    pub SPR: Mmio<u32>,
     /// The `UART_IRDA_CSR_0` register.
-    pub IRDA_CSR: ReadWrite<u32>,
+    pub IRDA_CSR: Mmio<u32>,
     /// The `UART_RX_FIFO_CFG_0` register.
-    pub RX_FIFO_CFG: ReadWrite<u32>,
+    pub RX_FIFO_CFG: Mmio<u32>,
     /// The `UART_MIE_0` register.
-    pub MIE: ReadWrite<u32>,
+    pub MIE: Mmio<u32>,
     /// The `UART_VENDOR_STATUS_0_0` register.
-    pub VENDOR_STATUS: ReadWrite<u32>,
-    _unk: [u8; 0xC],
+    pub VENDOR_STATUS: Mmio<u32>,
+    _unk: [Mmio<u8>; 0xC],
     /// The `UART_ASR_0` register.
-    pub ASR: ReadWrite<u32>,
-}
-
-impl Registers {
-    /// Factory method to create a pointer to the UART A registers.
-    #[inline]
-    pub const fn get_a() -> &'static Self {
-        unsafe { &*(UART_A_BASE as *const Registers) }
-    }
-
-    /// Factory method to create a pointer to the UART B registers.
-    #[inline]
-    pub const fn get_b() -> &'static Self {
-        unsafe { &*(UART_B_BASE as *const Registers) }
-    }
-
-    /// Factory method to create a pointer to the UART C registers.
-    #[inline]
-    pub const fn get_c() -> &'static Self {
-        unsafe { &*(UART_C_BASE as *const Registers) }
-    }
-
-    /// Factory method to create a pointer to the UART D registers.
-    #[inline]
-    pub const fn get_d() -> &'static Self {
-        unsafe { &*(UART_D_BASE as *const Registers) }
-    }
-
-    /// Factory method to create a pointer to the UART E registers.
-    #[inline]
-    pub const fn get_e() -> &'static Self {
-        unsafe { &*(UART_E_BASE as *const Registers) }
-    }
+    pub ASR: Mmio<u32>,
 }
 
 /// Representation of a UART.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Uart {
-    /// The UART CPU registers used for communication.
-    registers: &'static Registers,
+    /// A pointer to the UART CPU registers used for communication.
+    registers: *const Registers,
     /// The device clock to enable data transfer.
     clock: &'static Clock,
 }
@@ -330,31 +300,31 @@ pub struct Uart {
 impl Uart {
     /// Representation of the UART A.
     pub const A: Self = Uart {
-        registers: Registers::get_a(),
+        registers: UART_A_BASE as *const Registers,
         clock: &Clock::UART_A,
     };
 
     /// Representation of the UART B.
     pub const B: Self = Uart {
-        registers: Registers::get_b(),
+        registers: UART_B_BASE as *const Registers,
         clock: &Clock::UART_B,
     };
 
     /// Representation of the UART C.
     pub const C: Self = Uart {
-        registers: Registers::get_c(),
+        registers: UART_C_BASE as *const Registers,
         clock: &Clock::UART_C,
     };
 
     /// Representation of the UART D.
     pub const D: Self = Uart {
-        registers: Registers::get_d(),
+        registers: UART_D_BASE as *const Registers,
         clock: &Clock::UART_D,
     };
 
     /// Representation of the UART APE.
     pub const E: Self = Uart {
-        registers: Registers::get_e(),
+        registers: UART_E_BASE as *const Registers,
         clock: &Clock::UART_APE,
     };
 }
@@ -375,31 +345,39 @@ impl Uart {
     /// Blocks until the line has entered the desired state.
     #[inline]
     pub fn wait_idle(&self, status: VendorStatus) {
+        let register_base = unsafe { &*self.registers };
+
         if status.contains(VendorStatus::UART_TX_IDLE) {
-            while (self.registers.LSR.get() & LineStatus::TMTY.bits()) == 0 {}
+            while (register_base.LSR.read() & LineStatus::TMTY.bits()) == 0 {}
         }
 
         if status.contains(VendorStatus::UART_RX_IDLE) {
-            while (self.registers.LSR.get() & LineStatus::RDR.bits()) == 0 {}
+            while (register_base.LSR.read() & LineStatus::RDR.bits()) == 0 {}
         }
     }
 
     /// Waits until data have been transmitted.
     #[inline]
     fn wait_transmit(&self) {
-        while (self.registers.LSR.get() & LineStatus::THRE.bits()) == 0 {}
+        let register_base = unsafe { &*self.registers };
+
+        while (register_base.LSR.read() & LineStatus::THRE.bits()) == 0 {}
     }
 
     /// Waits until data have been received.
     #[inline]
     fn wait_receive(&self) {
-        while (self.registers.LSR.get() & LineStatus::RDR.bits()) == 0 {}
+        let register_base = unsafe { &*self.registers };
+
+        while (register_base.LSR.read() & LineStatus::RDR.bits()) == 0 {}
     }
 
     /// Initializes the UART.
     pub fn init(&self, baud: u32) {
         // Enable device clock.
         self.clock.enable();
+
+        let register_base = unsafe { &*self.registers };
 
         // Wait for TX idle state.
         self.wait_idle(VendorStatus::UART_TX_IDLE);
@@ -408,66 +386,59 @@ impl Uart {
         let baud_rate = (8 * baud + 408_000_000) / (16 * baud);
 
         // Disable interrupts.
-        self.registers.IER_DLAB.set(0);
+        register_base.IER_DLAB.write(0);
 
         // No hardware flow control.
-        self.registers.MCR.set(0);
+        register_base.MCR.write(0);
 
         // Enable DLAB and set word length to 8.
-        self.registers
-            .LCR
-            .set((LineControl::DLAB | LineControl::WORD_LENGTH_8).bits());
+        register_base.LCR.write((LineControl::DLAB | LineControl::WORD_LENGTH_8).bits());
 
-        self.registers.THR_DLAB.set(baud_rate);
-        self.registers.IER_DLAB.set(baud_rate >> 8);
+        register_base.THR_DLAB.write(baud_rate);
+        register_base.IER_DLAB.write(baud_rate >> 8);
 
         // Disable DLAB.
-        self.registers
-            .LCR
-            .set(self.registers.LCR.get() & !LineControl::DLAB.bits());
+        register_base.LCR.write(register_base.LCR.read() & !LineControl::DLAB.bits());
 
-        self.registers.SPR.get(); // Dummy read.
+        register_base.SPR.read(); // Dummy read.
         self.wait_symbols(baud, 3); // Wait for 3 symbols.
 
         // Enable FIFO.
-        self.registers.IIR_FCR.set(FifoControl::FCR_EN_FIFO.bits());
-        self.registers.SPR.get(); // Dummy read.
+        register_base.IIR_FCR.write(FifoControl::FCR_EN_FIFO.bits());
+        register_base.SPR.read(); // Dummy read.
         self.wait_cycles(baud, 3); // Wait for 3 baud cycles.
 
         // Flush FIFO.
         self.wait_idle(VendorStatus::UART_TX_IDLE); // Ensure no data is being written to TX FIFO.
-        self.registers
-            .IIR_FCR
-            .set(self.registers.IIR_FCR.get() | (FifoControl::RX_CLR | FifoControl::TX_CLR).bits()); // Clear TX and RX FIFOs.
+        register_base.IIR_FCR.write(
+            register_base.IIR_FCR.read() | (FifoControl::RX_CLR | FifoControl::TX_CLR).bits(),
+        ); // Clear TX and RX FIFOs.
         self.wait_cycles(baud, 32); // Wait for 32 baud cycles.
 
         // Wait for idle state.
         self.wait_idle(VendorStatus::UART_TX_IDLE | VendorStatus::UART_RX_IDLE);
     }
 
-    /// Writes a byte over UART.
+    /// Writes a byte (`u8`) over UART.
     pub fn write_byte(&self, byte: u8) {
+        let register_base = unsafe { &*self.registers };
+
         // Wait until it is possible to write data.
         self.wait_transmit();
 
         // Write the byte.
-        self.registers.THR_DLAB.set(u32::from(byte));
-    }
-
-    /// Writes a buffer of `u8` data over UART.
-    pub fn write(&self, data: &[u8]) {
-        for byte in data {
-            self.write_byte(*byte);
-        }
+        register_base.THR_DLAB.write(u32::from(byte));
     }
 
     /// Reads a byte (`u8`) over UART.
     pub fn read_byte(&self) -> u8 {
+        let register_base = unsafe { &*self.registers };
+
         // Wait until it is possible to read data.
         self.wait_receive();
 
         // Read byte.
-        self.registers.THR_DLAB.get() as u8
+        register_base.THR_DLAB.read() as u8
     }
 
     /// Reads bytes into a buffer.
@@ -481,7 +452,9 @@ impl Uart {
 impl Write for Uart {
     fn write_str(&mut self, s: &str) -> Result<(), Error> {
         // Write data.
-        self.write(s.as_bytes());
+        for byte in s.as_bytes() {
+            self.write_byte(*byte);
+        }
 
         // Wait for everything to be written.
         self.wait_transmit();

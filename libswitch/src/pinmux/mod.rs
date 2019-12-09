@@ -65,14 +65,12 @@
 //! [`configure_uart`]: fn.configure_uart.html
 //! [`configure_i2c`]: fn.configure_i2c.html
 
-use core::ops::Deref;
-
-use register::mmio::*;
+use mirage_mmio::{Mmio, VolatileStorage};
 
 use crate::{i2c::I2c, uart::Uart};
 
 /// The base address for Pinmux registers.
-const PINMUX_BASE: u32 = 0x7000_3000;
+pub(crate) const PINMUX_BASE: u32 = 0x7000_3000;
 
 /// Configuration value for no pulls.
 pub const PULL_NONE: u32 = (0 << 2);
@@ -137,231 +135,213 @@ pub const SCHMT: u32 = (1 << 12);
 
 /// Representation of the Pinmux registers.
 #[repr(C)]
-pub struct Registers {
-    pub sdmmc1_clk: ReadWrite<u32>,
-    pub sdmmc1_cmd: ReadWrite<u32>,
-    pub sdmmc1_dat3: ReadWrite<u32>,
-    pub sdmmc1_dat2: ReadWrite<u32>,
-    pub sdmmc1_dat1: ReadWrite<u32>,
-    pub sdmmc1_dat0: ReadWrite<u32>,
-    _r18: ReadWrite<u32>,
-    pub sdmmc3_clk: ReadWrite<u32>,
-    pub sdmmc3_cmd: ReadWrite<u32>,
-    pub sdmmc3_dat0: ReadWrite<u32>,
-    pub sdmmc3_dat1: ReadWrite<u32>,
-    pub sdmmc3_dat2: ReadWrite<u32>,
-    pub sdmmc3_dat3: ReadWrite<u32>,
-    _r34: ReadWrite<u32>,
-    pub pex_l0_rst_n: ReadWrite<u32>,
-    pub pex_l0_clkreq_n: ReadWrite<u32>,
-    pub pex_wake_n: ReadWrite<u32>,
-    pub pex_l1_rst_n: ReadWrite<u32>,
-    pub pex_l1_clkreq_n: ReadWrite<u32>,
-    pub sata_led_active: ReadWrite<u32>,
-    pub spi1_mosi: ReadWrite<u32>,
-    pub spi1_miso: ReadWrite<u32>,
-    pub spi1_sck: ReadWrite<u32>,
-    pub spi1_cs0: ReadWrite<u32>,
-    pub spi1_cs1: ReadWrite<u32>,
-    pub spi2_mosi: ReadWrite<u32>,
-    pub spi2_miso: ReadWrite<u32>,
-    pub spi2_sck: ReadWrite<u32>,
-    pub spi2_cs0: ReadWrite<u32>,
-    pub spi2_cs1: ReadWrite<u32>,
-    pub spi4_mosi: ReadWrite<u32>,
-    pub spi4_miso: ReadWrite<u32>,
-    pub spi4_sck: ReadWrite<u32>,
-    pub spi4_cs0: ReadWrite<u32>,
-    pub qspi_sck: ReadWrite<u32>,
-    pub qspi_cs_n: ReadWrite<u32>,
-    pub qspi_io0: ReadWrite<u32>,
-    pub qspi_io1: ReadWrite<u32>,
-    pub qspi_io2: ReadWrite<u32>,
-    pub qspi_io3: ReadWrite<u32>,
-    _ra0: ReadWrite<u32>,
-    pub dmic1_clk: ReadWrite<u32>,
-    pub dmic1_dat: ReadWrite<u32>,
-    pub dmic2_clk: ReadWrite<u32>,
-    pub dmic2_dat: ReadWrite<u32>,
-    pub dmic3_clk: ReadWrite<u32>,
-    pub dmic3_dat: ReadWrite<u32>,
-    pub gen1_i2c_scl: ReadWrite<u32>,
-    pub gen1_i2c_sda: ReadWrite<u32>,
-    pub gen2_i2c_scl: ReadWrite<u32>,
-    pub gen2_i2c_sda: ReadWrite<u32>,
-    pub gen3_i2c_scl: ReadWrite<u32>,
-    pub gen3_i2c_sda: ReadWrite<u32>,
-    pub cam_i2c_scl: ReadWrite<u32>,
-    pub cam_i2c_sda: ReadWrite<u32>,
-    pub pwr_i2c_scl: ReadWrite<u32>,
-    pub pwr_i2c_sda: ReadWrite<u32>,
-    pub uart1_tx: ReadWrite<u32>,
-    pub uart1_rx: ReadWrite<u32>,
-    pub uart1_rts: ReadWrite<u32>,
-    pub uart1_cts: ReadWrite<u32>,
-    pub uart2_tx: ReadWrite<u32>,
-    pub uart2_rx: ReadWrite<u32>,
-    pub uart2_rts: ReadWrite<u32>,
-    pub uart2_cts: ReadWrite<u32>,
-    pub uart3_tx: ReadWrite<u32>,
-    pub uart3_rx: ReadWrite<u32>,
-    pub uart3_rts: ReadWrite<u32>,
-    pub uart3_cts: ReadWrite<u32>,
-    pub uart4_tx: ReadWrite<u32>,
-    pub uart4_rx: ReadWrite<u32>,
-    pub uart4_rts: ReadWrite<u32>,
-    pub uart4_cts: ReadWrite<u32>,
-    pub dap1_fs: ReadWrite<u32>,
-    pub dap1_din: ReadWrite<u32>,
-    pub dap1_dout: ReadWrite<u32>,
-    pub dap1_sclk: ReadWrite<u32>,
-    pub dap2_fs: ReadWrite<u32>,
-    pub dap2_din: ReadWrite<u32>,
-    pub dap2_dout: ReadWrite<u32>,
-    pub dap2_sclk: ReadWrite<u32>,
-    pub dap4_fs: ReadWrite<u32>,
-    pub dap4_din: ReadWrite<u32>,
-    pub dap4_dout: ReadWrite<u32>,
-    pub dap4_sclk: ReadWrite<u32>,
-    pub cam1_mclk: ReadWrite<u32>,
-    pub cam2_mclk: ReadWrite<u32>,
-    pub jtag_rtck: ReadWrite<u32>,
-    pub clk_32k_in: ReadWrite<u32>,
-    pub clk_32k_out: ReadWrite<u32>,
-    pub batt_bcl: ReadWrite<u32>,
-    pub clk_req: ReadWrite<u32>,
-    pub cpu_pwr_req: ReadWrite<u32>,
-    pub pwr_int_n: ReadWrite<u32>,
-    pub shutdown: ReadWrite<u32>,
-    pub core_pwr_req: ReadWrite<u32>,
-    pub aud_mclk: ReadWrite<u32>,
-    pub dvfs_pwm: ReadWrite<u32>,
-    pub dvfs_clk: ReadWrite<u32>,
-    pub gpio_x1_aud: ReadWrite<u32>,
-    pub gpio_x3_aud: ReadWrite<u32>,
-    pub pcc7: ReadWrite<u32>,
-    pub hdmi_cec: ReadWrite<u32>,
-    pub hdmi_int_dp_hpd: ReadWrite<u32>,
-    pub spdif_out: ReadWrite<u32>,
-    pub spdif_in: ReadWrite<u32>,
-    pub usb_vbus_en0: ReadWrite<u32>,
-    pub usb_vbus_en1: ReadWrite<u32>,
-    pub dp_hpd0: ReadWrite<u32>,
-    pub wifi_en: ReadWrite<u32>,
-    pub wifi_rst: ReadWrite<u32>,
-    pub wifi_wake_ap: ReadWrite<u32>,
-    pub ap_wake_bt: ReadWrite<u32>,
-    pub bt_rst: ReadWrite<u32>,
-    pub bt_wake_ap: ReadWrite<u32>,
-    pub ap_wake_nfc: ReadWrite<u32>,
-    pub nfc_en: ReadWrite<u32>,
-    pub nfc_int: ReadWrite<u32>,
-    pub gps_en: ReadWrite<u32>,
-    pub gps_rst: ReadWrite<u32>,
-    pub cam_rst: ReadWrite<u32>,
-    pub cam_af_en: ReadWrite<u32>,
-    pub cam_flash_en: ReadWrite<u32>,
-    pub cam1_pwdn: ReadWrite<u32>,
-    pub cam2_pwdn: ReadWrite<u32>,
-    pub cam1_strobe: ReadWrite<u32>,
-    pub lcd_te: ReadWrite<u32>,
-    pub lcd_bl_pwm: ReadWrite<u32>,
-    pub lcd_bl_en: ReadWrite<u32>,
-    pub lcd_rst: ReadWrite<u32>,
-    pub lcd_gpio1: ReadWrite<u32>,
-    pub lcd_gpio2: ReadWrite<u32>,
-    pub ap_ready: ReadWrite<u32>,
-    pub touch_rst: ReadWrite<u32>,
-    pub touch_clk: ReadWrite<u32>,
-    pub modem_wake_ap: ReadWrite<u32>,
-    pub touch_int: ReadWrite<u32>,
-    pub motion_int: ReadWrite<u32>,
-    pub als_prox_int: ReadWrite<u32>,
-    pub temp_alert: ReadWrite<u32>,
-    pub button_power_on: ReadWrite<u32>,
-    pub button_vol_up: ReadWrite<u32>,
-    pub button_vol_down: ReadWrite<u32>,
-    pub button_slide_sw: ReadWrite<u32>,
-    pub button_home: ReadWrite<u32>,
-    pub pa6: ReadWrite<u32>,
-    pub pe6: ReadWrite<u32>,
-    pub pe7: ReadWrite<u32>,
-    pub ph6: ReadWrite<u32>,
-    pub pk0: ReadWrite<u32>,
-    pub pk1: ReadWrite<u32>,
-    pub pk2: ReadWrite<u32>,
-    pub pk3: ReadWrite<u32>,
-    pub pk4: ReadWrite<u32>,
-    pub pk5: ReadWrite<u32>,
-    pub pk6: ReadWrite<u32>,
-    pub pk7: ReadWrite<u32>,
-    pub pl0: ReadWrite<u32>,
-    pub pl1: ReadWrite<u32>,
-    pub pz0: ReadWrite<u32>,
-    pub pz1: ReadWrite<u32>,
-    pub pz2: ReadWrite<u32>,
-    pub pz3: ReadWrite<u32>,
-    pub pz4: ReadWrite<u32>,
-    pub pz5: ReadWrite<u32>,
+pub struct Pinmux {
+    pub sdmmc1_clk: Mmio<u32>,
+    pub sdmmc1_cmd: Mmio<u32>,
+    pub sdmmc1_dat3: Mmio<u32>,
+    pub sdmmc1_dat2: Mmio<u32>,
+    pub sdmmc1_dat1: Mmio<u32>,
+    pub sdmmc1_dat0: Mmio<u32>,
+    _r18: Mmio<u32>,
+    pub sdmmc3_clk: Mmio<u32>,
+    pub sdmmc3_cmd: Mmio<u32>,
+    pub sdmmc3_dat0: Mmio<u32>,
+    pub sdmmc3_dat1: Mmio<u32>,
+    pub sdmmc3_dat2: Mmio<u32>,
+    pub sdmmc3_dat3: Mmio<u32>,
+    _r34: Mmio<u32>,
+    pub pex_l0_rst_n: Mmio<u32>,
+    pub pex_l0_clkreq_n: Mmio<u32>,
+    pub pex_wake_n: Mmio<u32>,
+    pub pex_l1_rst_n: Mmio<u32>,
+    pub pex_l1_clkreq_n: Mmio<u32>,
+    pub sata_led_active: Mmio<u32>,
+    pub spi1_mosi: Mmio<u32>,
+    pub spi1_miso: Mmio<u32>,
+    pub spi1_sck: Mmio<u32>,
+    pub spi1_cs0: Mmio<u32>,
+    pub spi1_cs1: Mmio<u32>,
+    pub spi2_mosi: Mmio<u32>,
+    pub spi2_miso: Mmio<u32>,
+    pub spi2_sck: Mmio<u32>,
+    pub spi2_cs0: Mmio<u32>,
+    pub spi2_cs1: Mmio<u32>,
+    pub spi4_mosi: Mmio<u32>,
+    pub spi4_miso: Mmio<u32>,
+    pub spi4_sck: Mmio<u32>,
+    pub spi4_cs0: Mmio<u32>,
+    pub qspi_sck: Mmio<u32>,
+    pub qspi_cs_n: Mmio<u32>,
+    pub qspi_io0: Mmio<u32>,
+    pub qspi_io1: Mmio<u32>,
+    pub qspi_io2: Mmio<u32>,
+    pub qspi_io3: Mmio<u32>,
+    _ra0: Mmio<u32>,
+    pub dmic1_clk: Mmio<u32>,
+    pub dmic1_dat: Mmio<u32>,
+    pub dmic2_clk: Mmio<u32>,
+    pub dmic2_dat: Mmio<u32>,
+    pub dmic3_clk: Mmio<u32>,
+    pub dmic3_dat: Mmio<u32>,
+    pub gen1_i2c_scl: Mmio<u32>,
+    pub gen1_i2c_sda: Mmio<u32>,
+    pub gen2_i2c_scl: Mmio<u32>,
+    pub gen2_i2c_sda: Mmio<u32>,
+    pub gen3_i2c_scl: Mmio<u32>,
+    pub gen3_i2c_sda: Mmio<u32>,
+    pub cam_i2c_scl: Mmio<u32>,
+    pub cam_i2c_sda: Mmio<u32>,
+    pub pwr_i2c_scl: Mmio<u32>,
+    pub pwr_i2c_sda: Mmio<u32>,
+    pub uart1_tx: Mmio<u32>,
+    pub uart1_rx: Mmio<u32>,
+    pub uart1_rts: Mmio<u32>,
+    pub uart1_cts: Mmio<u32>,
+    pub uart2_tx: Mmio<u32>,
+    pub uart2_rx: Mmio<u32>,
+    pub uart2_rts: Mmio<u32>,
+    pub uart2_cts: Mmio<u32>,
+    pub uart3_tx: Mmio<u32>,
+    pub uart3_rx: Mmio<u32>,
+    pub uart3_rts: Mmio<u32>,
+    pub uart3_cts: Mmio<u32>,
+    pub uart4_tx: Mmio<u32>,
+    pub uart4_rx: Mmio<u32>,
+    pub uart4_rts: Mmio<u32>,
+    pub uart4_cts: Mmio<u32>,
+    pub dap1_fs: Mmio<u32>,
+    pub dap1_din: Mmio<u32>,
+    pub dap1_dout: Mmio<u32>,
+    pub dap1_sclk: Mmio<u32>,
+    pub dap2_fs: Mmio<u32>,
+    pub dap2_din: Mmio<u32>,
+    pub dap2_dout: Mmio<u32>,
+    pub dap2_sclk: Mmio<u32>,
+    pub dap4_fs: Mmio<u32>,
+    pub dap4_din: Mmio<u32>,
+    pub dap4_dout: Mmio<u32>,
+    pub dap4_sclk: Mmio<u32>,
+    pub cam1_mclk: Mmio<u32>,
+    pub cam2_mclk: Mmio<u32>,
+    pub jtag_rtck: Mmio<u32>,
+    pub clk_32k_in: Mmio<u32>,
+    pub clk_32k_out: Mmio<u32>,
+    pub batt_bcl: Mmio<u32>,
+    pub clk_req: Mmio<u32>,
+    pub cpu_pwr_req: Mmio<u32>,
+    pub pwr_int_n: Mmio<u32>,
+    pub shutdown: Mmio<u32>,
+    pub core_pwr_req: Mmio<u32>,
+    pub aud_mclk: Mmio<u32>,
+    pub dvfs_pwm: Mmio<u32>,
+    pub dvfs_clk: Mmio<u32>,
+    pub gpio_x1_aud: Mmio<u32>,
+    pub gpio_x3_aud: Mmio<u32>,
+    pub pcc7: Mmio<u32>,
+    pub hdmi_cec: Mmio<u32>,
+    pub hdmi_int_dp_hpd: Mmio<u32>,
+    pub spdif_out: Mmio<u32>,
+    pub spdif_in: Mmio<u32>,
+    pub usb_vbus_en0: Mmio<u32>,
+    pub usb_vbus_en1: Mmio<u32>,
+    pub dp_hpd0: Mmio<u32>,
+    pub wifi_en: Mmio<u32>,
+    pub wifi_rst: Mmio<u32>,
+    pub wifi_wake_ap: Mmio<u32>,
+    pub ap_wake_bt: Mmio<u32>,
+    pub bt_rst: Mmio<u32>,
+    pub bt_wake_ap: Mmio<u32>,
+    pub ap_wake_nfc: Mmio<u32>,
+    pub nfc_en: Mmio<u32>,
+    pub nfc_int: Mmio<u32>,
+    pub gps_en: Mmio<u32>,
+    pub gps_rst: Mmio<u32>,
+    pub cam_rst: Mmio<u32>,
+    pub cam_af_en: Mmio<u32>,
+    pub cam_flash_en: Mmio<u32>,
+    pub cam1_pwdn: Mmio<u32>,
+    pub cam2_pwdn: Mmio<u32>,
+    pub cam1_strobe: Mmio<u32>,
+    pub lcd_te: Mmio<u32>,
+    pub lcd_bl_pwm: Mmio<u32>,
+    pub lcd_bl_en: Mmio<u32>,
+    pub lcd_rst: Mmio<u32>,
+    pub lcd_gpio1: Mmio<u32>,
+    pub lcd_gpio2: Mmio<u32>,
+    pub ap_ready: Mmio<u32>,
+    pub touch_rst: Mmio<u32>,
+    pub touch_clk: Mmio<u32>,
+    pub modem_wake_ap: Mmio<u32>,
+    pub touch_int: Mmio<u32>,
+    pub motion_int: Mmio<u32>,
+    pub als_prox_int: Mmio<u32>,
+    pub temp_alert: Mmio<u32>,
+    pub button_power_on: Mmio<u32>,
+    pub button_vol_up: Mmio<u32>,
+    pub button_vol_down: Mmio<u32>,
+    pub button_slide_sw: Mmio<u32>,
+    pub button_home: Mmio<u32>,
+    pub pa6: Mmio<u32>,
+    pub pe6: Mmio<u32>,
+    pub pe7: Mmio<u32>,
+    pub ph6: Mmio<u32>,
+    pub pk0: Mmio<u32>,
+    pub pk1: Mmio<u32>,
+    pub pk2: Mmio<u32>,
+    pub pk3: Mmio<u32>,
+    pub pk4: Mmio<u32>,
+    pub pk5: Mmio<u32>,
+    pub pk6: Mmio<u32>,
+    pub pk7: Mmio<u32>,
+    pub pl0: Mmio<u32>,
+    pub pl1: Mmio<u32>,
+    pub pz0: Mmio<u32>,
+    pub pz1: Mmio<u32>,
+    pub pz2: Mmio<u32>,
+    pub pz3: Mmio<u32>,
+    pub pz4: Mmio<u32>,
+    pub pz5: Mmio<u32>,
 }
 
-impl Registers {
-    /// Factory method to create a pointer to the Pinmux registers.
-    pub fn get() -> *const Self {
+impl VolatileStorage for Pinmux {
+    unsafe fn make_ptr() -> *const Self {
         PINMUX_BASE as *const _
     }
 }
 
-/// Pinmux abstraction.
-pub struct Pinmux;
-
-impl Deref for Pinmux {
-    type Target = Registers;
-
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*Registers::get() }
-    }
-}
-
 impl Pinmux {
-    /// Creates a new Pinmux object.
-    pub fn new() -> Self {
-        Pinmux
-    }
-
     /// Configures an UART device.
     pub fn configure_uart(&self, uart: &Uart) {
         match uart {
             &Uart::A => {
-                self.uart1_tx.set(0);
-                self.uart1_rx.set(INPUT | PULL_UP);
-                self.uart1_rts.set(0);
-                self.uart1_cts.set(INPUT | PULL_DOWN);
+                self.uart1_tx.write(0);
+                self.uart1_rx.write(INPUT | PULL_UP);
+                self.uart1_rts.write(0);
+                self.uart1_cts.write(INPUT | PULL_DOWN);
             },
             &Uart::B => {
-                self.uart2_tx.set(0);
-                self.uart2_rx.set(INPUT | PULL_UP);
-                self.uart2_rts.set(0);
-                self.uart2_cts.set(INPUT | PULL_DOWN);
+                self.uart2_tx.write(0);
+                self.uart2_rx.write(INPUT | PULL_UP);
+                self.uart2_rts.write(0);
+                self.uart2_cts.write(INPUT | PULL_DOWN);
             },
             &Uart::C => {
-                self.uart3_tx.set(0);
-                self.uart3_rx.set(INPUT | PULL_UP);
-                self.uart3_rts.set(0);
-                self.uart3_cts.set(INPUT | PULL_DOWN);
+                self.uart3_tx.write(0);
+                self.uart3_rx.write(INPUT | PULL_UP);
+                self.uart3_rts.write(0);
+                self.uart3_cts.write(INPUT | PULL_DOWN);
             },
             &Uart::D => {
-                self.uart4_tx.set(0);
-                self.uart4_rx.set(INPUT | PULL_UP);
-                self.uart4_rts.set(0);
-                self.uart4_cts.set(INPUT | PULL_DOWN);
+                self.uart4_tx.write(0);
+                self.uart4_rx.write(INPUT | PULL_UP);
+                self.uart4_rts.write(0);
+                self.uart4_cts.write(INPUT | PULL_DOWN);
             },
             &Uart::E => {
-                self.dap1_fs.set(0);
-                self.dap1_din.set(INPUT | PULL_UP);
-                self.dap1_dout.set(0);
-                self.dap1_sclk.set(INPUT | PULL_DOWN);
+                // Unused on the Switch.
+                // TODO(Vale): Nonetheless, figure this out.
             },
+            _ => {},
         }
     }
 
@@ -369,29 +349,30 @@ impl Pinmux {
     pub fn configure_i2c(&self, device: &I2c) {
         match device {
             &I2c::C1 => {
-                self.gen1_i2c_scl.set(INPUT);
-                self.gen1_i2c_sda.set(INPUT);
+                self.gen1_i2c_scl.write(INPUT);
+                self.gen1_i2c_sda.write(INPUT);
             },
             &I2c::C2 => {
-                self.gen2_i2c_scl.set(INPUT);
-                self.gen2_i2c_sda.set(INPUT);
+                self.gen2_i2c_scl.write(INPUT);
+                self.gen2_i2c_sda.write(INPUT);
             },
             &I2c::C3 => {
-                self.gen3_i2c_scl.set(INPUT);
-                self.gen3_i2c_sda.set(INPUT);
+                self.gen3_i2c_scl.write(INPUT);
+                self.gen3_i2c_sda.write(INPUT);
             },
             &I2c::C4 => {
-                self.cam_i2c_scl.set(INPUT);
-                self.cam_i2c_sda.set(INPUT);
+                self.cam_i2c_scl.write(INPUT);
+                self.cam_i2c_sda.write(INPUT);
             },
             &I2c::C5 => {
-                self.pwr_i2c_scl.set(INPUT);
-                self.pwr_i2c_sda.set(INPUT);
+                self.pwr_i2c_scl.write(INPUT);
+                self.pwr_i2c_sda.write(INPUT);
             },
             &I2c::C6 => {
                 // Unused on the Switch.
                 // TODO(Vale): Nonetheless, figure this out.
             },
+            _ => {},
         }
     }
 }

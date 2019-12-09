@@ -80,7 +80,7 @@ impl RtcTime {
         // Get day of week.
         let mut weekday = 0;
         let mut remainder = I2c::C5.read_byte(MAX77620_RTC_I2C_ADDR, 0x0A).unwrap();
-        for i in 0..8 {
+        for _ in 0..8 {
             weekday += 1;
 
             if remainder & 1 != 0 {
@@ -126,7 +126,7 @@ impl RtcTime {
             10 => "October",
             11 => "November",
             12 => "December",
-            _ => "",
+            _ => "Unknown",
         }
     }
 

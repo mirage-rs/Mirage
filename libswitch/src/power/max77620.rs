@@ -386,7 +386,7 @@ impl From<u8> for Regulator<'_> {
 impl<'a> Regulator<'a> {
     /// Configures all regulators with the default configuration options.
     pub fn config_default() {
-        for i in 1..13 {
+        for _ in 1..13 {
             match I2c::C5.read_byte(MAX77620_PWR_I2C_ADDR, 0x5C) {
                 Ok(value) => {
                     let regulator = Regulator::from(value);

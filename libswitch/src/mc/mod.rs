@@ -11,402 +11,405 @@
 //! memory controller (EMC) communicates with external DDR3L,
 //! LPDDR3, and LPDDR4 devices.
 
-use register::mmio::ReadWrite;
+use mirage_mmio::{Mmio, VolatileStorage};
 
-use crate::{clock, timer::usleep};
+use crate::{clock::Car, timer::usleep};
 
 /// Base address for the MC registers.
-const MC_BASE: u32 = 0x7001_9000;
+pub(crate) const MC_BASE: u32 = 0x7001_9000;
 
-register!(IRAM_BOM, MC_BASE + 0x65C);
+pub(crate) const IRAM_BOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x65C) as *const _) };
 
-register!(IRAM_TOM, MC_BASE + 0x660);
+pub(crate) const IRAM_TOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x660) as *const _) };
 
-register!(SEC_CARVEOUT_BOM, MC_BASE + 0x670);
+pub(crate) const SEC_CARVEOUT_BOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x670) as *const _) };
 
-register!(SEC_CARVEOUT_SIZE_MB, MC_BASE + 0x674);
+pub(crate) const SEC_CARVEOUT_SIZE_MB: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x674) as *const _) };
 
-register!(SEC_CARVEOUT_REG_CTRL, MC_BASE + 0x678);
+pub(crate) const SEC_CARVEOUT_REG_CTRL: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x678) as *const _) };
 
-register!(VIDEO_PROTECT_GPU_OVERRIDE_0, MC_BASE + 0x984);
+pub(crate) const VIDEO_PROTECT_GPU_OVERRIDE_0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x984) as *const _) };
 
-register!(VIDEO_PROTECT_GPU_OVERRIDE_1, MC_BASE + 0x988);
+pub(crate) const VIDEO_PROTECT_GPU_OVERRIDE_1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x988) as *const _) };
 
-register!(VIDEO_PROTECT_BOM, MC_BASE + 0x648);
+pub(crate) const VIDEO_PROTECT_BOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x648) as *const _) };
 
-register!(VIDEO_PROTECT_SIZE_MB, MC_BASE + 0x64C);
+pub(crate) const VIDEO_PROTECT_SIZE_MB: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x64C) as *const _) };
 
-register!(VIDEO_PROTECT_REG_CTRL, MC_BASE + 0x650);
+pub(crate) const VIDEO_PROTECT_REG_CTRL: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x650) as *const _) };
 
-register!(MTS_CARVEOUT_BOM, MC_BASE + 0x9A0);
+pub(crate) const MTS_CARVEOUT_BOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x9A0) as *const _) };
 
-register!(MTS_CARVEOUT_SIZE_MB, MC_BASE + 0x9A4);
+pub(crate) const MTS_CARVEOUT_SIZE_MB: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x9A4) as *const _) };
 
-register!(MTS_CARVEOUT_ADR_HI, MC_BASE + 0x9A8);
+pub(crate) const MTS_CARVEOUT_ADR_HI: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x9A8) as *const _) };
 
-register!(MTS_CARVEOUT_REG_CTRL, MC_BASE + 0x9ac);
+pub(crate) const MTS_CARVEOUT_REG_CTRL: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0x9ac) as *const _) };
 
-register!(SECURITY_CARVEOUT1_BOM, MC_BASE + 0xC0C);
+pub(crate) const SECURITY_CARVEOUT1_BOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC0C) as *const _) };
 
-register!(SECURITY_CARVEOUT1_BOM_HI, MC_BASE + 0xC10);
+pub(crate) const SECURITY_CARVEOUT1_BOM_HI: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC10) as *const _) };
 
-register!(SECURITY_CARVEOUT1_SIZE_128KB, MC_BASE + 0xC14);
+pub(crate) const SECURITY_CARVEOUT1_SIZE_128KB: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC14) as *const _) };
 
-register!(SECURITY_CARVEOUT1_CLIENT_ACCESS0, MC_BASE + 0xC18);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC18) as *const _) };
 
-register!(SECURITY_CARVEOUT1_CLIENT_ACCESS1, MC_BASE + 0xC1C);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC1C) as *const _) };
 
-register!(SECURITY_CARVEOUT1_CLIENT_ACCESS2, MC_BASE + 0xC20);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC20) as *const _) };
 
-register!(SECURITY_CARVEOUT1_CLIENT_ACCESS3, MC_BASE + 0xC24);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC24) as *const _) };
 
-register!(SECURITY_CARVEOUT1_CLIENT_ACCESS4, MC_BASE + 0xC28);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC28) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS0,
-    MC_BASE + 0xC2C
-);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC2C) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS1,
-    MC_BASE + 0xC30
-);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC30) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS2,
-    MC_BASE + 0xC34
-);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC34) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS3,
-    MC_BASE + 0xC38
-);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC38) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS4,
-    MC_BASE + 0xC3C
-);
+pub(crate) const SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC3C) as *const _) };
 
-register!(SECURITY_CARVEOUT1_CFG0, MC_BASE + 0xC08);
+pub(crate) const SECURITY_CARVEOUT1_CFG0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC08) as *const _) };
 
-register!(SECURITY_CARVEOUT2_BOM, MC_BASE + 0xC5C);
+pub(crate) const SECURITY_CARVEOUT2_BOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC5C) as *const _) };
 
-register!(SECURITY_CARVEOUT2_BOM_HI, MC_BASE + 0xC60);
+pub(crate) const SECURITY_CARVEOUT2_BOM_HI: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC60) as *const _) };
 
-register!(SECURITY_CARVEOUT2_SIZE_128KB, MC_BASE + 0xC64);
+pub(crate) const SECURITY_CARVEOUT2_SIZE_128KB: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC64) as *const _) };
 
-register!(SECURITY_CARVEOUT2_CLIENT_ACCESS0, MC_BASE + 0xC68);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC68) as *const _) };
 
-register!(SECURITY_CARVEOUT2_CLIENT_ACCESS1, MC_BASE + 0xC6C);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC6C) as *const _) };
 
-register!(SECURITY_CARVEOUT2_CLIENT_ACCESS2, MC_BASE + 0xC70);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC70) as *const _) };
 
-register!(SECURITY_CARVEOUT2_CLIENT_ACCESS3, MC_BASE + 0xC74);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC74) as *const _) };
 
-register!(SECURITY_CARVEOUT2_CLIENT_ACCESS4, MC_BASE + 0xC78);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC78) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS0,
-    MC_BASE + 0xC7C
-);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC7C) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS1,
-    MC_BASE + 0xC80
-);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC80) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS2,
-    MC_BASE + 0xC84
-);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC84) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS3,
-    MC_BASE + 0xC88
-);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC88) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS4,
-    MC_BASE + 0xC8C
-);
+pub(crate) const SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC8C) as *const _) };
 
-register!(SECURITY_CARVEOUT2_CFG0, MC_BASE + 0xC58);
+pub(crate) const SECURITY_CARVEOUT2_CFG0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xC58) as *const _) };
 
-register!(SECURITY_CARVEOUT3_BOM, MC_BASE + 0xCAC);
+pub(crate) const SECURITY_CARVEOUT3_BOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCAC) as *const _) };
 
-register!(SECURITY_CARVEOUT3_BOM_HI, MC_BASE + 0xCB0);
+pub(crate) const SECURITY_CARVEOUT3_BOM_HI: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCB0) as *const _) };
 
-register!(SECURITY_CARVEOUT3_SIZE_128KB, MC_BASE + 0xCB4);
+pub(crate) const SECURITY_CARVEOUT3_SIZE_128KB: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCB4) as *const _) };
 
-register!(SECURITY_CARVEOUT3_CLIENT_ACCESS0, MC_BASE + 0xCB8);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCB8) as *const _) };
 
-register!(SECURITY_CARVEOUT3_CLIENT_ACCESS1, MC_BASE + 0xCBC);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCBC) as *const _) };
 
-register!(SECURITY_CARVEOUT3_CLIENT_ACCESS2, MC_BASE + 0xCC0);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCC0) as *const _) };
 
-register!(SECURITY_CARVEOUT3_CLIENT_ACCESS3, MC_BASE + 0xCC4);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCC4) as *const _) };
 
-register!(SECURITY_CARVEOUT3_CLIENT_ACCESS4, MC_BASE + 0xCC8);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCC8) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS0,
-    MC_BASE + 0xCCC
-);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCCC) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS1,
-    MC_BASE + 0xCD0
-);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCD0) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS2,
-    MC_BASE + 0xCD4
-);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCD4) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS3,
-    MC_BASE + 0xCD8
-);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCD8) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS4,
-    MC_BASE + 0xCDC
-);
+pub(crate) const SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCDC) as *const _) };
 
-register!(SECURITY_CARVEOUT3_CFG0, MC_BASE + 0xCA8);
+pub(crate) const SECURITY_CARVEOUT3_CFG0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCA8) as *const _) };
 
-register!(SECURITY_CARVEOUT4_BOM, MC_BASE + 0xCFC);
+pub(crate) const SECURITY_CARVEOUT4_BOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCFC) as *const _) };
 
-register!(SECURITY_CARVEOUT4_BOM_HI, MC_BASE + 0xD00);
+pub(crate) const SECURITY_CARVEOUT4_BOM_HI: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD00) as *const _) };
 
-register!(SECURITY_CARVEOUT4_SIZE_128KB, MC_BASE + 0xD04);
+pub(crate) const SECURITY_CARVEOUT4_SIZE_128KB: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD04) as *const _) };
 
-register!(SECURITY_CARVEOUT4_CLIENT_ACCESS0, MC_BASE + 0xD08);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD08) as *const _) };
 
-register!(SECURITY_CARVEOUT4_CLIENT_ACCESS1, MC_BASE + 0xD0C);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD0C) as *const _) };
 
-register!(SECURITY_CARVEOUT4_CLIENT_ACCESS2, MC_BASE + 0xD10);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD10) as *const _) };
 
-register!(SECURITY_CARVEOUT4_CLIENT_ACCESS3, MC_BASE + 0xD14);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD14) as *const _) };
 
-register!(SECURITY_CARVEOUT4_CLIENT_ACCESS4, MC_BASE + 0xD18);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD18) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS0,
-    MC_BASE + 0xD1C
-);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD1C) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS1,
-    MC_BASE + 0xD20
-);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD20) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS2,
-    MC_BASE + 0xD24
-);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD24) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS3,
-    MC_BASE + 0xD28
-);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD28) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS4,
-    MC_BASE + 0xD2C
-);
+pub(crate) const SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD2C) as *const _) };
 
-register!(SECURITY_CARVEOUT4_CFG0, MC_BASE + 0xCF8);
+pub(crate) const SECURITY_CARVEOUT4_CFG0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xCF8) as *const _) };
 
-register!(SECURITY_CARVEOUT5_BOM, MC_BASE + 0xD4C);
+pub(crate) const SECURITY_CARVEOUT5_BOM: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD4C) as *const _) };
 
-register!(SECURITY_CARVEOUT5_BOM_HI, MC_BASE + 0xD50);
+pub(crate) const SECURITY_CARVEOUT5_BOM_HI: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD50) as *const _) };
 
-register!(SECURITY_CARVEOUT5_SIZE_128KB, MC_BASE + 0xD54);
+pub(crate) const SECURITY_CARVEOUT5_SIZE_128KB: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD54) as *const _) };
 
-register!(SECURITY_CARVEOUT5_CLIENT_ACCESS0, MC_BASE + 0xD58);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD58) as *const _) };
 
-register!(SECURITY_CARVEOUT5_CLIENT_ACCESS1, MC_BASE + 0xD5C);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD5C) as *const _) };
 
-register!(SECURITY_CARVEOUT5_CLIENT_ACCESS2, MC_BASE + 0xD60);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD60) as *const _) };
 
-register!(SECURITY_CARVEOUT5_CLIENT_ACCESS3, MC_BASE + 0xD64);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD64) as *const _) };
 
-register!(SECURITY_CARVEOUT5_CLIENT_ACCESS4, MC_BASE + 0xD68);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD68) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS0,
-    MC_BASE + 0xD6C
-);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD6C) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS1,
-    MC_BASE + 0xD70
-);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS1: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD70) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS2,
-    MC_BASE + 0xD74
-);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS2: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD74) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS3,
-    MC_BASE + 0xD78
-);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS3: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD78) as *const _) };
 
-register!(
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS4,
-    MC_BASE + 0xD7C
-);
+pub(crate) const SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS4: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD7C) as *const _) };
 
-register!(SECURITY_CARVEOUT5_CFG0, MC_BASE + 0xD48);
+pub(crate) const SECURITY_CARVEOUT5_CFG0: Mmio<u32> =
+    unsafe { Mmio::new((MC_BASE + 0xD48) as *const _) };
 
 pub fn config_tsec_carveout(bom: u32, size_mb: u32, lock: bool) {
-    SEC_CARVEOUT_BOM.set(bom);
-    SEC_CARVEOUT_SIZE_MB.set(size_mb);
+    SEC_CARVEOUT_BOM.write(bom);
+    SEC_CARVEOUT_SIZE_MB.write(size_mb);
 
     if lock {
-        SEC_CARVEOUT_REG_CTRL.set(1);
+        SEC_CARVEOUT_REG_CTRL.write(1);
     }
 }
 
 pub fn config_carveout() {
     unsafe {
-        (*(0x8005_FFFC as *const ReadWrite<u32>)).set(0xC0ED_BBCC);
+        Mmio::new(0x8005_FFFC as *const u32).write(0xC0ED_BBCC);
     }
 
-    VIDEO_PROTECT_GPU_OVERRIDE_0.set(1);
-    VIDEO_PROTECT_GPU_OVERRIDE_1.set(0);
-    VIDEO_PROTECT_BOM.set(0);
-    VIDEO_PROTECT_SIZE_MB.set(0);
-    VIDEO_PROTECT_REG_CTRL.set(1);
+    VIDEO_PROTECT_GPU_OVERRIDE_0.write(1);
+    VIDEO_PROTECT_GPU_OVERRIDE_1.write(0);
+    VIDEO_PROTECT_BOM.write(0);
+    VIDEO_PROTECT_SIZE_MB.write(0);
+    VIDEO_PROTECT_REG_CTRL.write(1);
 
     config_tsec_carveout(0, 0, true);
 
-    MTS_CARVEOUT_BOM.set(0);
-    MTS_CARVEOUT_SIZE_MB.set(0);
-    MTS_CARVEOUT_ADR_HI.set(0);
-    MTS_CARVEOUT_REG_CTRL.set(1);
+    MTS_CARVEOUT_BOM.write(0);
+    MTS_CARVEOUT_SIZE_MB.write(0);
+    MTS_CARVEOUT_ADR_HI.write(0);
+    MTS_CARVEOUT_REG_CTRL.write(1);
 
-    SECURITY_CARVEOUT1_BOM.set(0);
-    SECURITY_CARVEOUT1_BOM_HI.set(0);
-    SECURITY_CARVEOUT1_SIZE_128KB.set(0);
-    SECURITY_CARVEOUT1_CLIENT_ACCESS0.set(0);
-    SECURITY_CARVEOUT1_CLIENT_ACCESS1.set(0);
-    SECURITY_CARVEOUT1_CLIENT_ACCESS2.set(0);
-    SECURITY_CARVEOUT1_CLIENT_ACCESS3.set(0);
-    SECURITY_CARVEOUT1_CLIENT_ACCESS4.set(0);
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS0.set(0);
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS1.set(0);
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS2.set(0);
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS3.set(0);
-    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS4.set(0);
-    SECURITY_CARVEOUT1_CFG0.set(0x4000006);
+    SECURITY_CARVEOUT1_BOM.write(0);
+    SECURITY_CARVEOUT1_BOM_HI.write(0);
+    SECURITY_CARVEOUT1_SIZE_128KB.write(0);
+    SECURITY_CARVEOUT1_CLIENT_ACCESS0.write(0);
+    SECURITY_CARVEOUT1_CLIENT_ACCESS1.write(0);
+    SECURITY_CARVEOUT1_CLIENT_ACCESS2.write(0);
+    SECURITY_CARVEOUT1_CLIENT_ACCESS3.write(0);
+    SECURITY_CARVEOUT1_CLIENT_ACCESS4.write(0);
+    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS0.write(0);
+    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS1.write(0);
+    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS2.write(0);
+    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS3.write(0);
+    SECURITY_CARVEOUT1_CLIENT_FORCE_INTERNAL_ACCESS4.write(0);
+    SECURITY_CARVEOUT1_CFG0.write(0x4000006);
 
-    SECURITY_CARVEOUT3_BOM.set(0);
-    SECURITY_CARVEOUT3_BOM_HI.set(0);
-    SECURITY_CARVEOUT3_SIZE_128KB.set(0);
-    SECURITY_CARVEOUT3_CLIENT_ACCESS0.set(0);
-    SECURITY_CARVEOUT3_CLIENT_ACCESS1.set(0);
-    SECURITY_CARVEOUT3_CLIENT_ACCESS2.set(0x3000000);
-    SECURITY_CARVEOUT3_CLIENT_ACCESS3.set(0);
-    SECURITY_CARVEOUT3_CLIENT_ACCESS4.set(0x300);
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS0.set(0);
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS1.set(0);
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS2.set(0);
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS3.set(0);
-    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS4.set(0);
-    SECURITY_CARVEOUT3_CFG0.set(0x4401E7E);
+    SECURITY_CARVEOUT3_BOM.write(0);
+    SECURITY_CARVEOUT3_BOM_HI.write(0);
+    SECURITY_CARVEOUT3_SIZE_128KB.write(0);
+    SECURITY_CARVEOUT3_CLIENT_ACCESS0.write(0);
+    SECURITY_CARVEOUT3_CLIENT_ACCESS1.write(0);
+    SECURITY_CARVEOUT3_CLIENT_ACCESS2.write(0x3000000);
+    SECURITY_CARVEOUT3_CLIENT_ACCESS3.write(0);
+    SECURITY_CARVEOUT3_CLIENT_ACCESS4.write(0x300);
+    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS0.write(0);
+    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS1.write(0);
+    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS2.write(0);
+    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS3.write(0);
+    SECURITY_CARVEOUT3_CLIENT_FORCE_INTERNAL_ACCESS4.write(0);
+    SECURITY_CARVEOUT3_CFG0.write(0x4401E7E);
 
-    SECURITY_CARVEOUT4_BOM.set(0);
-    SECURITY_CARVEOUT4_BOM_HI.set(0);
-    SECURITY_CARVEOUT4_SIZE_128KB.set(0);
-    SECURITY_CARVEOUT4_CLIENT_ACCESS0.set(0);
-    SECURITY_CARVEOUT4_CLIENT_ACCESS1.set(0);
-    SECURITY_CARVEOUT4_CLIENT_ACCESS2.set(0);
-    SECURITY_CARVEOUT4_CLIENT_ACCESS3.set(0);
-    SECURITY_CARVEOUT4_CLIENT_ACCESS4.set(0);
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS0.set(0);
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS1.set(0);
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS2.set(0);
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS3.set(0);
-    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS4.set(0);
-    SECURITY_CARVEOUT4_CFG0.set(0x8F);
+    SECURITY_CARVEOUT4_BOM.write(0);
+    SECURITY_CARVEOUT4_BOM_HI.write(0);
+    SECURITY_CARVEOUT4_SIZE_128KB.write(0);
+    SECURITY_CARVEOUT4_CLIENT_ACCESS0.write(0);
+    SECURITY_CARVEOUT4_CLIENT_ACCESS1.write(0);
+    SECURITY_CARVEOUT4_CLIENT_ACCESS2.write(0);
+    SECURITY_CARVEOUT4_CLIENT_ACCESS3.write(0);
+    SECURITY_CARVEOUT4_CLIENT_ACCESS4.write(0);
+    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS0.write(0);
+    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS1.write(0);
+    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS2.write(0);
+    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS3.write(0);
+    SECURITY_CARVEOUT4_CLIENT_FORCE_INTERNAL_ACCESS4.write(0);
+    SECURITY_CARVEOUT4_CFG0.write(0x8F);
 
-    SECURITY_CARVEOUT5_BOM.set(0);
-    SECURITY_CARVEOUT5_BOM_HI.set(0);
-    SECURITY_CARVEOUT5_SIZE_128KB.set(0);
-    SECURITY_CARVEOUT5_CLIENT_ACCESS0.set(0);
-    SECURITY_CARVEOUT5_CLIENT_ACCESS1.set(0);
-    SECURITY_CARVEOUT5_CLIENT_ACCESS2.set(0);
-    SECURITY_CARVEOUT5_CLIENT_ACCESS3.set(0);
-    SECURITY_CARVEOUT5_CLIENT_ACCESS4.set(0);
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS0.set(0);
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS1.set(0);
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS2.set(0);
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS3.set(0);
-    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS4.set(0);
-    SECURITY_CARVEOUT5_CFG0.set(0x8F);
+    SECURITY_CARVEOUT5_BOM.write(0);
+    SECURITY_CARVEOUT5_BOM_HI.write(0);
+    SECURITY_CARVEOUT5_SIZE_128KB.write(0);
+    SECURITY_CARVEOUT5_CLIENT_ACCESS0.write(0);
+    SECURITY_CARVEOUT5_CLIENT_ACCESS1.write(0);
+    SECURITY_CARVEOUT5_CLIENT_ACCESS2.write(0);
+    SECURITY_CARVEOUT5_CLIENT_ACCESS3.write(0);
+    SECURITY_CARVEOUT5_CLIENT_ACCESS4.write(0);
+    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS0.write(0);
+    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS1.write(0);
+    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS2.write(0);
+    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS3.write(0);
+    SECURITY_CARVEOUT5_CLIENT_FORCE_INTERNAL_ACCESS4.write(0);
+    SECURITY_CARVEOUT5_CFG0.write(0x8F);
 }
 
 pub fn config_carveout_finalize() {
-    SECURITY_CARVEOUT2_BOM.set(0x8002_0000);
-    SECURITY_CARVEOUT2_BOM_HI.set(0);
-    SECURITY_CARVEOUT2_SIZE_128KB.set(2);
-    SECURITY_CARVEOUT2_CLIENT_ACCESS0.set(0);
-    SECURITY_CARVEOUT2_CLIENT_ACCESS1.set(0);
-    SECURITY_CARVEOUT2_CLIENT_ACCESS2.set(0x3000000);
-    SECURITY_CARVEOUT2_CLIENT_ACCESS3.set(0);
-    SECURITY_CARVEOUT2_CLIENT_ACCESS4.set(0x300);
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS0.set(0);
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS1.set(0);
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS2.set(0);
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS3.set(0);
-    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS4.set(0);
-    SECURITY_CARVEOUT2_CFG0.set(0x440167E);
+    SECURITY_CARVEOUT2_BOM.write(0x8002_0000);
+    SECURITY_CARVEOUT2_BOM_HI.write(0);
+    SECURITY_CARVEOUT2_SIZE_128KB.write(2);
+    SECURITY_CARVEOUT2_CLIENT_ACCESS0.write(0);
+    SECURITY_CARVEOUT2_CLIENT_ACCESS1.write(0);
+    SECURITY_CARVEOUT2_CLIENT_ACCESS2.write(0x3000000);
+    SECURITY_CARVEOUT2_CLIENT_ACCESS3.write(0);
+    SECURITY_CARVEOUT2_CLIENT_ACCESS4.write(0x300);
+    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS0.write(0);
+    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS1.write(0);
+    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS2.write(0);
+    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS3.write(0);
+    SECURITY_CARVEOUT2_CLIENT_FORCE_INTERNAL_ACCESS4.write(0);
+    SECURITY_CARVEOUT2_CFG0.write(0x440167E);
 }
 
 pub fn enable_ahb_redirect() {
-    let car = &clock::Car::new();
+    let car = unsafe { Car::get() };
 
-    car.lvl2_clk_gate_ovrd
-        .set((car.lvl2_clk_gate_ovrd.get() & 0xFFF7_FFFF) | 0x80000);
+    car.lvl2_clk_gate_ovrd.write((car.lvl2_clk_gate_ovrd.read() & 0xFFF7_FFFF) | 0x80000);
 
-    IRAM_BOM.set(0x4000_0000);
-    IRAM_TOM.set(0x4003_F000);
+    IRAM_BOM.write(0x4000_0000);
+    IRAM_TOM.write(0x4003_F000);
 }
 
 pub fn disable_ahb_redirect() {
-    let car = &clock::Car::new();
+    let car = unsafe { Car::get() };
 
-    IRAM_BOM.set(0xFFFF_F000);
-    IRAM_TOM.set(0);
+    IRAM_BOM.write(0xFFFF_F000);
+    IRAM_TOM.write(0);
 
-    car.lvl2_clk_gate_ovrd
-        .set(car.lvl2_clk_gate_ovrd.get() & 0xFFF7_FFFF);
+    car.lvl2_clk_gate_ovrd.write(car.lvl2_clk_gate_ovrd.read() & 0xFFF7_FFFF);
 }
 
 pub fn enable_mc() {
-    let car = &clock::Car::new();
+    let car = unsafe { Car::get() };
 
     // Set EMC clock source.
-    car.clk_source_emc
-        .set((car.clk_source_emc.get() & 0x1FFF_FFFF) | 0x4000_0000);
+    car.clk_source_emc.write((car.clk_source_emc.read() & 0x1FFF_FFFF) | 0x4000_0000);
 
     // Enable MIPI CAL clock.
-    car.clk_enb_h_set
-        .set((car.clk_enb_h_set.get() & 0xFDFF_FFFF) | 0x2000000);
+    car.clk_enb_h_set.write((car.clk_enb_h_set.read() & 0xFDFF_FFFF) | 0x2000000);
 
     // Enable MC clock.
-    car.clk_enb_h_set
-        .set((car.clk_enb_h_set.get() & 0xFFFF_FFFE) | 1);
+    car.clk_enb_h_set.write((car.clk_enb_h_set.read() & 0xFFFF_FFFE) | 1);
 
     // Enable EMC DLL clock.
-    car.clk_enb_x_set
-        .set((car.clk_enb_x_set.get() & 0xFFFF_BFFF) | 0x4000);
+    car.clk_enb_x_set.write((car.clk_enb_x_set.read() & 0xFFFF_BFFF) | 0x4000);
 
     // Clear EMC and MC reset.
-    car.rst_dev_h_clr.set(0x2000001);
+    car.rst_dev_h_clr.write(0x2000001);
     usleep(5);
 
     disable_ahb_redirect();

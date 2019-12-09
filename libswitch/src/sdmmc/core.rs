@@ -1,4 +1,4 @@
-use register::mmio::ReadWrite;
+use mirage_mmio::{Mmio, VolatileStorage};
 
 use crate::{
     apb_misc::Padctl,
@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// Base address for SDMMC registers.
-const SDMMC_BASE: u32 = 0x700B_0000;
+pub(crate) const SDMMC_BASE: u32 = 0x700B_0000;
 
 const CLK_SOURCES: [u32; 4] = [0; 4];
 
@@ -328,86 +328,86 @@ pub enum SdmmcCarDivider {
 #[allow(non_snake_case)]
 #[repr(C)]
 struct Registers {
-    pub dma_address: ReadWrite<u32>,
-    pub block_size: ReadWrite<u16>,
-    pub block_count: ReadWrite<u16>,
-    pub argument: ReadWrite<u32>,
-    pub transfer_mode: ReadWrite<u16>,
-    pub command: ReadWrite<u16>,
-    pub response: [ReadWrite<u32>; 0x4],
-    pub buffer: ReadWrite<u32>,
-    pub present_state: ReadWrite<u32>,
-    pub host_control: ReadWrite<u8>,
-    pub power_control: ReadWrite<u8>,
-    pub block_gap_control: ReadWrite<u8>,
-    pub wake_up_control: ReadWrite<u8>,
-    pub clock_control: ReadWrite<u16>,
-    pub timeout_control: ReadWrite<u8>,
-    pub software_reset: ReadWrite<u8>,
-    pub int_status: ReadWrite<u32>,
-    pub int_enable: ReadWrite<u32>,
-    pub signal_enable: ReadWrite<u32>,
-    pub acmd12_err: ReadWrite<u16>,
-    pub host_control2: ReadWrite<u16>,
-    pub capabilities: ReadWrite<u32>,
-    pub capabilities_1: ReadWrite<u32>,
-    pub max_current: ReadWrite<u32>,
-    _0x4C: ReadWrite<u32>,
-    pub set_acmd12_error: ReadWrite<u16>,
-    pub set_int_error: ReadWrite<u16>,
-    pub adma_error: ReadWrite<u8>,
-    _0x56: [ReadWrite<u8>; 0x3],
-    pub adma_address: ReadWrite<u32>,
-    pub upper_adma_address: ReadWrite<u32>,
-    pub preset_for_init: ReadWrite<u16>,
-    pub preset_for_default: ReadWrite<u16>,
-    pub preset_for_high: ReadWrite<u16>,
-    pub preset_for_sdr12: ReadWrite<u16>,
-    pub preset_for_sdr25: ReadWrite<u16>,
-    pub preset_for_sdr50: ReadWrite<u16>,
-    pub preset_for_sdr104: ReadWrite<u16>,
-    pub preset_for_ddr50: ReadWrite<u16>,
-    _0x70: [ReadWrite<u32>; 0x23],
-    pub slot_int_status: ReadWrite<u16>,
-    pub host_version: ReadWrite<u16>,
+    pub dma_address: Mmio<u32>,
+    pub block_size: Mmio<u16>,
+    pub block_count: Mmio<u16>,
+    pub argument: Mmio<u32>,
+    pub transfer_mode: Mmio<u16>,
+    pub command: Mmio<u16>,
+    pub response: [Mmio<u32>; 0x4],
+    pub buffer: Mmio<u32>,
+    pub present_state: Mmio<u32>,
+    pub host_control: Mmio<u8>,
+    pub power_control: Mmio<u8>,
+    pub block_gap_control: Mmio<u8>,
+    pub wake_up_control: Mmio<u8>,
+    pub clock_control: Mmio<u16>,
+    pub timeout_control: Mmio<u8>,
+    pub software_reset: Mmio<u8>,
+    pub int_status: Mmio<u32>,
+    pub int_enable: Mmio<u32>,
+    pub signal_enable: Mmio<u32>,
+    pub acmd12_err: Mmio<u16>,
+    pub host_control2: Mmio<u16>,
+    pub capabilities: Mmio<u32>,
+    pub capabilities_1: Mmio<u32>,
+    pub max_current: Mmio<u32>,
+    _0x4C: Mmio<u32>,
+    pub set_acmd12_error: Mmio<u16>,
+    pub set_int_error: Mmio<u16>,
+    pub adma_error: Mmio<u8>,
+    _0x56: [Mmio<u8>; 0x3],
+    pub adma_address: Mmio<u32>,
+    pub upper_adma_address: Mmio<u32>,
+    pub preset_for_init: Mmio<u16>,
+    pub preset_for_default: Mmio<u16>,
+    pub preset_for_high: Mmio<u16>,
+    pub preset_for_sdr12: Mmio<u16>,
+    pub preset_for_sdr25: Mmio<u16>,
+    pub preset_for_sdr50: Mmio<u16>,
+    pub preset_for_sdr104: Mmio<u16>,
+    pub preset_for_ddr50: Mmio<u16>,
+    _0x70: [Mmio<u32>; 0x23],
+    pub slot_int_status: Mmio<u16>,
+    pub host_version: Mmio<u16>,
 
     // Vendor-specific registers.
-    pub vendor_clock_cntrl: ReadWrite<u32>,
-    pub vendor_sys_sw_cntrl: ReadWrite<u32>,
-    pub vendor_err_intr_status: ReadWrite<u32>,
-    pub vendor_cap_overrides: ReadWrite<u32>,
-    pub vendor_boot_cntrl: ReadWrite<u32>,
-    pub vendor_boot_ack_timeout: ReadWrite<u32>,
-    pub vendor_boot_dat_timeout: ReadWrite<u32>,
-    pub vendor_debounce_count: ReadWrite<u32>,
-    pub vendor_misc_cntrl: ReadWrite<u32>,
-    pub max_current_override: ReadWrite<u32>,
-    pub max_current_override_hi: ReadWrite<u32>,
-    _0x12C: [ReadWrite<u32>; 0x20],
-    pub vendor_io_trim_cntrl: ReadWrite<u32>,
+    pub vendor_clock_cntrl: Mmio<u32>,
+    pub vendor_sys_sw_cntrl: Mmio<u32>,
+    pub vendor_err_intr_status: Mmio<u32>,
+    pub vendor_cap_overrides: Mmio<u32>,
+    pub vendor_boot_cntrl: Mmio<u32>,
+    pub vendor_boot_ack_timeout: Mmio<u32>,
+    pub vendor_boot_dat_timeout: Mmio<u32>,
+    pub vendor_debounce_count: Mmio<u32>,
+    pub vendor_misc_cntrl: Mmio<u32>,
+    pub max_current_override: Mmio<u32>,
+    pub max_current_override_hi: Mmio<u32>,
+    _0x12C: [Mmio<u32>; 0x20],
+    pub vendor_io_trim_cntrl: Mmio<u32>,
 
     // SDMMC2/SDMMC4 only.
-    pub vendor_dllcal_cfg: ReadWrite<u32>,
-    pub vendor_dll_ctrl0: ReadWrite<u32>,
-    pub vendor_dll_ctrl1: ReadWrite<u32>,
-    pub vendor_dllcal_cfg_sta: ReadWrite<u32>,
+    pub vendor_dllcal_cfg: Mmio<u32>,
+    pub vendor_dll_ctrl0: Mmio<u32>,
+    pub vendor_dll_ctrl1: Mmio<u32>,
+    pub vendor_dllcal_cfg_sta: Mmio<u32>,
 
-    pub vendor_tuning_cntrl0: ReadWrite<u32>,
-    pub vendor_tuning_cntrl1: ReadWrite<u32>,
-    pub vendor_tuning_status0: ReadWrite<u32>,
-    pub vendor_tuning_status1: ReadWrite<u32>,
-    pub vendor_clk_gate_hysteresis_count: ReadWrite<u32>,
-    pub vendor_preset_val0: ReadWrite<u32>,
-    pub vendor_preset_val1: ReadWrite<u32>,
-    pub vendor_preset_val2: ReadWrite<u32>,
-    pub sdmemcomppadctrl: ReadWrite<u32>,
-    pub auto_cal_config: ReadWrite<u32>,
-    pub auto_cal_interval: ReadWrite<u32>,
-    pub auto_cal_status: ReadWrite<u32>,
-    pub io_spare: ReadWrite<u32>,
-    pub sdmmca_mccif_fifoctrl: ReadWrite<u32>,
-    pub timeout_wcoal_sdmmca: ReadWrite<u32>,
-    _0x1FC: ReadWrite<u32>,
+    pub vendor_tuning_cntrl0: Mmio<u32>,
+    pub vendor_tuning_cntrl1: Mmio<u32>,
+    pub vendor_tuning_status0: Mmio<u32>,
+    pub vendor_tuning_status1: Mmio<u32>,
+    pub vendor_clk_gate_hysteresis_count: Mmio<u32>,
+    pub vendor_preset_val0: Mmio<u32>,
+    pub vendor_preset_val1: Mmio<u32>,
+    pub vendor_preset_val2: Mmio<u32>,
+    pub sdmemcomppadctrl: Mmio<u32>,
+    pub auto_cal_config: Mmio<u32>,
+    pub auto_cal_interval: Mmio<u32>,
+    pub auto_cal_status: Mmio<u32>,
+    pub io_spare: Mmio<u32>,
+    pub sdmmca_mccif_fifoctrl: Mmio<u32>,
+    pub timeout_wcoal_sdmmca: Mmio<u32>,
+    _0x1FC: Mmio<u32>,
 }
 
 impl Registers {
@@ -501,111 +501,111 @@ fn get_sdclk_divider(bus_speed: SdmmcBusSpeed) -> u32 {
 impl<'a> Sdmmc<'a> {
     /// Checks if the SDMMC device clock is held in reset.
     fn is_clk_reset(&self) -> bool {
-        let car = &Car::new();
+        let car = unsafe { Car::get() };
 
         match self.controller {
-            SdmmcController::Sdmmc1 => (car.rst_dev_l.get() & CLK_L_SDMMC1) != 0,
-            SdmmcController::Sdmmc2 => (car.rst_dev_l.get() & CLK_L_SDMMC2) != 0,
-            SdmmcController::Sdmmc3 => (car.rst_dev_u.get() & CLK_U_SDMMC3) != 0,
-            SdmmcController::Sdmmc4 => (car.rst_dev_l.get() & CLK_L_SDMMC4) != 0,
+            SdmmcController::Sdmmc1 => (car.rst_dev_l.read() & CLK_L_SDMMC1) != 0,
+            SdmmcController::Sdmmc2 => (car.rst_dev_l.read() & CLK_L_SDMMC2) != 0,
+            SdmmcController::Sdmmc3 => (car.rst_dev_u.read() & CLK_U_SDMMC3) != 0,
+            SdmmcController::Sdmmc4 => (car.rst_dev_l.read() & CLK_L_SDMMC4) != 0,
         }
     }
 
     /// Puts the SDMMC device clock into reset.
     fn clk_set_reset(&self) {
-        let car = &Car::new();
+        let car = unsafe { Car::get() };
 
         match self.controller {
             SdmmcController::Sdmmc1 => {
-                car.rst_dev_l_set.set(CLK_L_SDMMC1);
+                car.rst_dev_l_set.write(CLK_L_SDMMC1);
             },
             SdmmcController::Sdmmc2 => {
-                car.rst_dev_l_set.set(CLK_L_SDMMC2);
+                car.rst_dev_l_set.write(CLK_L_SDMMC2);
             },
             SdmmcController::Sdmmc3 => {
-                car.rst_dev_u_set.set(CLK_U_SDMMC3);
+                car.rst_dev_u_set.write(CLK_U_SDMMC3);
             },
             SdmmcController::Sdmmc4 => {
-                car.rst_dev_l_set.set(CLK_L_SDMMC4);
+                car.rst_dev_l_set.write(CLK_L_SDMMC4);
             },
         }
     }
 
     /// Takes the SDMMC device clock out of reset.
     fn clk_clear_reset(&self) {
-        let car = &Car::new();
+        let car = unsafe { Car::get() };
 
         match self.controller {
             SdmmcController::Sdmmc1 => {
-                car.rst_dev_l_clr.set(CLK_L_SDMMC1);
+                car.rst_dev_l_clr.write(CLK_L_SDMMC1);
             },
             SdmmcController::Sdmmc2 => {
-                car.rst_dev_l_clr.set(CLK_L_SDMMC2);
+                car.rst_dev_l_clr.write(CLK_L_SDMMC2);
             },
             SdmmcController::Sdmmc3 => {
-                car.rst_dev_u_clr.set(CLK_U_SDMMC3);
+                car.rst_dev_u_clr.write(CLK_U_SDMMC3);
             },
             SdmmcController::Sdmmc4 => {
-                car.rst_dev_l_clr.set(CLK_L_SDMMC4);
+                car.rst_dev_l_clr.write(CLK_L_SDMMC4);
             },
         }
     }
 
     /// Checks if the SDMMC device clock is enabled.
     fn is_clk_enabled(&self) -> bool {
-        let car = &Car::new();
+        let car = unsafe { Car::get() };
 
         match self.controller {
-            SdmmcController::Sdmmc1 => (car.clk_out_enb_l.get() & CLK_L_SDMMC1) != 0,
-            SdmmcController::Sdmmc2 => (car.clk_out_enb_l.get() & CLK_L_SDMMC2) != 0,
-            SdmmcController::Sdmmc3 => (car.clk_out_enb_u.get() & CLK_U_SDMMC3) != 0,
-            SdmmcController::Sdmmc4 => (car.clk_out_enb_l.get() & CLK_L_SDMMC4) != 0,
+            SdmmcController::Sdmmc1 => (car.clk_out_enb_l.read() & CLK_L_SDMMC1) != 0,
+            SdmmcController::Sdmmc2 => (car.clk_out_enb_l.read() & CLK_L_SDMMC2) != 0,
+            SdmmcController::Sdmmc3 => (car.clk_out_enb_u.read() & CLK_U_SDMMC3) != 0,
+            SdmmcController::Sdmmc4 => (car.clk_out_enb_l.read() & CLK_L_SDMMC4) != 0,
         }
     }
 
     /// Enables the SDMMC device clock.
     fn clk_set_enabled(&self) {
-        let car = &Car::new();
+        let car = unsafe { Car::get() };
 
         match self.controller {
             SdmmcController::Sdmmc1 => {
-                car.clk_enb_l_set.set(CLK_L_SDMMC1);
+                car.clk_enb_l_set.write(CLK_L_SDMMC1);
             },
             SdmmcController::Sdmmc2 => {
-                car.clk_enb_l_set.set(CLK_L_SDMMC2);
+                car.clk_enb_l_set.write(CLK_L_SDMMC2);
             },
             SdmmcController::Sdmmc3 => {
-                car.clk_enb_u_set.set(CLK_U_SDMMC3);
+                car.clk_enb_u_set.write(CLK_U_SDMMC3);
             },
             SdmmcController::Sdmmc4 => {
-                car.clk_enb_l_set.set(CLK_L_SDMMC4);
+                car.clk_enb_l_set.write(CLK_L_SDMMC4);
             },
         }
     }
 
     /// Disables the SDMMC device clock.
     fn clk_set_disabled(&self) {
-        let car = &Car::new();
+        let car = unsafe { Car::get() };
 
         match self.controller {
             SdmmcController::Sdmmc1 => {
-                car.clk_enb_l_clr.set(CLK_L_SDMMC1);
+                car.clk_enb_l_clr.write(CLK_L_SDMMC1);
             },
             SdmmcController::Sdmmc2 => {
-                car.clk_enb_l_clr.set(CLK_L_SDMMC2);
+                car.clk_enb_l_clr.write(CLK_L_SDMMC2);
             },
             SdmmcController::Sdmmc3 => {
-                car.clk_enb_u_clr.set(CLK_U_SDMMC3);
+                car.clk_enb_u_clr.write(CLK_U_SDMMC3);
             },
             SdmmcController::Sdmmc4 => {
-                car.clk_enb_l_clr.set(CLK_L_SDMMC4);
+                car.clk_enb_l_clr.write(CLK_L_SDMMC4);
             },
         }
     }
 
     /// Sets the device clock source and CAR divider.
     fn clk_set_source(&self, frequency: u32) -> Result<u32, ()> {
-        let car = &Car::new();
+        let car = unsafe { Car::get() };
 
         let mut car_divider;
         let mut out_frequency;
@@ -654,19 +654,19 @@ impl<'a> Sdmmc<'a> {
         match self.controller {
             SdmmcController::Sdmmc1 => {
                 car.clk_source_sdmmc1
-                    .set(CLK_SOURCE_FIRST | car_divider as u32);
+                    .write(CLK_SOURCE_FIRST | car_divider as u32);
             },
             SdmmcController::Sdmmc2 => {
                 car.clk_source_sdmmc2
-                    .set(CLK_SOURCE_FIRST | car_divider as u32);
+                    .write(CLK_SOURCE_FIRST | car_divider as u32);
             },
             SdmmcController::Sdmmc3 => {
                 car.clk_source_sdmmc3
-                    .set(CLK_SOURCE_FIRST | car_divider as u32);
+                    .write(CLK_SOURCE_FIRST | car_divider as u32);
             },
             SdmmcController::Sdmmc4 => {
                 car.clk_source_sdmmc4
-                    .set(CLK_SOURCE_FIRST | car_divider as u32);
+                    .write(CLK_SOURCE_FIRST | car_divider as u32);
             },
         }
 
@@ -703,10 +703,10 @@ impl<'a> Sdmmc<'a> {
 
     /// Enables the SD clock, if possible.
     fn enable_sd_clock(&mut self) {
-        if self.has_sd && self.registers.clock_control.get() & (1 << 2) == 0 {
+        if self.has_sd && self.registers.clock_control.read() & (1 << 2) == 0 {
             self.registers
                 .clock_control
-                .set(self.registers.clock_control.get() | (1 << 2));
+                .write(self.registers.clock_control.read() | (1 << 2));
         }
 
         self.is_sd_clk_enabled = true;
@@ -716,23 +716,23 @@ impl<'a> Sdmmc<'a> {
     fn disable_sd_clock(&mut self) {
         self.registers
             .clock_control
-            .set(self.registers.clock_control.get() & !(1 << 2));
+            .write(self.registers.clock_control.read() & !(1 << 2));
 
         self.is_sd_clk_enabled = false;
     }
 
     /// Automatically enables or disables the SD clock.
     fn adjust_sd_clock(&mut self) {
-        if !self.has_sd && self.registers.clock_control.get() & (1 << 2) != 0 {
+        if !self.has_sd && self.registers.clock_control.read() & (1 << 2) != 0 {
             self.disable_sd_clock();
-        } else if self.is_sd_clk_enabled && self.registers.clock_control.get() & (1 << 2) == 0 {
+        } else if self.is_sd_clk_enabled && self.registers.clock_control.read() & (1 << 2) == 0 {
             self.enable_sd_clock();
         }
     }
 
     /// Returns the clock control value. Used for dummy reads.
-    fn get_sd_clock_control(&self) -> u16 {
-        self.registers.clock_control.get()
+    fn read_sd_clock_control(&self) -> u16 {
+        self.registers.clock_control.read()
     }
 
     /// Starts the SDMMC clock.
@@ -781,34 +781,34 @@ impl<'a> Sdmmc<'a> {
         // Clear the I/O conditioning constants.
         self.registers
             .vendor_clock_cntrl
-            .set(self.registers.vendor_clock_cntrl.get() & !0xFFFF_0000);
+            .write(self.registers.vendor_clock_cntrl.read() & !0xFFFF_0000);
 
         // Enable the PADPIPE clock.
         self.registers
             .vendor_clock_cntrl
-            .set(self.registers.vendor_clock_cntrl.get() | (1 << 3));
+            .write(self.registers.vendor_clock_cntrl.read() | (1 << 3));
 
         // Set the appropriate trim value.
         match self.controller {
             SdmmcController::Sdmmc1 => {
                 self.registers
                     .vendor_clock_cntrl
-                    .set(self.registers.vendor_clock_cntrl.get() | (0x02 << 24));
+                    .write(self.registers.vendor_clock_cntrl.read() | (0x02 << 24));
             },
             SdmmcController::Sdmmc2 => {
                 self.registers
                     .vendor_clock_cntrl
-                    .set(self.registers.vendor_clock_cntrl.get() | (0x08 << 24));
+                    .write(self.registers.vendor_clock_cntrl.read() | (0x08 << 24));
             },
             SdmmcController::Sdmmc3 => {
                 self.registers
                     .vendor_clock_cntrl
-                    .set(self.registers.vendor_clock_cntrl.get() | (0x03 << 24));
+                    .write(self.registers.vendor_clock_cntrl.read() | (0x03 << 24));
             },
             SdmmcController::Sdmmc4 => {
                 self.registers
                     .vendor_clock_cntrl
-                    .set(self.registers.vendor_clock_cntrl.get() | (0x08 << 24));
+                    .write(self.registers.vendor_clock_cntrl.read() | (0x08 << 24));
             },
         }
     }
@@ -820,18 +820,18 @@ impl<'a> Sdmmc<'a> {
                 SdmmcBusVoltage::Voltage1V8 => {
                     self.registers
                         .auto_cal_config
-                        .set(self.registers.auto_cal_config.get() & !0x7F7F);
+                        .write(self.registers.auto_cal_config.read() & !0x7F7F);
                     self.registers
                         .auto_cal_config
-                        .set(self.registers.auto_cal_config.get() | 0x7B7B);
+                        .write(self.registers.auto_cal_config.read() | 0x7B7B);
                 },
                 SdmmcBusVoltage::Voltage3V3 => {
                     self.registers
                         .auto_cal_config
-                        .set(self.registers.auto_cal_config.get() & !0x7F7F);
+                        .write(self.registers.auto_cal_config.read() & !0x7F7F);
                     self.registers
                         .auto_cal_config
-                        .set(self.registers.auto_cal_config.get() | 0x7D00);
+                        .write(self.registers.auto_cal_config.read() | 0x7D00);
                 },
                 _ => {
                     // uSD does not support requested voltage.
@@ -846,10 +846,10 @@ impl<'a> Sdmmc<'a> {
 
                 self.registers
                     .auto_cal_config
-                    .set(self.registers.auto_cal_config.get() & !0x7F7F);
+                    .write(self.registers.auto_cal_config.read() & !0x7F7F);
                 self.registers
                     .auto_cal_config
-                    .set(self.registers.auto_cal_config.get() | 0x0505);
+                    .write(self.registers.auto_cal_config.read() | 0x0505);
             },
         }
 
@@ -858,7 +858,7 @@ impl<'a> Sdmmc<'a> {
 
     /// Runs automatic calibration.
     fn autocal_run(&mut self, voltage: SdmmcBusVoltage) {
-        let padctl = &Padctl::new();
+        let padctl = unsafe { Padctl::get() };
         let mut restart_sd_clock = false;
 
         // SD clock is enabled, disable it and restart later.
@@ -868,28 +868,28 @@ impl<'a> Sdmmc<'a> {
         }
 
         // Set PAD_E_INPUT_OR_E_PWRD.
-        if self.registers.sdmemcomppadctrl.get() & 0x8000_0000 == 0 {
+        if self.registers.sdmemcomppadctrl.read() & 0x8000_0000 == 0 {
             self.registers
                 .sdmemcomppadctrl
-                .set(self.registers.sdmemcomppadctrl.get() | 0x8000_0000);
+                .write(self.registers.sdmemcomppadctrl.read() | 0x8000_0000);
 
             // Force a register read to refresh the clock control value.
-            self.get_sd_clock_control();
+            self.read_sd_clock_control();
 
             // Delay.
             usleep(1);
         }
 
         // Start automatic calibration.
-        self.registers.auto_cal_config.set(
-            self.registers.auto_cal_config.get()
+        self.registers.auto_cal_config.write(
+            self.registers.auto_cal_config.read()
                 & (AutocalConfiguration::SDMMC_AUTOCAL_START
                     | AutocalConfiguration::SDMMC_AUTOCAL_ENABLE)
                     .bits(),
         );
 
         // Force a register read to refresh the clock control value.
-        self.get_sd_clock_control();
+        self.read_sd_clock_control();
 
         // Delay.
         usleep(1);
@@ -898,14 +898,14 @@ impl<'a> Sdmmc<'a> {
         let timebase = get_microseconds();
 
         // Wait until the autocal is complete.
-        while self.registers.auto_cal_status.get() & AutocalStatus::SDMMC_AUTOCAL_ACTIVE.bits() != 0
+        while self.registers.auto_cal_status.read() & AutocalStatus::SDMMC_AUTOCAL_ACTIVE.bits() != 0
         {
             // Ensure we haven't timed out.
             if get_time_since(timebase) > Timeouts::SDMMC_AUTOCAL_TIMEOUT.bits() {
                 // Autocal timed out.
 
                 // Force a register read to refresh the clock control value.
-                self.get_sd_clock_control();
+                self.read_sd_clock_control();
 
                 // Upon timeout, fall back to the standard values.
                 match self.controller {
@@ -921,29 +921,29 @@ impl<'a> Sdmmc<'a> {
                             drvdn = 0x15;
                         }
 
-                        let mut value = padctl.sdmmc1_pad_cfgpadctrl.get();
+                        let mut value = padctl.sdmmc1_pad_cfgpadctrl.read();
 
                         value &= !((0x7F << 20) | (0x7F << 12));
                         value |= drvup << 20;
                         value |= drvdn << 12;
 
-                        padctl.sdmmc1_pad_cfgpadctrl.set(value);
+                        padctl.sdmmc1_pad_cfgpadctrl.write(value);
                     },
                     SdmmcController::Sdmmc4 => {
-                        let mut value = padctl.emmc4_pad_cfgpadctrl.get();
+                        let mut value = padctl.emmc4_pad_cfgpadctrl.read();
 
                         value &= !((0x3F << 8) | (0x3F << 2));
                         value |= 0x10 << 8;
                         value |= 0x10 << 2;
 
-                        padctl.emmc4_pad_cfgpadctrl.set(value);
+                        padctl.emmc4_pad_cfgpadctrl.write(value);
                     },
                     _ => {},
                 }
 
                 // Manually clear the autocal enable bit.
-                self.registers.auto_cal_config.set(
-                    self.registers.auto_cal_config.get()
+                self.registers.auto_cal_config.write(
+                    self.registers.auto_cal_config.read()
                         & !AutocalConfiguration::SDMMC_AUTOCAL_ENABLE.bits(),
                 );
             }
@@ -952,7 +952,7 @@ impl<'a> Sdmmc<'a> {
         // Clear PAD_E_INPUT_OR_E_PWRD (relevant for eMMC only).
         self.registers
             .sdmemcomppadctrl
-            .set(self.registers.sdmemcomppadctrl.get() & !0x8000_0000);
+            .write(self.registers.sdmemcomppadctrl.read() & !0x8000_0000);
 
         // If requested, enable the SD clock.
         if restart_sd_clock {
@@ -965,17 +965,17 @@ impl<'a> Sdmmc<'a> {
         // Enable the internal clock.
         self.registers
             .clock_control
-            .set(self.registers.clock_control.get() | (1 << 0));
+            .write(self.registers.clock_control.read() | (1 << 0));
 
         // Force a register read to refresh the clock control value.
-        self.get_sd_clock_control();
+        self.read_sd_clock_control();
 
         // Program a timeout of 2000 milliseconds.
         let timebase = get_microseconds();
         let mut is_timeout = false;
 
         // Wait for the clock to stabilize.
-        while !is_timeout && self.registers.clock_control.get() & (1 << 1) == 0 {
+        while !is_timeout && self.registers.clock_control.read() & (1 << 1) == 0 {
             // Keep checking if timeout expired.
             is_timeout = get_time_since(timebase) > 2_000_000;
         }
@@ -987,44 +987,44 @@ impl<'a> Sdmmc<'a> {
         }
 
         // Configure clock control and host control 2.
-        self.registers.host_control2.set(
-            self.registers.host_control2.get() & !HostControl2::SDHCI_CTRL_PRESET_VAL_ENABLE.bits(),
+        self.registers.host_control2.write(
+            self.registers.host_control2.read() & !HostControl2::SDHCI_CTRL_PRESET_VAL_ENABLE.bits(),
         );
         self.registers
             .host_control
-            .set(self.registers.host_control.get() & !(1 << 5));
+            .write(self.registers.host_control.read() & !(1 << 5));
         self.registers
             .host_control2
-            .set(self.registers.host_control2.get() | HostControl2::SDHCI_HOST_VERSION_4_EN.bits());
+            .write(self.registers.host_control2.read() | HostControl2::SDHCI_HOST_VERSION_4_EN.bits());
 
         // Ensure 64-bit addressing is supported.
-        if self.registers.capabilities.get() & Capabilities::SDHCI_CAN_64BIT.bits() == 0 {
+        if self.registers.capabilities.read() & Capabilities::SDHCI_CAN_64BIT.bits() == 0 {
             // 64-bit addressing is unsupported.
             return Err(());
         }
 
         // Enable 64-bit addressing.
-        self.registers.host_control2.set(
-            self.registers.host_control2.get() | HostControl2::SDHCI_ADDRESSING_64BIT_EN.bits(),
+        self.registers.host_control2.write(
+            self.registers.host_control2.read() | HostControl2::SDHCI_ADDRESSING_64BIT_EN.bits(),
         );
 
         // Use SDMA by default.
         self.registers
             .host_control
-            .set(self.registers.host_control.get() & !HostControl::SDHCI_CTRL_DMA_MASK.bits());
+            .write(self.registers.host_control.read() & !HostControl::SDHCI_CTRL_DMA_MASK.bits());
 
         // Change to ADMA if possible.
-        if self.registers.capabilities.get() & Capabilities::SDHCI_CAN_DO_ADMA2.bits() != 0 {
+        if self.registers.capabilities.read() & Capabilities::SDHCI_CAN_DO_ADMA2.bits() != 0 {
             self.use_adma = true;
         }
 
         // Set the timeout to be the maximum value.
         self.registers
             .timeout_control
-            .set(self.registers.timeout_control.get() & 0xF0);
+            .write(self.registers.timeout_control.read() & 0xF0);
         self.registers
             .timeout_control
-            .set(self.registers.timeout_control.get() | 0x0E);
+            .write(self.registers.timeout_control.read() | 0x0E);
 
         Ok(())
     }
@@ -1038,23 +1038,23 @@ impl<'a> Sdmmc<'a> {
     pub fn set_bus_width(&mut self, bus_width: SdmmcBusWidth) {
         match bus_width {
             SdmmcBusWidth::Width1Bit => {
-                self.registers.host_control.set(
-                    self.registers.host_control.get()
+                self.registers.host_control.write(
+                    self.registers.host_control.read()
                         & !(HostControl::SDHCI_CTRL_4BITBUS | HostControl::SDHCI_CTRL_8BITBUS)
                             .bits(),
                 );
             },
             SdmmcBusWidth::Width4Bit => {
-                self.registers.host_control.set(
-                    self.registers.host_control.get() | HostControl::SDHCI_CTRL_4BITBUS.bits(),
+                self.registers.host_control.write(
+                    self.registers.host_control.read() | HostControl::SDHCI_CTRL_4BITBUS.bits(),
                 );
-                self.registers.host_control.set(
-                    self.registers.host_control.get() & !HostControl::SDHCI_CTRL_8BITBUS.bits(),
+                self.registers.host_control.write(
+                    self.registers.host_control.read() & !HostControl::SDHCI_CTRL_8BITBUS.bits(),
                 );
             },
             SdmmcBusWidth::Width8Bit => {
-                self.registers.host_control.set(
-                    self.registers.host_control.get() | HostControl::SDHCI_CTRL_8BITBUS.bits(),
+                self.registers.host_control.write(
+                    self.registers.host_control.read() | HostControl::SDHCI_CTRL_8BITBUS.bits(),
                 );
             },
         }
@@ -1073,23 +1073,23 @@ impl<'a> Sdmmc<'a> {
             SdmmcBusVoltage::VoltageNone => {
                 self.registers
                     .power_control
-                    .set(self.registers.power_control.get() & !(1 << 0));
+                    .write(self.registers.power_control.read() & !(1 << 0));
             },
             SdmmcBusVoltage::Voltage1V8 => {
                 self.registers
                     .power_control
-                    .set(self.registers.power_control.get() | (5 << 1));
+                    .write(self.registers.power_control.read() | (5 << 1));
                 self.registers
                     .power_control
-                    .set(self.registers.power_control.get() | (1 << 0));
+                    .write(self.registers.power_control.read() | (1 << 0));
             },
             SdmmcBusVoltage::Voltage3V3 => {
                 self.registers
                     .power_control
-                    .set(self.registers.power_control.get() | (7 << 1));
+                    .write(self.registers.power_control.read() | (7 << 1));
                 self.registers
                     .power_control
-                    .set(self.registers.power_control.get() | (1 << 0));
+                    .write(self.registers.power_control.read() | (1 << 0));
             },
         }
 
@@ -1101,16 +1101,16 @@ impl<'a> Sdmmc<'a> {
             // Clear and set DQS_TRIM_VAL (used in HS400).
             self.registers
                 .vendor_cap_overrides
-                .set(self.registers.vendor_cap_overrides.get() & !0x3F00);
+                .write(self.registers.vendor_cap_overrides.read() & !0x3F00);
             self.registers
                 .vendor_cap_overrides
-                .set(self.registers.vendor_cap_overrides.get() | 0x2800);
+                .write(self.registers.vendor_cap_overrides.read() | 0x2800);
         }
 
         // Clear TAP_VAL_UPDATED_BY_HW.
         self.registers
             .vendor_tuning_cntrl0
-            .set(self.registers.vendor_tuning_cntrl0.get() & !0x20000);
+            .write(self.registers.vendor_tuning_cntrl0.read() & !0x20000);
 
         if bus_speed == SdmmcBusSpeed::MmcHs400 {
             // We must have obtained the tap value from the tuning procedure here.
@@ -1118,10 +1118,10 @@ impl<'a> Sdmmc<'a> {
                 // Clear and set the tap value.
                 self.registers
                     .vendor_clock_cntrl
-                    .set(self.registers.vendor_clock_cntrl.get() & !0xFF0000);
+                    .write(self.registers.vendor_clock_cntrl.read() & !0xFF0000);
                 self.registers
                     .vendor_clock_cntrl
-                    .set(self.registers.vendor_clock_cntrl.get() | (self.tap_val << 16));
+                    .write(self.registers.vendor_clock_cntrl.read() | (self.tap_val << 16));
             }
         } else {
             // Use the recommended values.
@@ -1140,10 +1140,10 @@ impl<'a> Sdmmc<'a> {
             // Clear and set the tap values.
             self.registers
                 .vendor_clock_cntrl
-                .set(self.registers.vendor_clock_cntrl.get() & !0xFF0000);
+                .write(self.registers.vendor_clock_cntrl.read() & !0xFF0000);
             self.registers
                 .vendor_clock_cntrl
-                .set(self.registers.vendor_clock_cntrl.get() | (self.tap_val << 16));
+                .write(self.registers.vendor_clock_cntrl.read() | (self.tap_val << 16));
         }
     }
 
@@ -1159,17 +1159,17 @@ impl<'a> Sdmmc<'a> {
         // Set the CALIBRATE bit.
         self.registers
             .vendor_dllcal_cfg
-            .set(self.registers.vendor_dllcal_cfg.get() | 0x8000_0000);
+            .write(self.registers.vendor_dllcal_cfg.read() | 0x8000_0000);
 
         // Force a register read to refresh the clock control value.
-        self.get_sd_clock_control();
+        self.read_sd_clock_control();
 
         // Program a timeout of 5 milliseconds.
         let mut timebase = get_microseconds();
         let mut is_timeout = false;
 
         // Wait for CALIBRATE to be cleared.
-        while !is_timeout && self.registers.vendor_dllcal_cfg.get() & 0x8000_0000 != 0 {
+        while !is_timeout && self.registers.vendor_dllcal_cfg.read() & 0x8000_0000 != 0 {
             // Keep checking if timeout expired.
             is_timeout = get_time_since(timebase) > 5_000;
         }
@@ -1185,7 +1185,7 @@ impl<'a> Sdmmc<'a> {
         is_timeout = false;
 
         // Wait for DLL_CAL_ACTIVE to be cleared.
-        while !is_timeout && self.registers.vendor_dllcal_cfg_sta.get() & 0x8000_0000 != 0 {
+        while !is_timeout && self.registers.vendor_dllcal_cfg_sta.read() & 0x8000_0000 != 0 {
             // Keep checking if timeout expired.
             is_timeout = get_time_since(timebase) > 10_000;
         }
@@ -1226,9 +1226,9 @@ impl<'a> Sdmmc<'a> {
             | SdmmcBusSpeed::SdLegacy => {
                 self.registers
                     .host_control
-                    .set(self.registers.host_control.get() & !HostControl::SDHCI_CTRL_HISPD.bits());
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() & !HostControl2::SDHCI_CTRL_VDD_180.bits(),
+                    .write(self.registers.host_control.read() & !HostControl::SDHCI_CTRL_HISPD.bits());
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() & !HostControl2::SDHCI_CTRL_VDD_180.bits(),
                 );
             },
 
@@ -1236,9 +1236,9 @@ impl<'a> Sdmmc<'a> {
             SdmmcBusSpeed::SdHs | SdmmcBusSpeed::MmcHs | SdmmcBusSpeed::UhsSdr25 => {
                 self.registers
                     .host_control
-                    .set(self.registers.host_control.get() | HostControl::SDHCI_CTRL_HISPD.bits());
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() & !HostControl2::SDHCI_CTRL_VDD_180.bits(),
+                    .write(self.registers.host_control.read() | HostControl::SDHCI_CTRL_HISPD.bits());
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() & !HostControl2::SDHCI_CTRL_VDD_180.bits(),
                 );
             },
 
@@ -1248,40 +1248,40 @@ impl<'a> Sdmmc<'a> {
             | SdmmcBusSpeed::UhsDdr50
             | SdmmcBusSpeed::UhsSdr50
             | SdmmcBusSpeed::MmcDdr52 => {
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() & !HostControl2::SDHCI_CTRL_UHS_MASK.bits(),
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() & !HostControl2::SDHCI_CTRL_UHS_MASK.bits(),
                 );
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() | HostControl2::SDHCI_CTRL_UHS_SDR104.bits(),
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() | HostControl2::SDHCI_CTRL_UHS_SDR104.bits(),
                 );
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() | HostControl2::SDHCI_CTRL_VDD_180.bits(),
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() | HostControl2::SDHCI_CTRL_VDD_180.bits(),
                 );
             },
 
             // 200MHz single-data rate (MMC).
             SdmmcBusSpeed::MmcHs400 => {
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() & !HostControl2::SDHCI_CTRL_UHS_MASK.bits(),
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() & !HostControl2::SDHCI_CTRL_UHS_MASK.bits(),
                 );
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() | HostControl2::SDHCI_CTRL_HS400.bits(),
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() | HostControl2::SDHCI_CTRL_HS400.bits(),
                 );
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() | HostControl2::SDHCI_CTRL_VDD_180.bits(),
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() | HostControl2::SDHCI_CTRL_VDD_180.bits(),
                 );
             },
 
             // 25Mhz default speed (SD).
             SdmmcBusSpeed::UhsSdr12 => {
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() & !HostControl2::SDHCI_CTRL_UHS_MASK.bits(),
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() & !HostControl2::SDHCI_CTRL_UHS_MASK.bits(),
                 );
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() | HostControl2::SDHCI_CTRL_UHS_SDR12.bits(),
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() | HostControl2::SDHCI_CTRL_UHS_SDR12.bits(),
                 );
-                self.registers.host_control2.set(
-                    self.registers.host_control2.get() | HostControl2::SDHCI_CTRL_VDD_180.bits(),
+                self.registers.host_control2.write(
+                    self.registers.host_control2.read() | HostControl2::SDHCI_CTRL_VDD_180.bits(),
                 );
             },
 
@@ -1292,7 +1292,7 @@ impl<'a> Sdmmc<'a> {
         }
 
         // Force a register read to refresh the clock control value.
-        self.get_sd_clock_control();
+        self.read_sd_clock_control();
 
         // Get the clock's frequency and divider.
         let frequency = get_sdclk_frequency(bus_speed);
@@ -1314,9 +1314,9 @@ impl<'a> Sdmmc<'a> {
         // Set the clock control divider values.
         self.registers
             .clock_control
-            .set(self.registers.clock_control.get() & !((0x300 | 0xFF) << 6));
-        self.registers.clock_control.set(
-            self.registers.clock_control.get() | ((divider_high << 6) | (divider_low << 8)) as u16,
+            .write(self.registers.clock_control.read() & !((0x300 | 0xFF) << 6));
+        self.registers.clock_control.write(
+            self.registers.clock_control.read() | ((divider_high << 6) | (divider_low << 8)) as u16,
         );
 
         // If requested, enable the SD clock.

@@ -2,41 +2,57 @@
 //!
 //! Also referred to as PMC Counter 0 registers.
 
+use mirage_mmio::{Mmio, VolatileStorage};
+
 /// Base address for SYSCTR0 registers.
-const SYSCTR0_BASE: u32 = 0x700F_0000;
+pub(crate) const SYSCTR0_BASE: u32 = 0x700F_0000;
 
-register!(CNTCR, SYSCTR0_BASE + 0x0);
+/// Representation of the PMC Counter 0 registers.
+#[allow(non_snake_case)]
+#[repr(C)]
+pub struct Sysctr0Registers {
+    /// The `SYSCTR0_CNTCR_0` register.
+    pub CNTCR: Mmio<u32>,
+    /// The `SYSCTR0_CNTSR_0` register.
+    pub CNTSR: Mmio<u32>,
+    /// The `SYSCTR0_CNTCV0_0` register.
+    pub CNTCV0: Mmio<u32>,
+    /// The `SYSCTR0_CNTCV1_0` register.
+    pub CNTCV1: Mmio<u32>,
+    _unk1: [Mmio<u32>; 0x4],
+    /// The `SYSCTR0_CNTFID0_0` register.
+    pub CNTFID0: Mmio<u32>,
+    /// The `SYSCTR0_CNTFID1_0` register.
+    pub CNTFID1: Mmio<u32>,
+    _unk2: [Mmio<u32>; 0x3EA],
+    /// The `SYSCTR0_COUNTERID4_0` register.
+    pub COUNTERID4: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID5_0` register.
+    pub COUNTERID5: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID6_0` register.
+    pub COUNTERID6: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID7_0` register.
+    pub COUNTERID7: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID0_0` register.
+    pub COUNTERID0: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID1_0` register.
+    pub COUNTERID1: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID2_0` register.
+    pub COUNTERID2: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID3_0` register.
+    pub COUNTERID3: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID8_0` register.
+    pub COUNTERID8: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID9_0` register.
+    pub COUNTERID9: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID10_0` register.
+    pub COUNTERID10: Mmio<u32>,
+    /// The `SYSCTR0_COUNTERID11_0` register.
+    pub COUNTERID11: Mmio<u32>,
+}
 
-register!(CNTSR, SYSCTR0_BASE + 0x4);
-
-register!(CNTCV0, SYSCTR0_BASE + 0x8);
-
-register!(CNTCV1, SYSCTR0_BASE + 0xC);
-
-register!(CNTFID0, SYSCTR0_BASE + 0x20);
-
-register!(CNTFID1, SYSCTR0_BASE + 0x24);
-
-register!(COUNTERID4, SYSCTR0_BASE + 0xFD0);
-
-register!(COUNTERID5, SYSCTR0_BASE + 0xFD4);
-
-register!(COUNTERID6, SYSCTR0_BASE + 0xFD8);
-
-register!(COUNTERID7, SYSCTR0_BASE + 0xFDC);
-
-register!(COUNTERID0, SYSCTR0_BASE + 0xFE0);
-
-register!(COUNTERID1, SYSCTR0_BASE + 0xFE4);
-
-register!(COUNTERID2, SYSCTR0_BASE + 0xFE8);
-
-register!(COUNTERID3, SYSCTR0_BASE + 0xFEC);
-
-register!(COUNTERID8, SYSCTR0_BASE + 0xFF0);
-
-register!(COUNTERID9, SYSCTR0_BASE + 0xFF4);
-
-register!(COUNTERID10, SYSCTR0_BASE + 0xFF8);
-
-register!(COUNTERID11, SYSCTR0_BASE + 0xFFC);
+impl VolatileStorage for Sysctr0Registers {
+    unsafe fn make_ptr() -> *const Self {
+        SYSCTR0_BASE as *const _
+    }
+}

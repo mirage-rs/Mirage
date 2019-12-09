@@ -90,11 +90,13 @@
 //! [`GpioConfig`]: enum.GpioConfig.html
 //! [`gpio!`]: macro.gpio.html
 
+pub use paste::expr;
+
 use enum_primitive::FromPrimitive;
-use register::mmio::ReadWrite;
+use mirage_mmio::{Mmio, VolatileStorage};
 
 /// Base address for the GPIO registers.
-const GPIO_BASE: u32 = 0x6000_D000;
+pub(crate) const GPIO_BASE: u32 = 0x6000_D000;
 
 /// The total amount of GPIO ports per bank section.
 const GPIO_PORTS_COUNT: usize = 4;
@@ -102,7 +104,7 @@ const GPIO_PORTS_COUNT: usize = 4;
 const GPIO_BANKS_COUNT: usize = 8;
 
 /// The GPIO ports.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GpioPort {
     A = 0,
     B,
@@ -139,7 +141,7 @@ pub enum GpioPort {
 }
 
 /// Representation of the GPIO pins for each port.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GpioPin {
     P0 = 0,
     P1,
@@ -185,7 +187,7 @@ enum_from_primitive! {
 }
 
 /// Supported GPIO configurations.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum GpioConfig {
     Input,
     OutputLow,
@@ -195,22 +197,22 @@ pub enum GpioConfig {
 /// Representation of a GPIO bank.
 #[repr(C)]
 struct GpioBank {
-    gpio_config: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_direction_out: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_out: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_in: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_int_status: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_int_enable: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_int_level: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_int_clear: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_config: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_dir_out: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_out: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_in: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_int_status: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_int_enable: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_int_level: [ReadWrite<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_int_clear: [ReadWrite<u32>; GPIO_PORTS_COUNT],
+    gpio_config: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_direction_out: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_out: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_in: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_int_status: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_int_enable: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_int_level: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_int_clear: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_config: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_dir_out: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_out: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_in: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_int_status: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_int_enable: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_int_level: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_int_clear: [Mmio<u32>; GPIO_PORTS_COUNT],
 }
 
 /// Representation of the GPIO controller.
@@ -220,15 +222,14 @@ pub struct GpioController {
     banks: [GpioBank; GPIO_BANKS_COUNT],
 }
 
-impl GpioController {
-    /// Factory method to create a pointer to the GPIO controller.
-    pub fn get() -> *const Self {
+impl VolatileStorage for GpioController {
+    unsafe fn make_ptr() -> *const Self {
         GPIO_BASE as *const _
     }
 }
 
 /// Representation of a GPIO
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Gpio {
     /// The GPIO port.
     pub port: GpioPort,
@@ -241,6 +242,8 @@ pub struct Gpio {
 /// # Example
 ///
 /// ```
+/// use mirage_libswitch::gpio::*;
+///
 /// let gpio = Gpio {
 ///     port: GpioPort::X,
 ///     pin: GpioPin::P7,
@@ -253,7 +256,7 @@ macro_rules! gpio {
     ($port:ident, $pin:tt) => {
         $crate::gpio::Gpio {
             port: $crate::gpio::GpioPort::$port,
-            pin: ::paste::expr!($crate::gpio::GpioPin::[<P $pin>]),
+            pin: $crate::gpio::expr!($crate::gpio::GpioPin::[<P $pin>]),
         }
     }
 }
@@ -330,19 +333,18 @@ impl Gpio {
     }
 
     /// Reads the flag of a GPIO register.
-    fn read_flag(&self, reg: &ReadWrite<u32>) -> u32 {
-        (reg.get() >> self.pin as u32) & 1
+    #[inline]
+    fn read_flag(&self, reg: &Mmio<u32>) -> u32 {
+        (reg.read() >> self.pin as u32) & 1
     }
 
     /// Gets the GPIO mode the pin is currently set to.
     pub fn get_mode(&self) -> GpioMode {
-        let controller = GpioController::get();
+        let controller = unsafe { GpioController::get() };
 
         // Figure out the register to read from.
-        let config_reg = unsafe {
-            &(*controller).banks[self.get_bank()].gpio_config
-                [self.port as usize & (GPIO_PORTS_COUNT - 1)]
-        };
+        let config_reg = &controller.banks[self.get_bank()].gpio_config
+            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
 
         // Read the flag and wrap it into the corresponding enum.
         GpioMode::from_u32(self.read_flag(config_reg)).unwrap()
@@ -350,14 +352,12 @@ impl Gpio {
 
     /// Sets the GPIO mode for the pin.
     pub fn set_mode(&self, mode: GpioMode) {
-        let controller = GpioController::get();
+        let controller = unsafe { GpioController::get() };
 
         // Figure out the register to write to and the mask to be used.
-        let config_reg = unsafe {
-            &(*controller).banks[self.get_bank()].gpio_config
-                [self.port as usize & (GPIO_PORTS_COUNT - 1)]
-        };
-        let mut value = config_reg.get();
+        let config_reg = &controller.banks[self.get_bank()].gpio_config
+            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
+        let mut value = config_reg.read();
         let mask = self.get_mask();
 
         // Set or clear the bit, as appropriate.
@@ -371,21 +371,19 @@ impl Gpio {
         }
 
         // Set the new value.
-        config_reg.set(value);
+        config_reg.write(value);
 
         // Dummy read.
-        config_reg.get();
+        config_reg.read();
     }
 
     /// Gets the direction the pin is currently set to.
     pub fn get_direction(&self) -> GpioDirection {
-        let controller = GpioController::get();
+        let controller = unsafe { GpioController::get() };
 
         // Figure out the register to read from.
-        let direction_reg = unsafe {
-            &(*controller).banks[self.get_bank()].gpio_direction_out
-                [self.port as usize & (GPIO_PORTS_COUNT - 1)]
-        };
+        let direction_reg = &controller.banks[self.get_bank()].gpio_direction_out
+            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
 
         // Read the flag and wrap it into the corresponding enum.
         GpioDirection::from_u32(self.read_flag(direction_reg)).unwrap()
@@ -393,14 +391,12 @@ impl Gpio {
 
     /// Sets the direction of the pin.
     pub fn set_direction(&self, direction: GpioDirection) {
-        let controller = GpioController::get();
+        let controller = unsafe { GpioController::get() };
 
         // Figure out the register to write to and the mask to be used.
-        let direction_reg = unsafe {
-            &(*controller).banks[self.get_bank()].gpio_direction_out
-                [self.port as usize & (GPIO_PORTS_COUNT - 1)]
-        };
-        let mut value = direction_reg.get();
+        let direction_reg = &controller.banks[self.get_bank()].gpio_direction_out
+            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
+        let mut value = direction_reg.read();
         let mask = self.get_mask();
 
         // Set or clear the bit, as appropriate.
@@ -414,10 +410,10 @@ impl Gpio {
         }
 
         // Set the new value.
-        direction_reg.set(value);
+        direction_reg.write(value);
 
         // Dummy read.
-        direction_reg.get();
+        direction_reg.read();
     }
 
     /// Configures a GPIO with a pre-defined configuration.
@@ -441,14 +437,12 @@ impl Gpio {
 
     /// Writes a level to the pin.
     pub fn write(&self, level: GpioLevel) {
-        let controller = GpioController::get();
+        let controller = unsafe { GpioController::get() };
 
         // Figure out the register to write to and the mask to be used.
-        let out_reg = unsafe {
-            &(*controller).banks[self.get_bank()].gpio_out
-                [self.port as usize & (GPIO_PORTS_COUNT - 1)]
-        };
-        let mut value = out_reg.get();
+        let out_reg = &controller.banks[self.get_bank()].gpio_out
+            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
+        let mut value = out_reg.read();
         let mask = self.get_mask();
 
         // Set or clear the bit, as appropriate.
@@ -462,21 +456,19 @@ impl Gpio {
         }
 
         // Set the new value.
-        out_reg.set(value);
+        out_reg.write(value);
 
         // Dummy read.
-        out_reg.get();
+        out_reg.read();
     }
 
     /// Reads the GPIO level of the pin.
     pub fn read(&self) -> GpioLevel {
-        let controller = GpioController::get();
+        let controller = unsafe { GpioController::get() };
 
         // Figure out the register to read from.
-        let in_reg = unsafe {
-            &(*controller).banks[self.get_bank()].gpio_in
-                [self.port as usize & (GPIO_PORTS_COUNT - 1)]
-        };
+        let in_reg = &controller.banks[self.get_bank()].gpio_in
+            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
 
         // Read the flag and wrap it into the corresponding enum.
         GpioLevel::from_u32(self.read_flag(in_reg)).unwrap()
