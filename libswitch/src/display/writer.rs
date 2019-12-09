@@ -130,18 +130,18 @@ const GFX_STRIDE: usize = 720;
 
 lazy_static! {
     pub static ref WRITER: Writer = Writer {
-        buffer: unsafe { &mut *(FRAMEBUFFER_ADDRESS as *mut Framebuffer) },
+        buffer: unsafe { &mut *(crate::display::FRAMEBUFFER_ADDRESS as *mut Framebuffer) },
         foreground_color: 0xFFCCCCCC,
         fill_background: false,
         background_color: 0xFF1B1B1B,
         x: 0,
         y: 0
-    }
+    };
 }
 
 #[repr(transparent)]
 struct Framebuffer {
-    pixels: [u8; FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT],
+    pixels: [u32; FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT],
 }
 
 pub struct Writer {
@@ -157,7 +157,7 @@ impl Writer {
 
     /// Writes a single byte into the framebuffer at the current position.
     /// **Warning:** The byte must be between 32 and 126
-    pub fn write_char(&mut self, byte: u8) {
+    pub fn write_byte(&mut self, byte: u8) {
         if byte == '\n' as u8 {
             self.new_line();
             return
@@ -167,21 +167,22 @@ impl Writer {
             return
         }
 
-        let mut char_buf = &GFX_FONT[(8usize * (byte as usize - 32usize))..];
-        let mut fb = &self.buffer.pixels[((x + y * GFX_STRIDE) as usize)..];
+        let char_buf = &GFX_FONT[(8usize * (byte as usize - 32usize))..];
+        let mut fb = &self.buffer.pixels[(self.x as usize + self.y as usize * GFX_STRIDE)..];
 
+        // TODO: Fix E0594 in line 178, 180, 182
         for _ in 0..8 {
-            let mut v = &char_buf[1..];
+            let v = &char_buf[1..];
             for _ in 0..8 {
-                if v & 1 {
-                    fb[0] = self.foreground_color;
+            if v[0] & 1 > 0 {
+                fb[0] = self.foreground_color;
                 } else if self.fill_background {
                     fb[0] = self.background_color;
                 }
-                v >>= 1;
+                v[0] >>= 1;
                 fb = &fb[1..];
             }
-            self.x += GFX_STRIDE - 8;
+            self.x += GFX_STRIDE as u32 - 8;
         }
         self.x += 8;
     }
@@ -189,7 +190,7 @@ impl Writer {
     /// Writes a sequence of bytes into the framebuffer.
     pub fn write_string(&mut self, string: &str) {
         for byte in string.as_bytes().iter() {
-            self.write_byte(byte);
+            self.write_byte(byte.clone());
         }
     }
 
@@ -197,7 +198,7 @@ impl Writer {
     pub fn new_line(&mut self) {
         self.x = 0;
         self.y += 8;
-        if self.y > (FRAMEBUFFER_HEIGHT - 8) {
+        if self.y > (FRAMEBUFFER_HEIGHT as u32 - 8) {
             self.y = 0;
         }
     }
