@@ -143,6 +143,12 @@ impl Writer {
         self.x += 8;
     }
 
+    pub fn write_string(&mut self, string: &str) {
+        for byte in string.as_bytes().iter() {
+            self.write_byte(byte);
+        }
+    }
+
     pub fn new_line(&mut self) {
         self.x = 0;
         self.y += 8;
