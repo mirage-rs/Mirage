@@ -1,3 +1,8 @@
+use core::fmt;
+use lazy_static::lazy_static;
+use crate::display::FRAMEBUFFER_ADDRESS;
+
+
 const GFX_FONT: [u8; 95] = [
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Char 032 ( )
 	0x00, 0x30, 0x30, 0x18, 0x18, 0x00, 0x0C, 0x00, // Char 033 (!)
@@ -100,6 +105,18 @@ const FRAMEBUFFER_HEIGHT: usize = 1280;
 const FRAMEBUFFER_WIDTH: usize = 720;
 const GFX_STRIDE: usize = 720;
 
+lazy_static! {
+    pub static ref WRITER: Writer = Writer {
+        buffer: unsafe { &mut *(FRAMEBUFFER_ADDRESS as *mut Framebuffer) },
+        foreground_color: 0xFFCCCCCC,
+        fill_background: false,
+        background_color: 0xFF1B1B1B,
+        x: 0,
+        y: 0
+    }
+}
+
+#[repr(transparent)]
 struct Framebuffer {
     pixels: [u8; FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT],
 }
@@ -155,5 +172,12 @@ impl Writer {
         if self.y > (FRAMEBUFFER_HEIGHT - 8) {
             self.y = 0;
         }
+    }
+}
+
+impl fmt::Write for Writer {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.write_string(s);
+        Ok(())
     }
 }
