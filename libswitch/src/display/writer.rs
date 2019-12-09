@@ -1,9 +1,32 @@
+//! Framebuffer writer
+//!
+//! # Description
+//!
+//! The Framebuffer is a portion of random access memory containing a bitmap that drives a display.
+//! The interaction with the Framebuffer is done by the `Writer` struct.
+//! It provides basic operations like `write_byte` and `write_string` that will write
+//! the given content onto the display. The `Writer` struct also implements
+//! the `core::fmt::Write` trait, and thus can be used via the `write` macro.
+//! This module also exports the `println` and `print`
+//! macro which can be used to print a formatted string onto the display
+//! and provides a global instance of the `Writer` which must be used.
+//!
+//! # Example
+//! ```
+//! use mirage_libswitch::display;
+//!
+//! #fn main() {
+//!     let writer = display::WRITER;
+//!     writer.write_string("Hello ");
+//!     println!("World!");
+//! #}
+//! ```
+
+
 use core::fmt;
 use lazy_static::lazy_static;
-use crate::display::FRAMEBUFFER_ADDRESS;
 
-
-const GFX_FONT: [u8; 95] = [
+const GFX_FONT: [u8; 760] = [
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Char 032 ( )
 	0x00, 0x30, 0x30, 0x18, 0x18, 0x00, 0x0C, 0x00, // Char 033 (!)
 	0x00, 0x22, 0x22, 0x22, 0x00, 0x00, 0x00, 0x00, // Char 034 (")
@@ -131,6 +154,9 @@ pub struct Writer {
 }
 
 impl Writer {
+
+    /// Writes a single byte into the framebuffer at the current position.
+    /// **Warning:** The byte must be between 32 and 126
     pub fn write_char(&mut self, byte: u8) {
         if byte == '\n' as u8 {
             self.new_line();
@@ -160,12 +186,14 @@ impl Writer {
         self.x += 8;
     }
 
+    /// Writes a sequence of bytes into the framebuffer.
     pub fn write_string(&mut self, string: &str) {
         for byte in string.as_bytes().iter() {
             self.write_byte(byte);
         }
     }
 
+    /// Jumps one line down and continues to write there.
     pub fn new_line(&mut self) {
         self.x = 0;
         self.y += 8;
