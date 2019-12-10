@@ -22,6 +22,7 @@
 //! #}
 //! ```
 
+use crate::display::FRAMEBUFFER_ADDRESS;
 
 use core::fmt;
 
@@ -123,6 +124,7 @@ const GFX_FONT: [[u8; 8]; 95] = [
     [0x00, 0x00, 0x00, 0x4C, 0x32, 0x00, 0x00, 0x00]  // Char 126 (~)
 ];
 
+pub const WRITER: Writer = Writer::new();
 
 const FRAMEBUFFER_HEIGHT: usize = 1280;
 #[allow(unused)]
@@ -139,6 +141,18 @@ pub struct Writer {
 }
 
 impl Writer {
+
+    /// Creates a new writer with default values.
+    const fn new() -> Self {
+        Self {
+            framebuffer: FRAMEBUFFER_ADDRESS as *mut u32,
+            foreground_color: 0xFFCCCCCC,
+            fill_background: true,
+            background_color: 0xFF1B1B1B,
+            x: 0,
+            y: 0,
+        }
+    }
 
     /// Writes a single byte into the framebuffer at the current position.
     /// **Warning:** The byte must be between 32 and 126
@@ -217,8 +231,7 @@ macro_rules! println {
 }
 
 #[doc(hidden)]
-pub fn _print(_args: fmt::Arguments) {
-    // TODO: uncomment this line as soon as a global instance is implemented.
-    // use core::fmt::Write;
-    // WRITER.write_fmt(args).unwrap();
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.write_fmt(args).unwrap();
 }
