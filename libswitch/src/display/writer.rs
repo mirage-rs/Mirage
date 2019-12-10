@@ -15,17 +15,16 @@
 //! ```
 //! use mirage_libswitch::display;
 //!
-//! #fn main() {
-//!     let writer = display::WRITER;
-//!     writer.write_string("Hello ");
-//!     println!("World!");
-//! #}
+//! fn main() {
+//!     println!("Hello, world!");
+//! }
 //! ```
 
-use crate::display::FRAMEBUFFER_ADDRESS;
+use core::{convert::TryFrom, fmt};
 
-use core::fmt;
+use super::FRAMEBUFFER_ADDRESS;
 
+/// Representations of printable characters.
 const GFX_FONT: [[u8; 8]; 95] = [
     [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Char 032 ( )
     [0x00, 0x30, 0x30, 0x18, 0x18, 0x00, 0x0C, 0x00], // Char 033 (!)
@@ -121,88 +120,102 @@ const GFX_FONT: [[u8; 8]; 95] = [
     [0x00, 0x18, 0x08, 0x08, 0x04, 0x08, 0x08, 0x18], // Char 123 ({)
     [0x00, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08], // Char 124 (|)
     [0x00, 0x0C, 0x08, 0x08, 0x10, 0x08, 0x08, 0x0C], // Char 125 (})
-    [0x00, 0x00, 0x00, 0x4C, 0x32, 0x00, 0x00, 0x00]  // Char 126 (~)
+    [0x00, 0x00, 0x00, 0x4C, 0x32, 0x00, 0x00, 0x00], // Char 126 (~)
 ];
 
-pub const WRITER: Writer = Writer::new();
+/// The global [`Writer`] instance for the print macros.
+///
+/// [`Writer`]: struct.Writer.html
+const WRITER: Writer = Writer::new();
 
-const FRAMEBUFFER_HEIGHT: usize = 1280;
-#[allow(unused)]
-const FRAMEBUFFER_WIDTH: usize = 720;
+/// The display height supported by the framebuffer.
+const FRAMEBUFFER_HEIGHT: u32 = 1280;
+/// The display width supported by the framebuffer.
+const FRAMEBUFFER_WIDTH: u32 = 720;
+/// The GFX stride for the framebuffer area.
 const GFX_STRIDE: u32 = 720;
 
+/// Interface to the framebuffer for drawing contents to the screen.
 pub struct Writer {
+    /// A mutable pointer to the framebuffer.
     framebuffer: *mut u32,
+    /// The foreground color of the framebuffer area.
     foreground_color: u32,
+    /// Whether the background should be filled or not.
     fill_background: bool,
+    /// The background color of the framebuffer area.
     background_color: u32,
     x: u32,
+    /// The Y coordinate of the cursor.
     y: u32,
 }
 
 impl Writer {
-
-    /// Creates a new writer with default values.
+    /// Creates a new instance of the [`Writer`] with default values.
+    ///
+    /// [`Writer`]: struct.Writer.html
     const fn new() -> Self {
         Self {
             framebuffer: FRAMEBUFFER_ADDRESS as *mut u32,
-            foreground_color: 0xFFCCCCCC,
+            foreground_color: 0xFFCC_CCCC,
             fill_background: true,
-            background_color: 0xFF1B1B1B,
+            background_color: 0xFF1B_1B1B,
             x: 0,
             y: 0,
         }
     }
 
-    /// Writes a single byte into the framebuffer at the current position.
-    /// **Warning:** The byte must be between 32 and 126
-    pub fn write_char(&mut self, character: char) -> Result<(), ()> {
+    /// Writes a single character into the framebuffer at the current position.
+    /// **Warning:** The character must be in a range between 32 and 126.
+    pub fn write_char(&mut self, character: char) -> Result<char, ()> {
         if character == '\n' {
             self.new_line();
-            return Ok(())
+            return Ok(character);
         }
 
-        let char_num = character as u8;
+        let char_num = u32::try_from(character).expect("Character must fit an u32!");
+
+        // Check if the character is in the allowed range and thus printable.
         if char_num < 32 || char_num > 126 {
-            return Err(())
+            return Err(());
         }
 
-        let char_buf = GFX_FONT[8usize * (char_num as usize - 32usize)];
-        let mut fb = self.framebuffer.wrapping_offset((self.x + self.y * GFX_STRIDE) as isize);
-        for num in char_buf.iter() {
-            let mut v = num.clone();
+        let char_buf = &GFX_FONT[8 * (char_num as usize - 32)];
+        let mut framebuffer = self
+            .framebuffer
+            .wrapping_offset((self.x + self.y * GFX_STRIDE) as isize);
+
+        for byte in char_buf.iter() {
+            let mut value = byte.clone();
+
             for _ in 0..8 {
-                if v & 1 > 0 {
+                if v & 1 != 0 {
                     unsafe {
-                        *fb = self.foreground_color;
+                        framebuffer.write(self.foreground_color);
                     }
                 } else if self.fill_background {
                     unsafe {
-                        *fb = self.background_color;
+                        framebuffer.write(self.background_color);
                     }
                 }
                 v >>= 1;
-                fb = fb.wrapping_offset(1);
+                framebuffer = framebuffer.wrapping_offset(1);
             }
-            self.x += GFX_STRIDE - 8;
+
+            framebuffer = framebuffer.wrapping_offset(GFX_STRIDE as isize - 8);
         }
+
         self.x += 8;
-        Ok(())
+
+        Ok(character)
     }
 
-    /// Writes a sequence of bytes into the framebuffer.
-    pub fn write_string(&mut self, string: &str) -> Result<(), ()> {
-        for c in string.chars() {
-            self.write_char(c)?;
-        }
-        Ok(())
-    }
-
-    /// Jumps one line down and continues to write there.
+    /// Puts a line break at the current position and continues in the next line.
     pub fn new_line(&mut self) {
         self.x = 0;
         self.y += 8;
-        if self.y > (FRAMEBUFFER_HEIGHT as u32 - 8) {
+
+        if self.y > (FRAMEBUFFER_HEIGHT - 8) {
             self.y = 0;
         }
     }
@@ -210,24 +223,26 @@ impl Writer {
 
 impl fmt::Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        let res = self.write_string(s);
-        if res.is_ok() {
-            Ok(())
-        } else {
-            Err(fmt::Error {})
+        for c in s.chars() {
+            self.write_char(c)
+                .expect("Failed to write character to the framebuffer!");
         }
+
+        Ok(())
     }
 }
 
+/// Prints to the standard output.
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::display::writer::_print(format_args!($($arg)*)));
 }
 
+/// Prints to the standard output, with a newline.
 #[macro_export]
 macro_rules! println {
     () => ($crate::print!("\n"));
-    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::display::print!("{}\n", format_args!($($arg)*)));
 }
 
 #[doc(hidden)]

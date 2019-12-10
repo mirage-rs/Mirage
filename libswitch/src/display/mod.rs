@@ -9,7 +9,7 @@
 //! rate and drive a different resolution panel.
 
 pub use display::*;
-pub use writer::{Writer, WRITER};
+pub use writer::*;
 pub use display_config::FRAMEBUFFER_ADDRESS;
 
 mod display;
