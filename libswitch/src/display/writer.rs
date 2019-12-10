@@ -24,7 +24,6 @@
 
 
 use core::fmt;
-use lazy_static::lazy_static;
 
 const GFX_FONT: [u8; 760] = [
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Char 032 ( )
@@ -128,16 +127,17 @@ const FRAMEBUFFER_HEIGHT: usize = 1280;
 const FRAMEBUFFER_WIDTH: usize = 720;
 const GFX_STRIDE: usize = 720;
 
-lazy_static! {
-    pub static ref WRITER: Writer = Writer {
-        buffer: unsafe { &mut *(crate::display::FRAMEBUFFER_ADDRESS as *mut Framebuffer) },
-        foreground_color: 0xFFCCCCCC,
-        fill_background: false,
-        background_color: 0xFF1B1B1B,
-        x: 0,
-        y: 0
-    };
-}
+// TODO: Add global constant that compiles!
+/*
+ *pub const WRITER: Writer = Writer {
+ *    buffer: unsafe { &mut *(crate::display::FRAMEBUFFER_ADDRESS as *mut Framebuffer) },
+ *    foreground_color: 0xFFCCCCCC,
+ *    fill_background: false,
+ *    background_color: 0xFF1B1B1B,
+ *    x: 0,
+ *    y: 0
+ *};
+ */
 
 #[repr(transparent)]
 struct Framebuffer {
@@ -209,4 +209,22 @@ impl fmt::Write for Writer {
         self.write_string(s);
         Ok(())
     }
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _print(_args: fmt::Arguments) {
+    // TODO: uncomment this line as soon as a global instance is implemented.
+    // use core::fmt::Write;
+    // WRITER.write_fmt(args).unwrap();
 }
