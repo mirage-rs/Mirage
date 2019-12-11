@@ -136,7 +136,7 @@ const FRAMEBUFFER_WIDTH: u32 = 720;
 const GFX_STRIDE: u32 = 720;
 
 /// Interface to the framebuffer for drawing contents to the screen.
-pub struct Writer {
+struct Writer {
     /// A mutable pointer to the framebuffer.
     framebuffer: *mut u32,
     /// The foreground color of the framebuffer area.
@@ -181,9 +181,8 @@ impl Writer {
         }
 
         let char_buf = &GFX_FONT[8 * (char_num as usize - 32)];
-        let mut framebuffer = self
-            .framebuffer
-            .wrapping_offset((self.x + self.y * GFX_STRIDE) as isize);
+        let mut framebuffer =
+            self.framebuffer.wrapping_offset((self.x + self.y * GFX_STRIDE) as isize);
 
         for byte in char_buf.iter() {
             let mut value = byte.clone();
