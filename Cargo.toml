@@ -1,2 +1,6 @@
 [workspace]
-members = ["libswitch", "mmio"]
+members = [
+    "bootstrap",
+    "libswitch",
+    "mmio"
+]
