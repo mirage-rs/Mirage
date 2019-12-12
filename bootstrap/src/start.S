@@ -52,7 +52,7 @@ _start:
 // The actual entrypoint to the bootstrap.
 //
 // The implementation is derived from Package1ldr's
-// initialization routine, however with a few additions.
+// initialization routine, except with a few additions.
 //
 // See: https://switchbrew.org/wiki/Package1#Initialization
 //
