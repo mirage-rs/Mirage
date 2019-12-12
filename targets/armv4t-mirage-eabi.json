@@ -18,11 +18,11 @@
   "has-elf-tls": false,
   "has-rpath": false,
   "is-builtin": true,
-  "linker": "rust-lld",
-  "linker-flavor": "ld.lld",
+  "linker": "arm-none-eabi-gcc",
+  "linker-flavor": "gcc",
   "linker-is-gnu": true,
   "llvm-target": "armv4t-none-eabi",
-  "max-atomic-width": 64,
+  "max-atomic-width": 0,
   "os": "none",
   "panic-strategy": "abort",
   "position-independent-executables": true,
@@ -31,8 +31,8 @@
   "target-pointer-width": "32",
   "vendor": "mirage",
   "pre-link-args": {
-    "ld.lld": [
-      "--build-id=sha1"
+    "gcc": [
+      "-Tlinker-scripts/bootstrap.ld"
     ]
   }
 }

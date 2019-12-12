@@ -21,6 +21,9 @@ dependencies = [
 [[package]]
 name = "mirage-bootstrap"
 version = "0.1.0"
+dependencies = [
+ "mirage-libswitch 0.1.0",
+]
 
 [[package]]
 name = "mirage-libswitch"

@@ -10,3 +10,4 @@ memcpy = true
 sysroot_path = "target/sysroot"
 
 [dependencies]
+mirage-libswitch = { path = "../libswitch" }
