@@ -10,6 +10,7 @@ PHDRS {
 
 SECTIONS {
   PROVIDE(__payload_start__ = 0x40010000);
+  PROVIDE(__stack_top__ = 0x40010000);
 
   . = __payload_start__;
 

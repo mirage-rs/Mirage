@@ -61,7 +61,7 @@ _start:
 start:
 
     // Set the stack and frame pointer, respectively.
-    ldr sp, =0x40010000
+    ldr sp, =__stack_top__
     mov fp, #0
 
     // Clear .bss section.
