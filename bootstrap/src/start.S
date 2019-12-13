@@ -23,10 +23,12 @@
 .type main, %function
 
 .section .text.crt0, "ax", %progbits
+.arm
 .global _start
 .type _start, %function
 
 _start:
+
     // Check if it is necessary to relocate.
     ldr r0, =__payload_start__
     adr r1, _start

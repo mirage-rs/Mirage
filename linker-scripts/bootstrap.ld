@@ -38,6 +38,7 @@ SECTIONS {
   } :data
 
   /* Payload ends here as the BSS shouldn't be copied to memory. */
+  . = ALIGN(16);
   PROVIDE(__payload_end__ = ABSOLUTE(.));
 
   /* App BSS. */
