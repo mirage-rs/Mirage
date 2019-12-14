@@ -43,7 +43,17 @@ global_asm!(include_str!("start.S"));
 #[macro_use]
 extern crate mirage_libswitch;
 
+extern crate mirage_mmio;
+
 use core::panic::PanicInfo;
+
+use mirage_libswitch::{
+    display,
+    gpio::{GpioConfig},
+    pinmux::{Pinmux, TRISTATE},
+    timer::sleep,
+};
+use mirage_mmio::VolatileStorage;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo<'_>) -> ! {
@@ -53,5 +63,17 @@ fn panic(_info: &PanicInfo<'_>) -> ! {
 
 #[no_mangle]
 pub extern "C" fn main() {
-    // TODO: Implement the bootloader.
+    let pinmux = unsafe { Pinmux::get() };
+
+    pinmux.lcd_bl_pwm.write(pinmux.lcd_bl_pwm.read() & !TRISTATE);
+    pinmux.lcd_bl_en.write(pinmux.lcd_bl_en.read() & !TRISTATE);
+
+    gpio!(V, 0).config(GpioConfig::OutputHigh);
+    gpio!(V, 1).config(GpioConfig::OutputHigh);
+
+    display::display_backlight();
+
+    sleep(5);
+
+    display::hide_backlight();
 }
