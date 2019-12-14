@@ -79,7 +79,7 @@ use core::{
     marker::{Send, Sync},
 };
 
-use mirage_mmio::Mmio;
+use mirage_mmio::BlockMmio;
 
 use crate::{clock::Clock, timer::usleep};
 
@@ -259,32 +259,32 @@ bitflags! {
 #[repr(C)]
 pub struct Registers {
     /// The `UART_THR_DLAB_0_0` register.
-    pub THR_DLAB: Mmio<u32>,
+    pub THR_DLAB: BlockMmio<u32>,
     /// The `UART_IER_DLAB_0_0` register.
-    pub IER_DLAB: Mmio<u32>,
+    pub IER_DLAB: BlockMmio<u32>,
     /// The `UART_IIR_FCR_0` register.
-    pub IIR_FCR: Mmio<u32>,
+    pub IIR_FCR: BlockMmio<u32>,
     /// The `UART_LCR_0` register.
-    pub LCR: Mmio<u32>,
+    pub LCR: BlockMmio<u32>,
     /// The `UART_MCR_0` register.
-    pub MCR: Mmio<u32>,
+    pub MCR: BlockMmio<u32>,
     /// The `UART_LSR_0` register.
-    pub LSR: Mmio<u32>,
+    pub LSR: BlockMmio<u32>,
     /// The `UART_MSR_0` register.
-    pub MSR: Mmio<u32>,
+    pub MSR: BlockMmio<u32>,
     /// The `UART_SPR_0` register.
-    pub SPR: Mmio<u32>,
+    pub SPR: BlockMmio<u32>,
     /// The `UART_IRDA_CSR_0` register.
-    pub IRDA_CSR: Mmio<u32>,
+    pub IRDA_CSR: BlockMmio<u32>,
     /// The `UART_RX_FIFO_CFG_0` register.
-    pub RX_FIFO_CFG: Mmio<u32>,
+    pub RX_FIFO_CFG: BlockMmio<u32>,
     /// The `UART_MIE_0` register.
-    pub MIE: Mmio<u32>,
+    pub MIE: BlockMmio<u32>,
     /// The `UART_VENDOR_STATUS_0_0` register.
-    pub VENDOR_STATUS: Mmio<u32>,
-    _unk: [Mmio<u8>; 0xC],
+    pub VENDOR_STATUS: BlockMmio<u32>,
+    _unk: [BlockMmio<u8>; 0xC],
     /// The `UART_ASR_0` register.
-    pub ASR: Mmio<u32>,
+    pub ASR: BlockMmio<u32>,
 }
 
 /// Representation of a UART.

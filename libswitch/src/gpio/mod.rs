@@ -93,7 +93,7 @@
 pub use paste::expr;
 
 use enum_primitive::FromPrimitive;
-use mirage_mmio::{Mmio, VolatileStorage};
+use mirage_mmio::{BlockMmio, VolatileStorage};
 
 /// Base address for the GPIO registers.
 pub(crate) const GPIO_BASE: u32 = 0x6000_D000;
@@ -197,22 +197,22 @@ pub enum GpioConfig {
 /// Representation of a GPIO bank.
 #[repr(C)]
 struct GpioBank {
-    gpio_config: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_direction_out: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_out: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_in: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_int_status: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_int_enable: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_int_level: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_int_clear: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_config: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_dir_out: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_out: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_in: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_int_status: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_int_enable: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_int_level: [Mmio<u32>; GPIO_PORTS_COUNT],
-    gpio_masked_int_clear: [Mmio<u32>; GPIO_PORTS_COUNT],
+    gpio_config: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_direction_out: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_out: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_in: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_int_status: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_int_enable: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_int_level: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_int_clear: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_config: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_dir_out: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_out: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_in: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_int_status: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_int_enable: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_int_level: [BlockMmio<u32>; GPIO_PORTS_COUNT],
+    gpio_masked_int_clear: [BlockMmio<u32>; GPIO_PORTS_COUNT],
 }
 
 /// Representation of the GPIO controller.
@@ -340,7 +340,7 @@ impl Gpio {
 
     /// Reads the flag of a GPIO register.
     #[inline]
-    fn read_flag(&self, reg: &Mmio<u32>) -> u32 {
+    fn read_flag(&self, reg: &BlockMmio<u32>) -> u32 {
         (reg.read() >> self.pin as u32) & 1
     }
 

@@ -7,7 +7,9 @@
 //!
 //! The [`Mmio`] struct internally wraps around an unsafe raw pointer to
 //! an instance of [`RegisterCell`] which provides the underlying methods
-//! for accessing hardware registers.
+//! for accessing hardware registers while [`BlockMmio`] directly wraps
+//! an instance of [`RegisterCell`] due to different behavior when it
+//! comes to register block representation through structs.
 //!
 //! [`RegisterCell`] then stores an instance of [`UnsafeCell`] which is
 //! supposed to manage the actually supplied pointer to a certain
@@ -18,7 +20,7 @@
 //! This makes it possible to mutate [`RegisterCell`] in immutable structs.
 //! And since it is the underlying construction for the [`Mmio`] struct,
 //! this applies to it as well. In other words, it enables "interior
-//! mutability" for [`Mmio`]s.
+//! mutability" for [`Mmio`]s. Same applies to the [`BlockMmio`] struct.
 //!
 //! Compared to other MMIO implementations, the end user is often required
 //! to dereference raw pointers, which is considered unsafe, in order to
@@ -36,6 +38,12 @@
 //! The unsafe [`VolatileStorage::get`] method can then be used to create
 //! a reference of the respectively aligned instance of the structure that
 //! represents the register block.
+//! It however is important to represent the registers with [`BlockMmio`]
+//! here instead of [`Mmio`]. [`Mmio`] in this context misbehaves.
+//!
+//! While [`Mmio`] should be used for global representation of specific
+//! MMIOs as constants, [`BlockMmio`], which provides equal functionality,
+//! is suitable for structures which serve as register block abstractions.
 //!
 //! [`Mmio::new`] and [`VolatileStorage::get`] are considered unsafe for
 //! reasons elaborated below.
@@ -46,13 +54,11 @@
 //!
 //! # Safety
 //!
-//! The dereferencing of raw pointers and operations on the memory regions
-//! is actually done by the unexposed API of [`RegisterCell`]. It takes
-//! `*const Self` as its `self` type and dereferences itself (`*self`) at
-//! every operation on the underlying memory region. This act may result
-//! in dangling pointers, triggering Undefined Behavior, which is to be
-//! avoided. And that's why it is intrinsic to pass correct pointers to
-//! [`Mmio`]s which uses them to initialize [`RegisterCell`]s.
+//! The dereferencing of raw pointers is done internally.
+//! This act may result in dangling pointers, triggering Undefined Behavior,
+//! which is to be avoided. And that's why it is intrinsic to pass correct
+//! pointers to [`Mmio`]s which uses them to initialize [`RegisterCell`]s.
+//! Same goes for register block structs that make use of [`BlockMmio`].
 //!
 //! Though end users shouldn't dereference raw pointers in their own code
 //! by design, the supplied pointers nonetheless need to be correct and
@@ -60,18 +66,22 @@
 //! structure are marked as unsafe - the general risk to trigger UB is
 //! always present.
 //!
+//! If using a struct of registers, users should always represent these
+//! as [`BlockMmio`]s due to the way it is laid out. Using [`Mmio`] in
+//! such cases would result in operations on the dereferenced
+//!
 //! # Usage
 //!
 //! ``` no_run
-//! use mirage_mmio::{Mmio, VolatileStorage};
+//! use mirage_mmio::*;
 //!
 //! // A struct that represents a memory-mapped register block.
 //! // Needs to be made repr(C) so the fields get aligned correctly.
 //! #[repr(C)]
 //! pub struct RegisterBlock {
-//!     pub some_reg: Mmio<u32>,
-//!     _unknown: [Mmio<u32>; 4],
-//!     pub another_reg: Mmio<u32>,
+//!     pub some_reg: BlockMmio<u32>,
+//!     _unknown: [BlockMmio<u32>; 4],
+//!     pub another_reg: BlockMmio<u32>,
 //! }
 //!
 //! impl VolatileStorage for RegisterBlock {
@@ -101,6 +111,7 @@
 //! [volatile]: https://doc.rust-lang.org/core/ptr/fn.read_volatile.html
 //! [`Mmio`]: struct.Mmio.html
 //! [`RegisterCell`]: struct.RegisterCell.html
+//! [`BlockMmio`]: struct.BlockMmio.html
 //! [`UnsafeCell`]: https://doc.rust-lang.org/core/cell/struct.UnsafeCell.html
 //! [`RegisterCell::get`]: struct.RegisterCell.html#method.get
 //! [`RegisterCell::set`]: struct.RegisterCell.html#method.set
@@ -111,7 +122,6 @@
 
 #![no_std]
 #![deny(missing_docs)]
-#![feature(arbitrary_self_types)]
 #![feature(const_fn)]
 
 extern crate num_traits;
@@ -126,6 +136,10 @@ use num_traits::PrimInt;
 
 /// A mutable hardware register location in memory.
 struct RegisterCell<T: PrimInt> {
+    /// A [`UnsafeCell`] wrapping the
+    /// memory location.
+    ///
+    /// [`UnsafeCell`]: https://doc.rust-lang.org/core/cell/struct.UnsafeCell.html
     register: UnsafeCell<T>,
 }
 
@@ -151,8 +165,8 @@ impl<T: PrimInt> RegisterCell<T> {
     ///
     /// [volatile read]: https://doc.rust-lang.org/core/ptr/fn.read_volatile.html
     #[inline(always)]
-    pub unsafe fn get(self: *const Self) -> T {
-        read_volatile((*self).register.get())
+    pub unsafe fn get(&self) -> T {
+        read_volatile(self.register.get())
     }
 
     /// Performs a [volatile write] to the underlying
@@ -162,8 +176,36 @@ impl<T: PrimInt> RegisterCell<T> {
     ///
     /// [volatile write]: https://doc.rust-lang.org/core/ptr/fn.write_volatile.html
     #[inline(always)]
-    pub unsafe fn set(self: *const Self, value: T) {
-        write_volatile((*self).register.get(), value)
+    pub unsafe fn set(&self, value: T) {
+        write_volatile(self.register.get(), value)
+    }
+}
+
+/// Abstraction of a memory-mapped hardware register.
+///
+/// Generally used as a struct member, providing volatile
+/// read and write access to the managed memory region.
+pub struct BlockMmio<T: PrimInt> {
+    /// The underlying [`RegisterCell`],
+    /// managing the memory region.
+    ///
+    /// [`RegisterCell`]: struct.RegisterCell.html
+    value: RegisterCell<T>,
+}
+
+impl<T: PrimInt> BlockMmio<T> {
+    /// Reads the underlying hardware register
+    /// and returns the resulting value.
+    #[inline(always)]
+    pub fn read(&self) -> T {
+        unsafe { self.value.get() }
+    }
+
+    /// Writes the given value to the
+    /// underlying hardware register.
+    #[inline(always)]
+    pub fn write(&self, value: T) {
+        unsafe { self.value.set(value) }
     }
 }
 
@@ -236,20 +278,20 @@ impl<T: PrimInt> Mmio<T> {
     /// and returns the resulting value.
     #[inline(always)]
     pub fn read(&self) -> T {
-        unsafe { self.value.get() }
+        unsafe { (*self.value).get() }
     }
 
     /// Writes the given value to the
     /// underlying hardware register.
     #[inline(always)]
     pub fn write(&self, value: T) {
-        unsafe { self.value.set(value) }
+        unsafe { (*self.value).set(value) }
     }
 }
 
 impl<T> fmt::Debug for Mmio<T>
-where
-    T: fmt::Debug + PrimInt,
+    where
+        T: fmt::Debug + PrimInt,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.debug_struct("Mmio").field("value", &self.read()).finish()
@@ -262,7 +304,7 @@ mod tests {
 
     use alloc::format;
 
-    use crate::Mmio;
+    use crate::*;
 
     /// Tests volatile reads from registers for correctness.
     #[test]
