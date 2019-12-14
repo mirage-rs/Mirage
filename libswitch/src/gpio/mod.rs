@@ -320,6 +320,12 @@ impl Gpio {
         self.port as usize * 8 + self.pin as usize
     }
 
+    /// Calculates the value of the wrapped GPIO port.
+    #[inline]
+    fn get_port_value(&self) -> usize {
+        self.port as usize & 3
+    }
+
     /// Calculates the bank where the GPIO is located.
     #[inline]
     fn get_bank(&self) -> usize {
@@ -344,7 +350,7 @@ impl Gpio {
 
         // Figure out the register to read from.
         let config_reg = &controller.banks[self.get_bank()].gpio_config
-            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
+            [self.get_port_value()];
 
         // Read the flag and wrap it into the corresponding enum.
         GpioMode::from_u32(self.read_flag(config_reg)).unwrap()
@@ -356,7 +362,9 @@ impl Gpio {
 
         // Figure out the register to write to and the mask to be used.
         let config_reg = &controller.banks[self.get_bank()].gpio_config
-            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
+            [self.get_port_value()];
+
+        // Read the value to be modified and figure out the mask to be used.
         let mut value = config_reg.read();
         let mask = self.get_mask();
 
@@ -383,7 +391,7 @@ impl Gpio {
 
         // Figure out the register to read from.
         let direction_reg = &controller.banks[self.get_bank()].gpio_direction_out
-            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
+            [self.get_port_value()];
 
         // Read the flag and wrap it into the corresponding enum.
         GpioDirection::from_u32(self.read_flag(direction_reg)).unwrap()
@@ -395,7 +403,9 @@ impl Gpio {
 
         // Figure out the register to write to and the mask to be used.
         let direction_reg = &controller.banks[self.get_bank()].gpio_direction_out
-            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
+            [self.get_port_value()];
+
+        // Read the value to be modified and the mask to be used.
         let mut value = direction_reg.read();
         let mask = self.get_mask();
 
@@ -441,7 +451,9 @@ impl Gpio {
 
         // Figure out the register to write to and the mask to be used.
         let out_reg = &controller.banks[self.get_bank()].gpio_out
-            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
+            [self.get_port_value()];
+
+        // Read the value to be modified and the mask to be used.
         let mut value = out_reg.read();
         let mask = self.get_mask();
 
@@ -468,7 +480,7 @@ impl Gpio {
 
         // Figure out the register to read from.
         let in_reg = &controller.banks[self.get_bank()].gpio_in
-            [self.port as usize & (GPIO_PORTS_COUNT - 1)];
+            [self.get_port_value()];
 
         // Read the flag and wrap it into the corresponding enum.
         GpioLevel::from_u32(self.read_flag(in_reg)).unwrap()
