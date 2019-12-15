@@ -56,7 +56,8 @@ _start:
 
 //
 // Used to copy the RCM payload data to the
-// start of the execution stack.
+// start of the execution stack and jump to
+// the actual application entrypoint.
 //
 // Since the payload data is aligned to 16-byte
 // boundary, this is safe to use.
@@ -73,6 +74,7 @@ _start:
 // Destroys r0-r7.
 //
 relocator:
+    // Relocate the payload.
     ldmia r1!, {r4-r7}
     stmia r0!, {r4-r7}
     subs r2, #0x10
