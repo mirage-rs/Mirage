@@ -65,7 +65,7 @@ args = [
 ]
 
 # Compiles the bootstrap in .bin format, to be used as an RCM payload.
-[tasks.bootstrap-build]
+[tasks.bootstrap]
 description = "Compiles the bootstrap as an RCM payload."
 dependencies = ["bootstrap-elf-build"]
 command = "arm-none-eabi-objcopy"
