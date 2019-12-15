@@ -188,7 +188,7 @@ impl Writer {
             let mut value = byte.clone();
 
             for _ in 0..8 {
-                if v & 1 != 0 {
+                if value & 1 != 0 {
                     unsafe {
                         framebuffer.write(self.foreground_color);
                     }
@@ -197,7 +197,7 @@ impl Writer {
                         framebuffer.write(self.background_color);
                     }
                 }
-                v >>= 1;
+                value >>= 1;
                 framebuffer = framebuffer.wrapping_offset(1);
             }
 
