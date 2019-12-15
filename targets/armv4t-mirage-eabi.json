@@ -19,8 +19,8 @@
   "has-elf-tls": false,
   "has-rpath": false,
   "is-builtin": true,
-  "linker": "arm-none-eabi-gcc",
-  "linker-flavor": "gcc",
+  "linker": "rust-lld",
+  "linker-flavor": "ld.lld",
   "linker-is-gnu": true,
   "llvm-target": "armv4t-none-eabi",
   "os": "none",
@@ -32,11 +32,8 @@
   "target-pointer-width": "32",
   "vendor": "mirage",
   "pre-link-args": {
-    "gcc": [
-      "-Tlinker-scripts/bootstrap.ld",
-      "-nostartfiles",
-      "-Wl,--nmagic,--gc-sections",
-      "-Xlinker"
+    "ld.lld": [
+      "-Tlink.T"
     ]
   }
 }

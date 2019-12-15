@@ -33,5 +33,6 @@ Thumbs.db
 *.til
 
 # Build results
+link.T
 *.bin
 **/mirage-*/

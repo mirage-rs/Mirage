@@ -1,0 +1,117 @@
+# General cargo-make configuration.
+[config]
+skip_core_tasks = true
+min_version = "0.22.0"
+default_to_workspace = false
+
+# Environment variables needed thorough the build.
+[env]
+RUST_TARGET_PATH = "${CARGO_MAKE_WORKING_DIRECTORY}"
+# Common path for Mirage build targets.
+MIRAGE_TARGETS_PATH = "${PWD}/targets"
+# The build target pertaining to the BPMP (ARM7TDMI).
+MIRAGE_ARM_TARGET = "${MIRAGE_TARGETS_PATH}/armv4t-mirage-eabi.json"
+# The build target pertaining to the Cortex-A57.
+MIRAGE_AARCH64_TARGET = "${MIRAGE_TARGETS_PATH}/aarch64-mirage-none.json"
+
+# Configuration for debug builds.
+[env.development]
+PROFILE_NAME = "debug"
+COMPILER_FLAGS = ""
+
+# Configuration for release builds.
+[env.production]
+PROFILE_NAME = "release"
+COMPILER_FLAGS = "--release"
+
+# rustup component add rust-src; Required by cargo-xbuild.
+[tasks.install-rust-src]
+install_crate = { rustup_component_name = "rust-src" }
+
+# rustup-component add llvm-tools-preview; Required by cargo-binutils.
+[tasks.install-llvm-tools-preview]
+install_crate = { rustup_component_name = "llvm-tools-preview" }
+
+# Installs the cargo-objcopy from the cargo-binutils crate.
+[tasks.install-cargo-binutils]
+dependencies = ["install-llvm-tools-preview"]
+install_crate = { crate_name = "cargo-binutils", binary = "cargo-objcopy", test_arg = "--help" }
+
+# Installs cargo-xbuild.
+[tasks.install-cargo-xbuild]
+dependencies = ["install-rust-src"]
+install_crate = { crate_name = "cargo-xbuild", binary = "cargo-xbuild", test_arg = "--help" }
+
+# Copies the linker script for the bootstrap to the project root.
+[tasks.bootstrap-linker]
+script_runner = "@shell"
+script = [
+    '''
+    cp linker-scripts/bootstrap.ld link.T
+    '''
+]
+
+# Builds the bootstrap ELF.
+[tasks.bootstrap-elf-build]
+description = "Compiles the bootstrap for the BPMP processor."
+env = { "RUSTFLAGS" = "--sysroot ${PWD}/target/sysroot" }
+dependencies = ["bootstrap-linker", "install-cargo-xbuild"]
+command = "cargo"
+args = [
+    "xbuild",
+    "--target=${MIRAGE_ARM_TARGET}",
+    "--package=mirage-bootstrap",
+    "@@split(COMPILER_FLAGS, )"
+]
+
+# Compiles the bootstrap in .bin format, to be used as an RCM payload.
+[tasks.bootstrap-build]
+description = "Compiles the bootstrap as an RCM payload."
+dependencies = ["bootstrap-elf-build"]
+command = "arm-none-eabi-objcopy"
+args = [
+    "-S",
+    "-O",
+    "binary",
+    "${PWD}/target/armv4t-mirage-eabi/${PROFILE_NAME}/mirage-bootstrap",
+    "mirage-bootstrap.bin"
+]
+# Waiting for https://github.com/rust-embedded/cargo-binutils/issues/41
+#env = { "RUSTFLAGS" = "--sysroot ${PWD}/target/sysroot" }
+#dependencies = ["bootstrap-elf-build", "install-cargo-binutils"]
+#command = "cargo"
+#args = [
+#    "objcopy",
+#    "@@split(COMPILER_FLAGS, )",
+#    "--bin=mirage-bootstrap",
+#    "--target=${MIRAGE_ARM_TARGET}",
+#    "--",
+#    "-O",
+#    "binary",
+#    "mirage-bootstrap.bin"
+#]
+
+# Cleans up the bootstrap build junk.
+[tasks.bootstrap-clean]
+script_runner = "@shell"
+script = [
+    '''
+    rm -f link.T mirage-bootstrap.bin
+    '''
+]
+
+# Builds the entire Mirage project.
+[tasks.mirage-build]
+description = "Builds the entire Mirage project."
+dependencies = ["bootstrap-build"]
+
+# General cleanup task.
+[tasks.clean]
+description = "Cleans up after the boostrap build."
+dependencies = ["bootstrap-clean"]
+command = "cargo"
+args = ["clean"]
+
+# The default task is a full project build.
+[tasks.default]
+run_task = "mirage-build"
