@@ -23,7 +23,7 @@ name = "mirage-bootstrap"
 version = "0.1.0"
 dependencies = [
  "mirage-libswitch 0.1.0",
- "mirage-mmio 0.1.0",
+ "mirage-mmio 0.2.0",
 ]
 
 [[package]]
@@ -32,13 +32,13 @@ version = "0.1.0"
 dependencies = [
  "bitflags 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "enum_primitive 0.1.1 (git+https://github.com/roblabla/enum_primitive-rs)",
- "mirage-mmio 0.1.0",
+ "mirage-mmio 0.2.0",
  "paste 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "mirage-mmio"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "num-traits 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
