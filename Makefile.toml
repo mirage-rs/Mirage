@@ -103,7 +103,7 @@ script = [
 # Builds the entire Mirage project.
 [tasks.mirage-build]
 description = "Builds the entire Mirage project."
-dependencies = ["bootstrap-build"]
+dependencies = ["bootstrap"]
 
 # General cleanup task.
 [tasks.clean]

@@ -3,14 +3,18 @@ OUTPUT_ARCH(arm)
 ENTRY(_start)
 
 PHDRS {
-  text PT_LOAD FLAGS(5);
+  text   PT_LOAD FLAGS(5);
   rodata PT_LOAD FLAGS(4);
-  data PT_LOAD FLAGS(6);
+  data   PT_LOAD FLAGS(6);
 }
 
 SECTIONS {
-  PROVIDE(__payload_start__ = 0x40010000);
-  PROVIDE(__stack_top__ = 0x40010000);
+  /* The address where the payload should be loaded to. */
+  PROVIDE(__payload_start__     = 0x40010000);
+  /* The start of the execution stack. */
+  PROVIDE(__stack_top__         = 0x40010000);
+  /* Some address in upper IRAM where the relocator can be safely placed. */
+  PROVIDE(__relocator_address__ = 0x4003F000);
 
   . = __payload_start__;
 

@@ -36,7 +36,7 @@ _start:
 
     // Copy a relocator to the upper IRAM.
     adr r2, relocator
-    ldr r3, =0x4003F000
+    ldr r3, =__relocator_address__
     adr r4, relocator_end
     sub r4, r4, r2
 
@@ -51,7 +51,7 @@ _start:
     sub r2, r2, r0
     ldr r3, =start
 
-    ldr r4, =0x4003F000
+    ldr r4, =__relocator_address__
     bx r4
 
 //
