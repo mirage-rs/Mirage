@@ -62,8 +62,8 @@ fn panic(_info: &PanicInfo<'_>) -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn main() {
-    let pinmux = unsafe { Pinmux::get() };
+pub unsafe extern "C" fn main() {
+    let pinmux = Pinmux::get();
 
     pinmux.lcd_bl_pwm.write(pinmux.lcd_bl_pwm.read() & !TRISTATE);
     pinmux.lcd_bl_en.write(pinmux.lcd_bl_en.read() & !TRISTATE);
