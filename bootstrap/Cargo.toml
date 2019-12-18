@@ -10,5 +10,5 @@ memcpy = true
 sysroot_path = "target/sysroot"
 
 [dependencies]
-mirage-libswitch = { path = "../libswitch" }
+mirage-libtegra = { path = "../libtegra" }
 mirage-mmio = { path = "../mmio" }

@@ -1,6 +1,6 @@
 [workspace]
 members = [
     "bootstrap",
-    "libswitch",
+    "libtegra",
     "mmio"
 ]

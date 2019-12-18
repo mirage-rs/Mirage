@@ -41,13 +41,13 @@ compile_error!("No!");
 global_asm!(include_str!("start.S"));
 
 #[macro_use]
-extern crate mirage_libswitch;
+extern crate mirage_libtegra;
 
 extern crate mirage_mmio;
 
 use core::panic::PanicInfo;
 
-use mirage_libswitch::{
+use mirage_libtegra::{
     display,
     gpio::{GpioConfig},
     pinmux::{Pinmux, TRISTATE},
