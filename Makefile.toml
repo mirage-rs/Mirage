@@ -36,6 +36,7 @@ install_crate = { rustup_component_name = "llvm-tools-preview" }
 [tasks.install-cargo-binutils]
 dependencies = ["install-llvm-tools-preview"]
 install_crate = { crate_name = "cargo-binutils", binary = "cargo-objcopy", test_arg = "--help" }
+install_crate_args = ["--git", "https://github.com/roblabla/cargo-binutils", "--branch", "cargo-metadata"]
 
 # Installs cargo-xbuild.
 [tasks.install-cargo-xbuild]
@@ -67,29 +68,19 @@ args = [
 # Compiles the bootstrap in .bin format, to be used as an RCM payload.
 [tasks.bootstrap]
 description = "Compiles the bootstrap as an RCM payload."
-dependencies = ["bootstrap-elf-build"]
-command = "arm-none-eabi-objcopy"
+env = { "RUSTFLAGS" = "--sysroot ${PWD}/target/sysroot" }
+dependencies = ["bootstrap-elf-build", "install-cargo-binutils"]
+command = "cargo"
 args = [
-    "-S",
+    "objcopy",
+    "@@split(COMPILER_FLAGS, )",
+    "--package=mirage-bootstrap",
+    "--target=${MIRAGE_ARM_TARGET}",
+    "--",
     "-O",
     "binary",
-    "${PWD}/target/armv4t-mirage-eabi/${PROFILE_NAME}/mirage-bootstrap",
     "mirage-bootstrap.bin"
 ]
-# Waiting for https://github.com/rust-embedded/cargo-binutils/issues/41
-#env = { "RUSTFLAGS" = "--sysroot ${PWD}/target/sysroot" }
-#dependencies = ["bootstrap-elf-build", "install-cargo-binutils"]
-#command = "cargo"
-#args = [
-#    "objcopy",
-#    "@@split(COMPILER_FLAGS, )",
-#    "--bin=mirage-bootstrap",
-#    "--target=${MIRAGE_ARM_TARGET}",
-#    "--",
-#    "-O",
-#    "binary",
-#    "mirage-bootstrap.bin"
-#]
 
 # Cleans up the bootstrap build junk.
 [tasks.bootstrap-clean]
