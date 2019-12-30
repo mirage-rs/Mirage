@@ -73,6 +73,7 @@ _start:
 //
 // Destroys r0-r7.
 //
+.align 4
 relocator:
     // Relocate the payload.
     ldmia r1!, {r4-r7}
