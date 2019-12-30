@@ -449,34 +449,34 @@ impl Tsec {
             (*((HOST1X_BASE + 0x3300) as *const Mmio<u32>)).write(0);
         }
 
-        let  SOR1_DP_HDCP_BKSV_LSB = unsafe {
+        let sor1_dp_hdcp_bksv_lsb = unsafe {
             &*((SOR1_BASE + 0x1E8) as *const Mmio<u32>)
         };
 
-        let  SOR1_TMDS_HDCP_BKSV_LSB = unsafe {
+        let sor1_tmds_hdcp_bksv_lsb = unsafe {
             &*((SOR1_BASE + 0x21C) as *const Mmio<u32>)
         };
 
-        let  SOR1_TMDS_HDCP_CN_MSB = unsafe {
+        let sor1_tmds_hdcp_cn_msb = unsafe {
             &*((SOR1_BASE + 0x208) as *const Mmio<u32>)
         };
 
-        let  SOR1_TMDS_HDCP_CN_LSB = unsafe {
+        let sor1_tmds_hdcp_cn_lsb = unsafe {
             &*((SOR1_BASE + 0x20C) as *const Mmio<u32>)
         };
 
         // Fetch result from SOR1.
         let mut key: [u32; 0x4] = [0; 4];
-        key[0] = SOR1_DP_HDCP_BKSV_LSB.read();
-        key[1] = SOR1_TMDS_HDCP_BKSV_LSB.read();
-        key[2] = SOR1_TMDS_HDCP_CN_MSB.read();
-        key[3] = SOR1_TMDS_HDCP_CN_LSB.read();
+        key[0] = sor1_dp_hdcp_bksv_lsb.read();
+        key[1] = sor1_tmds_hdcp_bksv_lsb.read();
+        key[2] = sor1_tmds_hdcp_cn_msb.read();
+        key[3] = sor1_tmds_hdcp_cn_lsb.read();
 
         // Clear SOR1 registers.
-        SOR1_DP_HDCP_BKSV_LSB.write(0);
-        SOR1_TMDS_HDCP_BKSV_LSB.write(0);
-        SOR1_TMDS_HDCP_CN_MSB.write(0);
-        SOR1_TMDS_HDCP_CN_LSB.write(0);
+        sor1_dp_hdcp_bksv_lsb.write(0);
+        sor1_tmds_hdcp_bksv_lsb.write(0);
+        sor1_tmds_hdcp_cn_msb.write(0);
+        sor1_tmds_hdcp_cn_lsb.write(0);
 
         Ok(key)
     }
