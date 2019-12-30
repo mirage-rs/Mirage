@@ -20,7 +20,7 @@ dependencies = [
 
 [[package]]
 name = "mirage-bootstrap"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mirage-libtegra 2.0.0",
  "mirage-mmio 1.0.0",

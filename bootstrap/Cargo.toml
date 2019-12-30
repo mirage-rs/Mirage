@@ -1,6 +1,6 @@
 [package]
 name = "mirage-bootstrap"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Valentin B. <valentin.be@protonmail.com>"]
 license = "Apache-2.0/MIT"
 edition = "2018"
