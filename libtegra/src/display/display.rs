@@ -13,17 +13,17 @@ use crate::{
 static mut DISPLAY_VERSION: u32 = 0;
 
 /// Base address for DI registers.
-const DI_BASE: u32 = 0x5420_0000;
+pub(crate) const DI_BASE: u32 = 0x5420_0000;
 
 /// Base address for DSI registers.
-const DSI_BASE: u32 = 0x5430_0000;
+pub(crate) const DSI_BASE: u32 = 0x5430_0000;
 
 /// Base address for MIPI CAL registers.
-const MIPI_CAL_BASE: u32 = 0x700E_3000;
+pub(crate) const MIPI_CAL_BASE: u32 = 0x700E_3000;
 
 /// Waits for DSI to be updated.
 unsafe fn dsi_wait(timeout: u32, offset: u32, mask: u32) {
-    let register = Mmio::new((DSI_BASE + offset * 4) as *const u32);
+    let register = &*((DSI_BASE + offset * 4) as *const Mmio<u32>);
     let end = get_microseconds() + timeout;
 
     while get_microseconds() < end && register.read() & mask != 0 {
@@ -98,7 +98,7 @@ pub fn initialize() {
 
     unsafe {
         // Configure display interface and display.
-        Mmio::new((MIPI_CAL_BASE + 0x60) as *const u32).write(0);
+        (*((MIPI_CAL_BASE + 0x60) as *const Mmio<u32>)).write(0);
 
         execute(CLOCK_BASE as *mut u32, &DISPLAY_CONFIG_1);
         execute(DI_BASE as *mut u32, &DISPLAY_CONFIG_2);
@@ -113,41 +113,41 @@ pub fn initialize() {
     usleep(60_000);
 
     unsafe {
-        Mmio::new((DSI_BASE + 0x3F * 4) as *const u32).write(0x50204);
-        Mmio::new((DSI_BASE + 0xA * 4) as *const u32).write(0x337);
-        Mmio::new((DSI_BASE + 0x13 * 4) as *const u32).write(1 << 1);
+        (*((DSI_BASE + 0x3F * 4) as *const Mmio<u32>)).write(0x50204);
+        (*((DSI_BASE + 0xA * 4) as *const Mmio<u32>)).write(0x337);
+        (*((DSI_BASE + 0x13 * 4) as *const Mmio<u32>)).write(1 << 1);
 
         dsi_wait(250_000, 0x13, 0x3);
 
-        Mmio::new((DSI_BASE + 0xA * 4) as *const u32).write(0x406);
-        Mmio::new((DSI_BASE + 0x13 * 4) as *const u32).write(1 << 1);
+        (*((DSI_BASE + 0xA * 4) as *const Mmio<u32>)).write(0x406);
+        (*((DSI_BASE + 0x13 * 4) as *const Mmio<u32>)).write(1 << 1);
         dsi_wait(250_000, 0x13, 0x3);
 
-        Mmio::new((DSI_BASE + 0xF * 4) as *const u32).write(0x200B);
+        (*((DSI_BASE + 0xF * 4) as *const Mmio<u32>)).write(0x200B);
         dsi_wait(150_000, 0xF, 1 << 3);
 
         usleep(5_000);
 
-        DISPLAY_VERSION = Mmio::new((DSI_BASE + 0x9 * 4) as *const u32).read();
+        DISPLAY_VERSION = (*((DSI_BASE + 0x9 * 4) as *const Mmio<u32>)).read();
 
         if DISPLAY_VERSION == 0x10 {
             execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_4);
         }
 
-        Mmio::new((DSI_BASE + 0xA * 4) as *const u32).write(0x1105);
-        Mmio::new((DSI_BASE + 0x13 * 4) as *const u32).write(1 << 1);
+        (*((DSI_BASE + 0xA * 4) as *const Mmio<u32>)).write(0x1105);
+        (*((DSI_BASE + 0x13 * 4) as *const Mmio<u32>)).write(1 << 1);
 
         usleep(180_000);
 
-        Mmio::new((DSI_BASE + 0xA * 4) as *const u32).write(0x2905);
-        Mmio::new((DSI_BASE + 0x13 * 4) as *const u32).write(1 << 1);
+        (*((DSI_BASE + 0xA * 4) as *const Mmio<u32>)).write(0x2905);
+        (*((DSI_BASE + 0x13 * 4) as *const Mmio<u32>)).write(1 << 1);
 
         usleep(20_000);
 
         execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_5);
         execute(CLOCK_BASE as *mut u32, &DISPLAY_CONFIG_6);
 
-        Mmio::new((DI_BASE + 0x42E * 4) as *const u32).write(4);
+        (*((DI_BASE + 0x42E * 4) as *const Mmio<u32>)).write(4);
         execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_7);
 
         usleep(10_000);
@@ -171,11 +171,11 @@ pub fn finish() {
     hide_backlight();
 
     unsafe {
-        Mmio::new((DSI_BASE + 0x4E * 4) as *const u32).write(1);
-        Mmio::new((DSI_BASE + 0xA * 4) as *const u32).write(0x2805);
+        (*((DSI_BASE + 0x4E * 4) as *const Mmio<u32>)).write(1);
+        (*((DSI_BASE + 0xA * 4) as *const Mmio<u32>)).write(0x2805);
 
-        Mmio::new((DI_BASE + 0x40 * 4) as *const u32).write(0x5);
-        Mmio::new((DSI_BASE + 0x4E * 4) as *const u32).write(0);
+        (*((DI_BASE + 0x40 * 4) as *const Mmio<u32>)).write(0x5);
+        (*((DSI_BASE + 0x4E * 4) as *const Mmio<u32>)).write(0);
 
         execute(DI_BASE as *mut u32, &DISPLAY_CONFIG_12);
         execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_13);
@@ -186,8 +186,8 @@ pub fn finish() {
             execute(DSI_BASE as *mut u32, &DISPLAY_CONFIG_14);
         }
 
-        Mmio::new((DSI_BASE + 0xA * 4) as *const u32).write(0x1005);
-        Mmio::new((DSI_BASE + 0x13 * 4) as *const u32).write(1 << 1);
+        (*((DSI_BASE + 0xA * 4) as *const Mmio<u32>)).write(0x1005);
+        (*((DSI_BASE + 0x13 * 4) as *const Mmio<u32>)).write(1 << 1);
     }
 
     usleep(50_000);
@@ -214,8 +214,8 @@ pub fn finish() {
     car.clk_enb_l_clr.write(0x1800_0000);
 
     unsafe {
-        Mmio::new((DSI_BASE + 0x4B * 4) as *const u32).write(0x10F010F);
-        Mmio::new((DSI_BASE + 0xB * 4) as *const u32).write(0);
+        (*((DSI_BASE + 0x4B * 4) as *const Mmio<u32>)).write(0x10F010F);
+        (*((DSI_BASE + 0xB * 4) as *const Mmio<u32>)).write(0);
     }
 
     // Backlight PWM.
@@ -237,12 +237,12 @@ pub fn color_screen(color: u32) {
 
     // Configure display to show a single color.
     unsafe {
-        let cmd_state_control_reg = Mmio::new((DI_BASE + 0x41 * 4) as *const u32);
+        let cmd_state_control_reg = &*((DI_BASE + 0x41 * 4) as *const Mmio<u32>);
 
-        Mmio::new((DI_BASE + 0xB80 * 4) as *const u32).write(0);
-        Mmio::new((DI_BASE + 0xD80 * 4) as *const u32).write(0);
-        Mmio::new((DI_BASE + 0xF80 * 4) as *const u32).write(0);
-        Mmio::new((DI_BASE + 0x4E4 * 4) as *const u32).write(color);
+        (*((DI_BASE + 0xB80 * 4) as *const Mmio<u32>)).write(0);
+        (*((DI_BASE + 0xD80 * 4) as *const Mmio<u32>)).write(0);
+        (*((DI_BASE + 0xF80 * 4) as *const Mmio<u32>)).write(0);
+        (*((DI_BASE + 0x4E4 * 4) as *const Mmio<u32>)).write(color);
         cmd_state_control_reg.write((cmd_state_control_reg.read() & 0xFFFF_FFFE) | (1 << 0));
     }
 

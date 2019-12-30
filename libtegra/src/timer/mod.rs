@@ -14,8 +14,8 @@
 //!
 //! # Implementation
 //!
-//! - The most important RTC and Timers registers are exposed as global constants
-//! within the crate.
+//! - The RTC and Fixed Time registers are exposed within the structures
+//! [`TimerRegisters`] and [`RtcRegisters`].
 //!
 //! - The functions [`get_seconds`], [`get_milliseconds`] and [`get_microseconds`]
 //! can be used to retrieve the current time.
@@ -26,7 +26,7 @@
 //! # Example
 //!
 //! ```
-//! use mirage_libswitch::timer::sleep;
+//! use mirage_libtegra::timer::sleep;
 //!
 //! fn main() {
 //!     sleep(5);
@@ -34,6 +34,8 @@
 //! }
 //! ```
 //!
+//! [`TimerRegisters`]: struct.TimerRegisters.html
+//! [`RtcRegisters`]: struct.RtcRegisters.html
 //! [`get_seconds`]: fn.get_seconds.html
 //! [`get_milliseconds`]: fn.get_milliseconds.html
 //! [`get_microseconds`]: fn.get_microseconds.html
@@ -41,45 +43,97 @@
 //! [`msleep`]: fn.msleep.html
 //! [`usleep`]: fn.usleep.html
 
-use mirage_mmio::Mmio;
+use mirage_mmio::{Mmio, VolatileStorage};
 
 /// Base address for Timer registers.
 pub(crate) const TIMERS_BASE: u32 = 0x6000_5000;
 
-pub(crate) const TIMERUS_CNTR_1US: Mmio<u32> =
-    unsafe { Mmio::new((TIMERS_BASE + 0x10) as *const _) };
+/// Representation of the Fixed Time Base registers.
+#[allow(non_snake_case)]
+#[repr(C)]
+pub struct TimerRegisters {
+    /// The `TIMERUS_CNTR_1US_0` register.
+    pub TIMERUS_CNTR_1US: Mmio<u32>,
+    /// The `TIMERUS_USEC_CFG_0` register.
+    pub TIMERUS_USEC_CFG: Mmio<u32>,
+    _reserved: [Mmio<u32>; 0xD],
+    /// The `TIMERUS_CNTR_FREEZE_0` register.
+    pub TIMERUS_CNTR_FREEZE: Mmio<u32>,
+}
 
-pub(crate) const TIMERUS_USEC_CFG: Mmio<u32> =
-    unsafe { Mmio::new((TIMERS_BASE + 0x14) as *const _) };
+impl VolatileStorage for TimerRegisters {
+    unsafe fn make_ptr() -> *const Self {
+        (TIMERS_BASE + 0x10) as *const _
+    }
+}
 
 /// Base address for RTC registers.
 pub(crate) const RTC_BASE: u32 = 0x7000_E000;
 
-pub(crate) const RTC_SECONDS: Mmio<u32> =
-    unsafe { Mmio::new((RTC_BASE + 0x8) as *const _) };
+/// Representation of the RTC registers.
+#[allow(non_snake_case)]
+#[repr(C)]
+pub struct RtcRegisters {
+    /// The `APBDEV_RTC_CONTROL_0` register.
+    pub RTC_CONTROL: Mmio<u32>,
+    /// The `APBDEV_RTC_BUSY_0` register.
+    pub RTC_BUSY: Mmio<u32>,
+    /// The `APBDEV_RTC_SECONDS_0` register.
+    pub RTC_SECONDS: Mmio<u32>,
+    /// The `APBDEV_RTC_SHADOW_SECONDS_0` register.
+    pub RTC_SHADOW_SECONDS: Mmio<u32>,
+    /// The `APBDEV_RTC_MILLI_SECONDS_0` register.
+    pub RTC_MILLI_SECONDS: Mmio<u32>,
+    /// The `APBDEV_RTC_SECONDS_ALARM0_0` register.
+    pub RTC_SECONDS_ALARM0: Mmio<u32>,
+    /// The `APBDEV_RTC_SECONDS_ALARM1_0` register.
+    pub RTC_SECONDS_ALARM1: Mmio<u32>,
+    /// The `APBDEV_RTC_MILLI_SECONDS_ALARM_0` register.
+    pub RTC_MILLI_SECONDS_ALARM: Mmio<u32>,
+    /// The `APBDEV_RTC_SECONDS_COUNTDOWN_ALARM_0` register.
+    pub RTC_SECONDS_COUNTDOWN_ALARM: Mmio<u32>,
+    /// The `APBDEV_RTC_MILLI_SECONDS_COUNTDOWN_ALARM_0` register.
+    pub RTC_MILLI_SECONDS_COUNTDOWN_ALARM: Mmio<u32>,
+    /// The `APBDEV_RTC_INTR_MASK_0` register.
+    pub RTC_INTR_MASK: Mmio<u32>,
+    /// The `APBDEV_RTC_INTR_STATUS_0` register.
+    pub RTC_INTR_STATUS: Mmio<u32>,
+    /// The `APBDEV_RTC_INTR_SOURCE_0` register.
+    pub RTC_INTR_SOURCE: Mmio<u32>,
+    /// The `APBDEV_RTC_INTR_SET_0` register.
+    pub RTC_INTR_SET: Mmio<u32>,
+    /// The `APBDEV_RTC_CORRECTION_FACTOR_0` register.
+    pub RTC_CORRECTION_FACTOR: Mmio<u32>,
+}
 
-pub(crate) const RTC_SHADOW_SECONDS: Mmio<u32> =
-    unsafe { Mmio::new((RTC_BASE + 0xC) as *const _) };
-
-pub(crate) const RTC_MILLI_SECONDS: Mmio<u32> =
-    unsafe { Mmio::new((RTC_BASE + 0x10) as *const _) };
+impl VolatileStorage for RtcRegisters {
+    unsafe fn make_ptr() -> *const Self {
+        RTC_BASE as *const _
+    }
+}
 
 /// Returns the current time in seconds.
-#[inline]
+#[inline(always)]
 pub fn get_seconds() -> u32 {
-    RTC_SECONDS.read()
+    let rtc = unsafe { RtcRegisters::get() };
+
+    rtc.RTC_SECONDS.read()
 }
 
 /// Returns the current time in milliseconds.
-#[inline]
+#[inline(always)]
 pub fn get_milliseconds() -> u32 {
-    RTC_MILLI_SECONDS.read() | (RTC_SHADOW_SECONDS.read() << 10)
+    let rtc = unsafe { RtcRegisters::get() };
+
+    rtc.RTC_MILLI_SECONDS.read() | (rtc.RTC_SHADOW_SECONDS.read() * 1000)
 }
 
 /// Returns the current time in microseconds.
-#[inline]
+#[inline(always)]
 pub fn get_microseconds() -> u32 {
-    TIMERUS_CNTR_1US.read()
+    let timer = unsafe { TimerRegisters::get() };
+
+    timer.TIMERUS_CNTR_1US.read()
 }
 
 /// Gets the time that has passed since a given [`get_microseconds`].

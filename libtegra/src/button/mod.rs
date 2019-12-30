@@ -19,7 +19,7 @@
 //! # Example
 //!
 //! ```
-//! use mirage_libswitch::button::*;
+//! use mirage_libtegra::button::*;
 //!
 //! fn main() {
 //!     // Wait for 10 seconds to get the key combination for entering RCM.

@@ -13,7 +13,7 @@
 //!
 //! # Example
 //! ```
-//! use mirage_libswitch::display;
+//! use mirage_libtegra::display;
 //!
 //! fn main() {
 //!     println!("Hello, world!");

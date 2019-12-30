@@ -55,14 +55,15 @@ use mirage_libtegra::{
 };
 use mirage_mmio::VolatileStorage;
 
+mod init;
+
 #[panic_handler]
 fn panic(_info: &PanicInfo<'_>) -> ! {
     // TODO: Implement a proper panic handler.
     loop {}
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn main() {
+unsafe fn backlight_poc() {
     let pinmux = Pinmux::get();
 
     pinmux.lcd_bl_pwm.write(pinmux.lcd_bl_pwm.read() & !TRISTATE);
@@ -76,4 +77,10 @@ pub unsafe extern "C" fn main() {
     sleep(5);
 
     display::hide_backlight();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn main() {
+    // Display backlight PoC for debugging.
+    backlight_poc();
 }

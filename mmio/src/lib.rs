@@ -5,11 +5,9 @@
 //!
 //! # Design
 //!
-//! The [`Mmio`] struct internally wraps around an unsafe raw pointer to
-//! an instance of [`RegisterCell`] which provides the underlying methods
-//! for accessing hardware registers while [`BlockMmio`] directly wraps
-//! an instance of [`RegisterCell`] due to different behavior when it
-//! comes to register block representation through structs.
+//! The [`Mmio`] struct internally wraps around an instance of
+//! [`RegisterCell`] which provides unsafe [volatile] access to
+//! a certain memory region.
 //!
 //! [`RegisterCell`] then stores an instance of [`UnsafeCell`] which is
 //! supposed to manage the actually supplied pointer to a certain
@@ -20,7 +18,7 @@
 //! This makes it possible to mutate [`RegisterCell`] in immutable structs.
 //! And since it is the underlying construction for the [`Mmio`] struct,
 //! this applies to it as well. In other words, it enables "interior
-//! mutability" for [`Mmio`]s. Same applies to the [`BlockMmio`] struct.
+//! mutability" for [`Mmio`]s.
 //!
 //! Compared to other MMIO implementations, the end user is often required
 //! to dereference raw pointers, which is considered unsafe, in order to
@@ -38,19 +36,13 @@
 //! The unsafe [`VolatileStorage::get`] method can then be used to create
 //! a reference of the respectively aligned instance of the structure that
 //! represents the register block.
-//! It however is important to represent the registers with [`BlockMmio`]
-//! here instead of [`Mmio`]. [`Mmio`] in this context misbehaves.
 //!
-//! While [`Mmio`] should be used for global representation of specific
-//! MMIOs as constants, [`BlockMmio`], which provides equal functionality,
-//! is suitable for structures which serve as register block abstractions.
-//!
-//! [`Mmio::new`] and [`VolatileStorage::get`] are considered unsafe for
-//! reasons elaborated below.
+//! [`VolatileStorage::get`] is considered unsafe for reasons elaborated
+//! below.
 //!
 //! If you only want to represent certain registers at certain addresses,
-//! you can do that through [`Mmio::new`], taking a pointer to the memory
-//! address of the register.
+//! you can do that by casting the addresses to [`Mmio`] pointers and
+//! dereferencing them.
 //!
 //! # Safety
 //!
@@ -58,17 +50,12 @@
 //! This act may result in dangling pointers, triggering Undefined Behavior,
 //! which is to be avoided. And that's why it is intrinsic to pass correct
 //! pointers to [`Mmio`]s which uses them to initialize [`RegisterCell`]s.
-//! Same goes for register block structs that make use of [`BlockMmio`].
 //!
 //! Though end users shouldn't dereference raw pointers in their own code
 //! by design, the supplied pointers nonetheless need to be correct and
 //! that's why entry points to the creation of instances of the [`Mmio`]
 //! structure are marked as unsafe - the general risk to trigger UB is
 //! always present.
-//!
-//! If using a struct of registers, users should always represent these
-//! as [`BlockMmio`]s due to the way it is laid out. Using [`Mmio`] in
-//! such cases would result in operations on the dereferenced
 //!
 //! # Usage
 //!
@@ -79,9 +66,9 @@
 //! // Needs to be made repr(C) so the fields get aligned correctly.
 //! #[repr(C)]
 //! pub struct RegisterBlock {
-//!     pub some_reg: BlockMmio<u32>,
-//!     _unknown: [BlockMmio<u32>; 4],
-//!     pub another_reg: BlockMmio<u32>,
+//!     pub some_reg: Mmio<u32>,
+//!     _unknown: [Mmio<u32>; 4],
+//!     pub another_reg: Mmio<u32>,
 //! }
 //!
 //! impl VolatileStorage for RegisterBlock {
@@ -92,10 +79,10 @@
 //!     }
 //! }
 //!
-//! // A globally defined hardware register which can be accessed directly.
-//! const REGISTER: Mmio<u32> = unsafe { Mmio::new(0xF000_0000 as *const _) };
 //!
 //! fn do_xy() {
+//!     let register = unsafe { &*(0xF000_0000 as *const Mmio<u32>) };
+//!
 //!     // The previously implemented make_ptr is needed
 //!     // to create a reference to the memory-mapped
 //!     // registers, which can now be accessed.
@@ -104,14 +91,13 @@
 //!     // Read from a register.
 //!     let some_value = registers.some_reg.read();
 //!     // Modify the value of another one.
-//!     register.another_reg.write(some_value << REGISTER.read());
+//!     registers.another_reg.write(some_value << register.read());
 //! }
 //! ```
 //!
 //! [volatile]: https://doc.rust-lang.org/core/ptr/fn.read_volatile.html
 //! [`Mmio`]: struct.Mmio.html
 //! [`RegisterCell`]: struct.RegisterCell.html
-//! [`BlockMmio`]: struct.BlockMmio.html
 //! [`UnsafeCell`]: https://doc.rust-lang.org/core/cell/struct.UnsafeCell.html
 //! [`RegisterCell::get`]: struct.RegisterCell.html#method.get
 //! [`RegisterCell::set`]: struct.RegisterCell.html#method.set
@@ -181,34 +167,6 @@ impl<T: PrimInt> RegisterCell<T> {
     }
 }
 
-/// Abstraction of a memory-mapped hardware register.
-///
-/// Generally used as a struct member, providing volatile
-/// read and write access to the managed memory region.
-pub struct BlockMmio<T: PrimInt> {
-    /// The underlying [`RegisterCell`],
-    /// managing the memory region.
-    ///
-    /// [`RegisterCell`]: struct.RegisterCell.html
-    value: RegisterCell<T>,
-}
-
-impl<T: PrimInt> BlockMmio<T> {
-    /// Reads the underlying hardware register
-    /// and returns the resulting value.
-    #[inline(always)]
-    pub fn read(&self) -> T {
-        unsafe { self.value.get() }
-    }
-
-    /// Writes the given value to the
-    /// underlying hardware register.
-    #[inline(always)]
-    pub fn write(&self, value: T) {
-        unsafe { self.value.set(value) }
-    }
-}
-
 /// A trait providing methods for the creation of instances of
 /// structures which represent register blocks.
 ///
@@ -253,45 +211,32 @@ pub trait VolatileStorage {
 /// Generally used behind a pointer, providing volatile
 /// read and write access to the managed memory region.
 pub struct Mmio<T: PrimInt> {
-    /// A pointer to the underlying [`RegisterCell`],
+    /// The underlying [`RegisterCell`],
     /// managing the memory region.
     ///
     /// [`RegisterCell`]: struct.RegisterCell.html
-    value: *const RegisterCell<T>,
+    value: RegisterCell<T>,
 }
 
 impl<T: PrimInt> Mmio<T> {
-    /// Creates a new instance of [`Mmio`]
-    /// wrapping the given value.
-    ///
-    /// NOTE: unsafe because it may trigger
-    /// Undefined Behavior.
-    ///
-    /// [`Mmio`]: struct.Mmio.html
-    pub const unsafe fn new(value: *const T) -> Self {
-        Mmio {
-            value: value as *const _,
-        }
-    }
-
     /// Reads the underlying hardware register
     /// and returns the resulting value.
     #[inline(always)]
     pub fn read(&self) -> T {
-        unsafe { (*self.value).get() }
+        unsafe { self.value.get() }
     }
 
     /// Writes the given value to the
     /// underlying hardware register.
     #[inline(always)]
     pub fn write(&self, value: T) {
-        unsafe { (*self.value).set(value) }
+        unsafe { self.value.set(value) }
     }
 }
 
 impl<T> fmt::Debug for Mmio<T>
-    where
-        T: fmt::Debug + PrimInt,
+where
+    T: fmt::Debug + PrimInt,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.debug_struct("Mmio").field("value", &self.read()).finish()
@@ -310,7 +255,7 @@ mod tests {
     #[test]
     fn read_register() {
         let x: i32 = 50;
-        let register = unsafe { Mmio::new(&x as *const i32) };
+        let register = unsafe { &*(&x as *const i32 as *const Mmio<i32>) };
 
         assert_eq!(50, x);
         assert_eq!(50, register.read());
@@ -321,7 +266,7 @@ mod tests {
     #[test]
     fn write_to_register() {
         let x: i32 = 50;
-        let register = unsafe { Mmio::new(&x as *const i32) };
+        let register = unsafe { &*(&x as *const i32 as *const Mmio<i32>) };
 
         assert_eq!(x, register.read());
 
@@ -336,7 +281,7 @@ mod tests {
     #[test]
     fn debug_register() {
         let x: i32 = 50;
-        let register = unsafe { Mmio::new(&x as *const i32) };
+        let register = unsafe { &*(&x as *const i32 as *const Mmio<i32>) };
 
         // Since the Debug trait obtains the representation of
         // the value field by calling `register.read()`, this

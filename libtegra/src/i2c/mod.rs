@@ -63,9 +63,12 @@
 //! [`clear_ti_charger_bit_7`]: fn.clear_ti_charger_bit_7.html
 //! [`set_ti_charger_bit_7`]: fn.set_ti_charger_bit_7.html
 
-use core::{convert::TryInto, marker::{Send, Sync}};
+use core::{
+    convert::TryInto,
+    marker::{Send, Sync},
+};
 
-use mirage_mmio::BlockMmio;
+use mirage_mmio::Mmio;
 
 use crate::{clock::Clock, timer::usleep};
 
@@ -104,47 +107,47 @@ pub enum Error {
 #[allow(non_snake_case)]
 #[repr(C)]
 pub struct Registers {
-    pub I2C_CNFG: BlockMmio<u32>,
-    pub I2C_CMD_ADDR0: BlockMmio<u32>,
-    pub I2C_CMD_ADDR1: BlockMmio<u32>,
-    pub I2C_CMD_DATA1: BlockMmio<u32>,
-    pub I2C_CMD_DATA2: BlockMmio<u32>,
-    _0x14: BlockMmio<u32>,
-    _0x18: BlockMmio<u32>,
-    pub I2C_STATUS: BlockMmio<u32>,
-    pub I2C_SL_CNFG: BlockMmio<u32>,
-    pub I2C_SL_RCVD: BlockMmio<u32>,
-    pub I2C_SL_STATUS: BlockMmio<u32>,
-    pub I2C_SL_ADDR1: BlockMmio<u32>,
-    pub I2C_SL_ADDR2: BlockMmio<u32>,
-    pub I2C_TLOW_SEXT: BlockMmio<u32>,
-    _0x38: BlockMmio<u32>,
-    pub I2C_SL_DELAY_COUNT: BlockMmio<u32>,
-    pub I2C_SL_INT_MASK: BlockMmio<u32>,
-    pub I2C_SL_INT_SOURCE: BlockMmio<u32>,
-    pub I2C_SL_INT_SET: BlockMmio<u32>,
-    _0x4C: BlockMmio<u32>,
-    pub I2C_TX_PACKET_FIFO: BlockMmio<u32>,
-    pub I2C_RX_FIFO: BlockMmio<u32>,
-    pub PACKET_TRANSFER_STATUS: BlockMmio<u32>,
-    pub FIFO_CONTROL: BlockMmio<u32>,
-    pub FIFO_STATUS: BlockMmio<u32>,
-    pub INTERRUPT_MASK_REGISTER: BlockMmio<u32>,
-    pub INTERRUPT_STATUS_REGISTER: BlockMmio<u32>,
-    pub I2C_CLK_DIVISOR_REGISTER: BlockMmio<u32>,
-    pub I2C_INTERRUPT_SOURCE_REGISTER: BlockMmio<u32>,
-    pub I2C_INTERRUPT_SET_REGISTER: BlockMmio<u32>,
-    pub I2C_SLV_TX_PACKET_FIFO: BlockMmio<u32>,
-    pub I2C_SLV_RX_FIFO: BlockMmio<u32>,
-    pub I2C_SLV_PACKET_STATUS: BlockMmio<u32>,
-    pub I2C_BUS_CLEAR_CONFIG: BlockMmio<u32>,
-    pub I2C_BUS_CLEAR_STATUS: BlockMmio<u32>,
-    pub I2C_CONFIG_LOAD: BlockMmio<u32>,
-    _0x90: BlockMmio<u32>,
-    pub I2C_INTERFACE_TIMING_0: BlockMmio<u32>,
-    pub I2C_INTERFACE_TIMING_1: BlockMmio<u32>,
-    pub I2C_HS_INTERFACE_TIMING_0: BlockMmio<u32>,
-    pub I2C_HS_INTERFACE_TIMING_1: BlockMmio<u32>,
+    pub I2C_CNFG: Mmio<u32>,
+    pub I2C_CMD_ADDR0: Mmio<u32>,
+    pub I2C_CMD_ADDR1: Mmio<u32>,
+    pub I2C_CMD_DATA1: Mmio<u32>,
+    pub I2C_CMD_DATA2: Mmio<u32>,
+    _0x14: Mmio<u32>,
+    _0x18: Mmio<u32>,
+    pub I2C_STATUS: Mmio<u32>,
+    pub I2C_SL_CNFG: Mmio<u32>,
+    pub I2C_SL_RCVD: Mmio<u32>,
+    pub I2C_SL_STATUS: Mmio<u32>,
+    pub I2C_SL_ADDR1: Mmio<u32>,
+    pub I2C_SL_ADDR2: Mmio<u32>,
+    pub I2C_TLOW_SEXT: Mmio<u32>,
+    _0x38: Mmio<u32>,
+    pub I2C_SL_DELAY_COUNT: Mmio<u32>,
+    pub I2C_SL_INT_MASK: Mmio<u32>,
+    pub I2C_SL_INT_SOURCE: Mmio<u32>,
+    pub I2C_SL_INT_SET: Mmio<u32>,
+    _0x4C: Mmio<u32>,
+    pub I2C_TX_PACKET_FIFO: Mmio<u32>,
+    pub I2C_RX_FIFO: Mmio<u32>,
+    pub PACKET_TRANSFER_STATUS: Mmio<u32>,
+    pub FIFO_CONTROL: Mmio<u32>,
+    pub FIFO_STATUS: Mmio<u32>,
+    pub INTERRUPT_MASK_REGISTER: Mmio<u32>,
+    pub INTERRUPT_STATUS_REGISTER: Mmio<u32>,
+    pub I2C_CLK_DIVISOR_REGISTER: Mmio<u32>,
+    pub I2C_INTERRUPT_SOURCE_REGISTER: Mmio<u32>,
+    pub I2C_INTERRUPT_SET_REGISTER: Mmio<u32>,
+    pub I2C_SLV_TX_PACKET_FIFO: Mmio<u32>,
+    pub I2C_SLV_RX_FIFO: Mmio<u32>,
+    pub I2C_SLV_PACKET_STATUS: Mmio<u32>,
+    pub I2C_BUS_CLEAR_CONFIG: Mmio<u32>,
+    pub I2C_BUS_CLEAR_STATUS: Mmio<u32>,
+    pub I2C_CONFIG_LOAD: Mmio<u32>,
+    _0x90: Mmio<u32>,
+    pub I2C_INTERFACE_TIMING_0: Mmio<u32>,
+    pub I2C_INTERFACE_TIMING_1: Mmio<u32>,
+    pub I2C_HS_INTERFACE_TIMING_0: Mmio<u32>,
+    pub I2C_HS_INTERFACE_TIMING_1: Mmio<u32>,
 }
 
 /// Representation of an I²C controller.
@@ -224,13 +227,17 @@ impl I2c {
         register_base.I2C_CMD_DATA1.write(data_source);
 
         // Set config with LENGTH = data_length, NEW_MASTER_FSM, DEBOUNCE_CNT = 4T.
-        register_base.I2C_CNFG.write((((data.len() << 1) - 2) | 0x2800) as u32);
+        register_base
+            .I2C_CNFG
+            .write((((data.len() << 1) - 2) | 0x2800) as u32);
 
         // Load hardware configuration.
         self.load_config();
 
         // CONFIG |= SEND.
-        register_base.I2C_CNFG.write((register_base.I2C_CNFG.read() & 0xFFFF_FDFF) | 0x200);
+        register_base
+            .I2C_CNFG
+            .write((register_base.I2C_CNFG.read() & 0xFFFF_FDFF) | 0x200);
 
         while register_base.I2C_STATUS.read() & 0x100 != 0 {
             // Wait until not busy.
@@ -252,13 +259,17 @@ impl I2c {
         register_base.I2C_CMD_ADDR0.write((device << 1) | 1);
 
         // Set config with LENGTH = buffer.len(), NEW_MASTER_FSM, DEBOUNCE_CNT = 4T.
-        register_base.I2C_CNFG.write((((buffer.len() << 1) - 2) | 0x2840) as u32);
+        register_base
+            .I2C_CNFG
+            .write((((buffer.len() << 1) - 2) | 0x2840) as u32);
 
         // Load hardware configuration.
         self.load_config();
 
         // CONFIG |= SEND.
-        register_base.I2C_CNFG.write((register_base.I2C_CNFG.read() & 0xFFFF_FDFF) | 0x200);
+        register_base
+            .I2C_CNFG
+            .write((register_base.I2C_CNFG.read() & 0xFFFF_FDFF) | 0x200);
 
         while register_base.I2C_STATUS.read() & 0x100 != 0 {
             // Wait until not busy.
@@ -302,7 +313,8 @@ impl I2c {
         register_base.I2C_BUS_CLEAR_STATUS.read();
 
         // Read and set the Interrupt Status.
-        register_base.INTERRUPT_STATUS_REGISTER
+        register_base
+            .INTERRUPT_STATUS_REGISTER
             .write(register_base.INTERRUPT_STATUS_REGISTER.read());
     }
 

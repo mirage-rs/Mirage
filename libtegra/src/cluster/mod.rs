@@ -13,21 +13,6 @@ use crate::{
 /// Base address for Flow Control registers.
 pub(crate) const FLOW_CTLR_BASE: u32 = 0x6000_7000;
 
-pub(crate) const HALT_COP_EVENTS: Mmio<u32> =
-    unsafe { Mmio::new((FLOW_CTLR_BASE + 0x004) as *const _) };
-
-pub(crate) const RAM_REPAIR: Mmio<u32> =
-    unsafe { Mmio::new((FLOW_CTLR_BASE + 0x040) as *const _) };
-
-pub(crate) const FLOW_DBG_QUAL: Mmio<u32> =
-    unsafe { Mmio::new((FLOW_CTLR_BASE + 0x050) as *const _) };
-
-pub(crate) const L2FLUSH_CONTROL: Mmio<u32> =
-    unsafe { Mmio::new((FLOW_CTLR_BASE + 0x094) as *const _) };
-
-pub(crate) const BPMP_CLUSTER_CONTROL: Mmio<u32> =
-    unsafe { Mmio::new((FLOW_CTLR_BASE + 0x098) as *const _) };
-
 fn try_enable_power() -> Result<(), Error> {
     let value = I2c::C5.read_byte(MAX77620_PWR_I2C_ADDR, 0x40)?;
 
@@ -83,8 +68,16 @@ pub fn boot_cpu0(entry: u32) {
     let car = unsafe { Car::get() };
     let sb = unsafe { SbRegisters::get() };
 
+    let ram_repair = unsafe {
+        &*((FLOW_CTLR_BASE + 0x040) as *const Mmio<u32>)
+    };
+
+    let bpmp_cluster_control = unsafe {
+        &*((FLOW_CTLR_BASE + 0x098) as *const Mmio<u32>)
+    };
+
     // Set ACTIVE_CLUSTER to FAST.
-    BPMP_CLUSTER_CONTROL.write(BPMP_CLUSTER_CONTROL.read() & 0xFFFF_FFFE);
+    bpmp_cluster_control.write(bpmp_cluster_control.read() & 0xFFFF_FFFE);
 
     enable_power();
 
@@ -125,13 +118,13 @@ pub fn boot_cpu0(entry: u32) {
     enable_pmc_partition(0x4000, 14).unwrap();
 
     // Request and wait for RAM repair.
-    RAM_REPAIR.write(1);
-    while RAM_REPAIR.read() & 2 == 0 {
+    ram_repair.write(1);
+    while ram_repair.read() & 2 == 0 {
         // Wait.
     }
 
     unsafe {
-        Mmio::new((EXCEPTION_VECTOR_BASE + 0x100) as *const u32).write(0);
+        (*((EXCEPTION_VECTOR_BASE + 0x100) as *const Mmio<u32>)).write(0);
     }
 
     // Set reset vector.

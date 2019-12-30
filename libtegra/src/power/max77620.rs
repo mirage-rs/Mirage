@@ -39,7 +39,7 @@
 //! # Example
 //!
 //! ```
-//! use mirage_libswitch::power::max77620::Regulator;
+//! use mirage_libtegra::power::max77620::Regulator;
 //!
 //! fn main() {
 //!     // Configure all regulators.

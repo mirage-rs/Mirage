@@ -20,7 +20,7 @@
 //! # Example
 //!
 //! ```
-//! use mirage_libswitch::rtc::RtcTime;
+//! use mirage_libtegra::rtc::RtcTime;
 //!
 //! fn main() {
 //!     let time = RtcTime::new();
