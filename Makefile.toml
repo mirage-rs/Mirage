@@ -6,13 +6,12 @@ default_to_workspace = false
 
 # Environment variables needed thorough the build.
 [env]
-RUST_TARGET_PATH = "${CARGO_MAKE_WORKING_DIRECTORY}"
 # Common path for Mirage build targets.
-MIRAGE_TARGETS_PATH = "${PWD}/targets"
+RUST_TARGET_PATH = "${CARGO_MAKE_WORKING_DIRECTORY}/targets"
 # The build target pertaining to the BPMP (ARM7TDMI).
-MIRAGE_ARM_TARGET = "${MIRAGE_TARGETS_PATH}/armv4t-mirage-eabi.json"
-# The build target pertaining to the Cortex-A57.
-MIRAGE_AARCH64_TARGET = "${MIRAGE_TARGETS_PATH}/aarch64-mirage-none.json"
+MIRAGE_ARM_TARGET = "armv4t-mirage-eabi"
+# The build target pertaining to the CCPLEX (Cortex-A57).
+MIRAGE_AARCH64_TARGET = "aarch64-mirage-none"
 
 # Configuration for debug builds.
 [env.development]
@@ -32,7 +31,7 @@ install_crate = { rustup_component_name = "rust-src" }
 [tasks.install-llvm-tools-preview]
 install_crate = { rustup_component_name = "llvm-tools-preview" }
 
-# Installs the cargo-objcopy from the cargo-binutils crate.
+# Installs the cargo-objcopy binary from the cargo-binutils crate.
 [tasks.install-cargo-binutils]
 dependencies = ["install-llvm-tools-preview"]
 install_crate = { crate_name = "cargo-binutils", binary = "cargo-objcopy", test_arg = "--help" }
@@ -41,7 +40,7 @@ install_crate_args = ["--git", "https://github.com/roblabla/cargo-binutils", "--
 # Installs cargo-xbuild.
 [tasks.install-cargo-xbuild]
 dependencies = ["install-rust-src"]
-install_crate = { crate_name = "cargo-xbuild", binary = "cargo-xbuild", test_arg = "--help" }
+install_crate = { crate_name = "cargo-xbuild", binary = "cargo", test_arg = ["xbuild", "--help"], min_version = "0.5.14" }
 
 # Copies the linker script for the bootstrap to the project root.
 [tasks.bootstrap-linker]
@@ -55,7 +54,7 @@ script = [
 # Builds the bootstrap ELF.
 [tasks.bootstrap-elf-build]
 description = "Compiles the bootstrap for the BPMP processor."
-env = { "RUSTFLAGS" = "--sysroot ${PWD}/target/sysroot" }
+env = { "RUSTFLAGS" = "--sysroot ${CARGO_MAKE_WORKING_DIRECTORY}/target/sysroot" }
 dependencies = ["bootstrap-linker", "install-cargo-xbuild"]
 command = "cargo"
 args = [
@@ -68,13 +67,13 @@ args = [
 # Compiles the bootstrap in .bin format, to be used as an RCM payload.
 [tasks.bootstrap]
 description = "Compiles the bootstrap as an RCM payload."
-env = { "RUSTFLAGS" = "--sysroot ${PWD}/target/sysroot" }
+env = { "RUSTFLAGS" = "--sysroot ${CARGO_MAKE_WORKING_DIRECTORY}/target/sysroot" }
 dependencies = ["bootstrap-elf-build", "install-cargo-binutils"]
 command = "cargo"
 args = [
     "objcopy",
     "@@split(COMPILER_FLAGS, )",
-    "--package=mirage-bootstrap",
+    "--bin=mirage-bootstrap",
     "--target=${MIRAGE_ARM_TARGET}",
     "--",
     "-O",
