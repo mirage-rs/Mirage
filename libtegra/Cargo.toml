@@ -1,7 +1,10 @@
 [package]
 name = "mirage-libtegra"
 version = "2.0.0"
-authors = ["Valentin B. <valentin.be@protonmail.com>"]
+authors = [
+    "Valentin B. <valentin.be@protonmail.com>",
+    "Justus K. <justus.k@protonmail.com>",
+]
 license = "Apache-2.0/MIT"
 edition = "2018"
 
