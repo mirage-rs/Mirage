@@ -1,5 +1,9 @@
 # Mirage
 
+[![Rust](https://img.shields.io/badge/rust-nightly%202019--12--15-93450a.svg)](https://www.rust-lang.org/)
+[![Discord](https://img.shields.io/discord/644185512013463552?color=blue)](https://discord.gg/rJNsDfk)
+[![License](https://img.shields.io/badge/license-Apache--2.0%2FMIT-blue)](./LICENSE)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fvbe0201%2FMirage.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fvbe0201%2FMirage?ref=badge_shield)
 [![Built with cargo-make](https://sagiegurari.github.io/cargo-make/assets/badges/cargo-make.svg)](https://sagiegurari.github.io/cargo-make)
 
 Mirage is a reimplementation of the Nintendo Switch firmware, based on
@@ -64,3 +68,5 @@ Mirage is distributed under the terms of either the Apache License (Version 2.0)
 or the MIT license, at the user's choice.
 
 See [LICENSE-APACHE](./LICENSE-APACHE) and [LICENSE-MIT](./LICENSE-MIT) for details.
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fvbe0201%2FMirage.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fvbe0201%2FMirage?ref=badge_large)
