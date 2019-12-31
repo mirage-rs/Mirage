@@ -62,6 +62,38 @@ items and their progress state in the
 
 *Coming soon.*
 
+## FAQ
+
+There are some frequently asked questions that come up every now and then.
+This section is dedicated to answering those.
+
+> Where does it differ from CFW projects, such as Atmosphère or ReiNX?
+
+The aim of these projects is to patch and customize the behavior of Horizon OS,
+to make the platform more open and allow for unsigned code execution. Ideally
+speaking, these projects are similar to a Jailbreak on your iDevice.
+
+Mirage, on the other hand, aims for a fully-featured reimplementation of the
+entire Operating System, without depending on Nintendo's firmware, however
+providing the same functionality.
+
+> Why are you doing this?
+
+Fun, research, and as a tribute to the wonderful and modern architecture of Horizon.
+
+Some milestones for the far future:
+
+* [ ] Very accurate reflection of the actual Horizon OS.
+
+* [ ] Getting commercial games and homebrew applications to boot
+  * [ ] Providing a Rust toolchain for application development
+
+* [ ] Providing build options for purposefully including Horizon's flaws
+  * Eases up research and exploit development, due to the open platform.
+
+* [ ] Getting Mirage to run on other architectures, such as x86
+  * Why not?
+
 ## License
 
 Mirage is distributed under the terms of either the Apache License (Version 2.0)
