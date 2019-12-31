@@ -66,7 +66,7 @@ and documentation pertaining to the Nintendo Switch
 of bugfixing and consultance pertaining to the Switch hardware
 
 * [rust-embedded](https://github.com/rust-embedded) and [rust-osdev](https://github.com/rust-osdev)
-for some great documentation pertaining to Rust on the bare metal
+for some great documentation and tools pertaining to Rust on the bare metal
 
 * Nvidia for their TRM, which contains tons of useless stuff, but also some helpful documentation
 
