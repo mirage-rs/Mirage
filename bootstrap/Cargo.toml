@@ -12,3 +12,6 @@ sysroot_path = "target/sysroot"
 [dependencies]
 mirage-libtegra = { path = "../libtegra" }
 mirage-mmio = { path = "../mmio" }
+
+[features]
+debug_uart_port = []

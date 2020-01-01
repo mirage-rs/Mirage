@@ -195,6 +195,9 @@ pub fn hwinit() {
     // Configure GPIOs.
     config_gpios(pinmux);
 
+    #[cfg(feature = "debug_uart_port")]
+    Uart::E.init(115_200);
+
     // Reboot CL-DVFS.
     Clock::CL_DVFS.enable();
 

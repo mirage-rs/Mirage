@@ -45,13 +45,17 @@ extern crate mirage_libtegra;
 
 extern crate mirage_mmio;
 
-use core::panic::PanicInfo;
+use core::{
+    fmt::Write,
+    panic::PanicInfo,
+};
 
 use mirage_libtegra::{
     display,
     gpio::{GpioConfig},
     pinmux::{Pinmux, TRISTATE},
     timer::sleep,
+    uart::Uart,
 };
 use mirage_mmio::VolatileStorage;
 
@@ -81,6 +85,9 @@ unsafe fn backlight_poc() {
 
 #[no_mangle]
 pub unsafe extern "C" fn main() {
+    #[cfg(feature = "debug_uart_port")]
+    writeln!(&mut Uart::E, "Mirage: Ready!").unwrap();
+
     // Display backlight PoC for debugging.
     backlight_poc();
 }
