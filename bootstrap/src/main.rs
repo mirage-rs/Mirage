@@ -52,7 +52,7 @@ use core::{
 
 use mirage_libtegra::{
     display,
-    gpio::{GpioConfig},
+    gpio::{Gpio, GpioConfig},
     pinmux::{Pinmux, TRISTATE},
     timer::sleep,
     uart::Uart,
@@ -73,8 +73,8 @@ unsafe fn backlight_poc() {
     pinmux.lcd_bl_pwm.write(pinmux.lcd_bl_pwm.read() & !TRISTATE);
     pinmux.lcd_bl_en.write(pinmux.lcd_bl_en.read() & !TRISTATE);
 
-    gpio!(V, 0).config(GpioConfig::OutputHigh);
-    gpio!(V, 1).config(GpioConfig::OutputHigh);
+    Gpio::LCD_BL_PWM.config(GpioConfig::OutputHigh);
+    Gpio::LCD_BL_EN.config(GpioConfig::OutputHigh);
 
     display::display_backlight();
 
