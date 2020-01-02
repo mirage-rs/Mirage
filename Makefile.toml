@@ -16,7 +16,7 @@ MIRAGE_AARCH64_TARGET = "aarch64-mirage-none"
 # Configuration for debug builds.
 [env.development]
 PROFILE_NAME = "debug"
-COMPILER_FLAGS = ""
+COMPILER_FLAGS = "--all-features"
 
 # Configuration for release builds.
 [env.production]
@@ -72,9 +72,9 @@ dependencies = ["bootstrap-elf-build", "install-cargo-binutils"]
 command = "cargo"
 args = [
     "objcopy",
-    "@@split(COMPILER_FLAGS, )",
-    "--bin=mirage-bootstrap",
     "--target=${MIRAGE_ARM_TARGET}",
+    "--bin=mirage-bootstrap",
+    "@@split(COMPILER_FLAGS, )",
     "--",
     "-O",
     "binary",
