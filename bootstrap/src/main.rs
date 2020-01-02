@@ -86,7 +86,7 @@ unsafe fn backlight_poc() {
 #[no_mangle]
 pub unsafe extern "C" fn main() {
     #[cfg(feature = "debug_uart_port")]
-    writeln!(&mut Uart::E, "Mirage: Ready!").unwrap();
+    writeln!(&mut Uart::E, "Mirage: Ready!").ok();
 
     // Display backlight PoC for debugging.
     backlight_poc();
