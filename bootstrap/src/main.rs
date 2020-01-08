@@ -59,6 +59,8 @@ use mirage_libtegra::{
 };
 use mirage_mmio::VolatileStorage;
 
+use init::hwinit;
+
 mod init;
 
 #[panic_handler]
@@ -85,6 +87,9 @@ unsafe fn backlight_poc() {
 
 #[no_mangle]
 pub unsafe extern "C" fn main() {
+    // Initialize the hardware.
+    hwinit();
+
     #[cfg(feature = "debug_uart_port")]
     writeln!(&mut Uart::E, "Mirage: Ready!").ok();
 

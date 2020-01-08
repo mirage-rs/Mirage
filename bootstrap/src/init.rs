@@ -7,7 +7,7 @@ use mirage_libtegra::{
     pinmux::{Pinmux, INPUT},
     pmc::Pmc,
     sdram,
-    se::SecurityEngine,
+    //se::SecurityEngine,
     sysctr0::Sysctr0Registers,
     sysreg::AhbRegisters,
     timer::{TimerRegisters, usleep},
@@ -16,7 +16,7 @@ use mirage_libtegra::{
 use mirage_mmio::{Mmio, VolatileStorage};
 
 /// The global instance of the Security Engine.
-const SECURITY_ENGINE: SecurityEngine = SecurityEngine::new();
+//const SECURITY_ENGINE: SecurityEngine = SecurityEngine::new();
 
 /// Base address for I2S registers.
 const I2S_BASE: u32 = 0x702D_1000;
@@ -29,26 +29,26 @@ fn config_oscillators(car: &Car, pmc: &Pmc) {
     // Set CLK_M_DIVISOR to 2.
     car.spare_reg0.write((car.spare_reg0.read() & 0xFFFF_FFF3) | 4);
     // Set counter frequency.
-    sysctr0.CNTFID0.write(19200000);
+    sysctr0.CNTFID0.write(0x124F800);
     // For 19.2MHz clk_m.
     timer.TIMERUS_USEC_CFG.write(0x45F);
-
     // Set OSC to 38.4MHz and drive strength.
     car.osc_ctrl.write(0x5000_0071);
 
-    // // Set LP0 OSC drive strength.
+    // Set LP0 OSC drive strength.
     pmc.osc_edpd_over.write((pmc.osc_edpd_over.read() & 0xFFFF_FF81) | 0xE);
     pmc.osc_edpd_over.write((pmc.osc_edpd_over.read() & 0xFFBF_FFFF) | 0x400000);
     pmc.cntrl2.write((pmc.cntrl2.read() & 0xFFFF_EFFF) | 0x1000);
     // LP0 EMC2TMC_CFG_XM2COMP_PU_VREF_SEL_RANGE.
     pmc.scratch188.write((pmc.scratch188.read() & 0xFCFF_FFFF) | 0x2000000);
 
-    // // Set HCLK div to 2 and PCLK div to 1.
+    // Set HCLK div to 2 and PCLK div to 1.
     car.clk_sys_rate.write(0x10);
     // Disable PLLMB.
     car.pllmb_base.write(car.pllmb_base.read() & 0xBFFF_FFFF);
 
-    pmc.tsc_mult.write((pmc.tsc_mult.read() & 0xFFFF_0000) | 0x249F); // 0x249F = (16 / 32.768 kHz)
+    // 0x249F = 19200000 * (16 / 32.768 kHz)
+    pmc.tsc_mult.write((pmc.tsc_mult.read() & 0xFFFF_0000) | 0x249F);
 
     // Set SCLK div to 1.
     car.clk_source_sys.write(0);
@@ -205,7 +205,7 @@ pub fn hwinit() {
     Clock::TZRAM.enable();
 
     // Initialize I2C 1.
-    I2c::C1.init();
+    I2c::C1.init(); // --- This is where execution gets stuck - no panic though.
 
     // Initialize I2C 5.
     I2c::C5.init();
@@ -255,7 +255,7 @@ pub fn hwinit() {
     config_pmc_scratch(pmc);
 
     // Set super clock burst policy to PLLP_OUT (408MHz).
-    car.sclk_brst_pol.write(0x2000_3333);
+    car.sclk_brst_pol.write((car.sclk_brst_pol.read() & 0xFFFF_8888) | 0x3333);
 
     // Initialize SDRAM.
     sdram::init(car, pmc);
