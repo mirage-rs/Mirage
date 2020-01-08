@@ -96,7 +96,7 @@ relocator_end:
 // Sets sp and fp.
 //
 start:
-    // Set the stack and frame pointer, respectively.
+    // Set the stack pointer and frame pointer.
     ldr sp, =__stack_top__
     mov fp, #0
 
