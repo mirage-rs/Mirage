@@ -20,7 +20,7 @@ use self::{config::DRAM_CONFIG, params::Parameters};
 use crate::{
     clock::Car,
     fuse::read_reserved_odm,
-    i2c::{I2c, MAX77620_PWR_I2C_ADDR},
+    i2c::{I2c, Device},
     pmc::Pmc,
     timer::{get_microseconds, usleep},
 };
@@ -622,8 +622,8 @@ pub fn get_parameters() -> Parameters {
 pub fn init(car: &Car, pmc: &Pmc) {
     let mut params = get_parameters();
 
-    I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x22, 5).unwrap();
-    I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x17, 40).unwrap();
+    I2c::C5.write_byte(Device::Max77620Pwr, 0x22, 5).unwrap();
+    I2c::C5.write_byte(Device::Max77620Pwr, 0x17, 40).unwrap();
 
     pmc.vddp_sel.write(params.pmc_vddp_sel);
     usleep(params.pmc_vddp_sel_wait);

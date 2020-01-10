@@ -2,7 +2,7 @@ use mirage_libtegra::{
     clock::{Car, Clock},
     fuse,
     gpio::{Gpio, GpioConfig},
-    i2c::{I2c, MAX77620_PWR_I2C_ADDR},
+    i2c::{I2c, Device},
     mc,
     pinmux::{Pinmux, INPUT},
     pmc::Pmc,
@@ -206,48 +206,48 @@ pub fn hwinit() {
 
     // Initialize I2C 1.
     I2c::C1.init(); // --- This is where execution gets stuck - no panic though.
-
+/*
     // Initialize I2C 5.
     I2c::C5.init();
 
     // Configure the PMIC.
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x4, 0x40)
+        .write_byte(Device::Max77620Pwr, 0x4, 0x40)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x41, 0x60)
+        .write_byte(Device::Max77620Pwr, 0x41, 0x60)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x43, 0x38)
+        .write_byte(Device::Max77620Pwr, 0x43, 0x38)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x44, 0x3A)
+        .write_byte(Device::Max77620Pwr, 0x44, 0x3A)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x45, 0x38)
+        .write_byte(Device::Max77620Pwr, 0x45, 0x38)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x4A, 0xF)
+        .write_byte(Device::Max77620Pwr, 0x4A, 0xF)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x4E, 0xC7)
+        .write_byte(Device::Max77620Pwr, 0x4E, 0xC7)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x4F, 0x4F)
+        .write_byte(Device::Max77620Pwr, 0x4F, 0x4F)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x50, 0x29)
+        .write_byte(Device::Max77620Pwr, 0x50, 0x29)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x52, 0x1B)
+        .write_byte(Device::Max77620Pwr, 0x52, 0x1B)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x56, 0x22)
+        .write_byte(Device::Max77620Pwr, 0x56, 0x22)
         .unwrap();
 
     // Configure SD0 voltage.
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x16, 42)
+        .write_byte(Device::Max77620Pwr, 0x16, 42)
         .unwrap();
 
     // Configure and lock PMC scratch registers.
@@ -260,5 +260,5 @@ pub fn hwinit() {
     // Initialize SDRAM.
     sdram::init(car, pmc);
 
-    // TODO(Vale): Save SDRAM LP0 parameters.
+    // TODO(Vale): Save SDRAM LP0 parameters.*/
 }

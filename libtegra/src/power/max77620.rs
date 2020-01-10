@@ -56,7 +56,7 @@
 //! [`Regulator::config_fps`]: struct.Regulator.html#method.config_fps
 
 use crate::{
-    i2c::{I2c, MAX77620_PWR_I2C_ADDR},
+    i2c::{I2c, Device},
     timer::usleep,
 };
 
@@ -387,7 +387,7 @@ impl<'a> Regulator<'a> {
     /// Configures all regulators with the default configuration options.
     pub fn config_default() {
         for _ in 1..13 {
-            match I2c::C5.read_byte(MAX77620_PWR_I2C_ADDR, 0x5C) {
+            match I2c::C5.read_byte(Device::Max77620Pwr, 0x5C) {
                 Ok(value) => {
                     let regulator = Regulator::from(value);
                     regulator.config_fps().unwrap();
@@ -401,12 +401,12 @@ impl<'a> Regulator<'a> {
             };
         }
 
-        I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x22, 4).unwrap();
+        I2c::C5.write_byte(Device::Max77620Pwr, 0x22, 4).unwrap();
     }
 
     /// Configures all regulators for low battery monitoring.
     pub fn low_battery_monitor_config() {
-        I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0, 0x92).unwrap();
+        I2c::C5.write_byte(Device::Max77620Pwr, 0, 0x92).unwrap();
     }
 
     /// Enables or disables the regulator.
@@ -417,7 +417,7 @@ impl<'a> Regulator<'a> {
             self.volt_addr
         };
 
-        match I2c::C5.read_byte(MAX77620_PWR_I2C_ADDR, addr) {
+        match I2c::C5.read_byte(Device::Max77620Pwr, addr) {
             Ok(mut value) => {
                 if set_enable {
                     value =
@@ -427,7 +427,7 @@ impl<'a> Regulator<'a> {
                 }
 
                 if I2c::C5
-                    .write_byte(MAX77620_PWR_I2C_ADDR, addr, value)
+                    .write_byte(Device::Max77620Pwr, addr, value)
                     .is_ok()
                 {
                     usleep(1000);
@@ -455,7 +455,7 @@ impl<'a> Regulator<'a> {
         let value = (self.fps_src << 6) | (self.pu_period << 3) | self.pd_period;
 
         if I2c::C5
-            .write_byte(MAX77620_PWR_I2C_ADDR, self.fps_addr, value)
+            .write_byte(Device::Max77620Pwr, self.fps_addr, value)
             .is_ok()
         {
             Ok(())
@@ -472,12 +472,12 @@ impl<'a> Regulator<'a> {
 
         let mult = (mv + self.mv_step - 1 - self.mv_min) / self.mv_step;
 
-        match I2c::C5.read_byte(MAX77620_PWR_I2C_ADDR, self.volt_addr) {
+        match I2c::C5.read_byte(Device::Max77620Pwr, self.volt_addr) {
             Ok(mut value) => {
                 value = (value & !self.volt_mask) | (mult & self.volt_mask as u32) as u8;
 
                 if I2c::C5
-                    .write_byte(MAX77620_PWR_I2C_ADDR, self.volt_addr, value)
+                    .write_byte(Device::Max77620Pwr, self.volt_addr, value)
                     .is_ok()
                 {
                     usleep(1000);

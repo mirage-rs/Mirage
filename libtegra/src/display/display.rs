@@ -40,10 +40,10 @@ pub fn initialize() {
 
     // Power on.
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x23, 0xD0)
+        .write_byte(Device::Max77620Pwr, 0x23, 0xD0)
         .unwrap();
     I2c::C5
-        .write_byte(MAX77620_PWR_I2C_ADDR, 0x3D, 0x9)
+        .write_byte(Device::Max77620Pwr, 0x3D, 0x9)
         .unwrap();
 
     // Enable MIPI CAL, DSI, DISP1, HOST1X, UART_FST_MIPI_CAL, DSIA LP clocks.

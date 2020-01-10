@@ -21,15 +21,15 @@
 //!
 //! # Implementation
 //!
-//! - The addresses of available I2C devices are exposed as constants.
+//! - The [`Device`] enum represents I2C slaves that can be accessed.
 //!
 //! - The [`Registers`] struct provides abstractions over the I2C registers
 //! and the possibility to create pointers to each I2C mapped at a different
 //! address.
 //!
-//! - The [`I2c`] represents an I2C and holds the [`Clock`] to enable
-//! the device and the respective [`Registers`] block pointer to
-//! communicate over I²C.
+//! - The [`I2c`] represents an I2C controller and holds the [`Clock`] to enable
+//! the device and the respective [`Registers`] block pointer to communicate over
+//! I²C.
 //!
 //! - [`I2c`] holds pre-defined constants which represent the I2C
 //! controllers 1 through 6 and should be preferred over creating
@@ -44,24 +44,24 @@
 //! For read operations, the buffer wis filled with little-endian-ordered
 //! bytes.
 //!
-//! - The [`Sync`] trait is implemented for [`I2c`], it is considered
-//! safe to share references between threads.
+//! - I2C operations may fail for various reasons. Thus we return a [`Result`]
+//! which, in case of failure, provides access to a member of [`Error`], which
+//! can give more detailed information about the cause.
 //!
-//! - [`send_pmic_cpu_shutdown_cmd`], [`read_ti_charger_bit_7`],
-//! [`clear_ti_charger_bit_7`] and [`set_ti_charger_bit_7`] are helper
-//! functions which wrap common I2C operations.
+//! - The [`Sync`] and [`Send`] traits are implemented for [`I2c`], it is
+//! considered thread-safe.
 //!
+//! [`Device`]: enum.Device.html
 //! [`Registers`]: struct.Registers.html
 //! [`I2c`]: struct.I2c.html
 //! [`Clock`]: ../clock/struct.Clock.html
 //! [`I2c::init`]: struct.I2c.html#method.init
 //! [`I2c::read`]: struct.I2c.html#method.read
 //! [`I2c::write`]: struct.I2c.html#method.write
+//! [`Result`]: https://doc.rust-lang.org/core/result/enum.Result.html
+//! [`Error`]: enum.Error.html
 //! [`Sync`]: https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html
-//! [`send_pmic_cpu_shutdown_cmd`]: fn.send_pmic_cpu_shutdown_cmd.html
-//! [`read_ti_charger_bit_7`]: fn.read_ti_charger_bit_7.html
-//! [`clear_ti_charger_bit_7`]: fn.clear_ti_charger_bit_7.html
-//! [`set_ti_charger_bit_7`]: fn.set_ti_charger_bit_7.html
+//! [`Send`]: https://doc.rust-lang.org/nightly/core/marker/trait.Send.html
 
 use core::{
     convert::TryInto,
@@ -72,35 +72,53 @@ use mirage_mmio::Mmio;
 
 use crate::{clock::Clock, timer::usleep};
 
-/// Base address for the I²C registers 1 through 4.
-pub(crate) const I2C_1234_BASE: u32 = 0x7000_C000;
+/// Base address for the I²C 1 controller.
+pub(crate) const I2C_1_BASE: u32 = 0x7000_C000;
 
-/// Base address for the I²C registers 5 through 6.
-pub(crate) const I2C_56_BASE: u32 = 0x7000_D000;
+/// Base address for the I²C 2 controller.
+pub(crate) const I2C_2_BASE: u32 = 0x7000_C400;
 
-/// The I²C device address for the Maxim 77621 CPU.
-pub const MAX77621_CPU_I2C_ADDR: u32 = 0x1B;
-/// The I²C device address for the Maxim 77621 GPU.
-pub const MAX77621_GPU_I2C_ADDR: u32 = 0x1C;
-/// The I²C device address for the Maxim 17050.
-pub const MAX17050_I2C_ADDR: u32 = 0x36;
-/// The I²C device address for the Maxim 77620 PWR.
-pub const MAX77620_PWR_I2C_ADDR: u32 = 0x3C;
-/// The I²C device address for the Maxim 77620 RTC.
-pub const MAX77620_RTC_I2C_ADDR: u32 = 0x68;
-/// The I²C device address for the TI BQ24193.
-pub const BQ24193_I2C_ADDR: u32 = 0x6B;
+/// Base address for the I²C 3 controller.
+pub(crate) const I2C_3_BASE: u32 = 0x7000_C500;
 
-/// Enumeration of possible I²C errors that may occur.
-#[derive(Debug)]
+/// Base address for the I²C 4 controller.
+pub(crate) const I2C_4_BASE: u32 = 0x7000_C700;
+
+/// Base address for the I²C 5 controller.
+pub(crate) const I2C_5_BASE: u32 = 0x7000_D000;
+
+/// Base address for the I²C 6 controller.
+pub(crate) const I2C_6_BASE: u32 = 0x7000_D100;
+
+/// Enumeration of I²C devices the controller can access.
+#[derive(Clone, Copy, Debug)]
+#[repr(u32)]
+pub enum Device {
+    /// The Maxim 77621 CPU device.
+    Max77621Cpu = 0x1B,
+    /// The Maxim 77621 GPU device.
+    Max77621Gpu = 0x1C,
+    /// The Maxim 17050 device.
+    Max17050 = 0x36,
+    /// The Maxim 77620 PWR device.
+    Max77620Pwr = 0x3C,
+    /// The Maxim 77620 RTC device.
+    Max77620Rtc = 0x68,
+    /// The TI BQ24193 device.
+    Bq24193 = 0x6B,
+}
+
+/// Enumeration of possible errors when communicating over the I²C protocol.
+#[derive(Clone, Copy, Debug)]
 pub enum Error {
-    /// Returned in case the boundaries of a buffer used for
-    /// read and write operations exceed the permitted size.
-    BufferBoundariesBlown,
-    /// Returned when the transmission over I²C errors.
-    TransmissionFailed,
-    /// Returned when a querying error for a device occurs.
-    QueryFailed,
+    /// Generic I²C error. Not closer specified.
+    Generic,
+    /// An issue with memory organization, e.g. a
+    /// buffer is too large to fit an I2C register.
+    MemoryError,
+    /// An I/O error that occurred during communication
+    /// over I²C. Indicated through the MMIOs.
+    IOError,
 }
 
 /// Representation of the I²C registers.
@@ -112,8 +130,7 @@ pub struct Registers {
     pub I2C_CMD_ADDR1: Mmio<u32>,
     pub I2C_CMD_DATA1: Mmio<u32>,
     pub I2C_CMD_DATA2: Mmio<u32>,
-    _0x14: Mmio<u32>,
-    _0x18: Mmio<u32>,
+    _reserved0: [Mmio<u8>; 0x8],
     pub I2C_STATUS: Mmio<u32>,
     pub I2C_SL_CNFG: Mmio<u32>,
     pub I2C_SL_RCVD: Mmio<u32>,
@@ -121,29 +138,29 @@ pub struct Registers {
     pub I2C_SL_ADDR1: Mmio<u32>,
     pub I2C_SL_ADDR2: Mmio<u32>,
     pub I2C_TLOW_SEXT: Mmio<u32>,
-    _0x38: Mmio<u32>,
+    _reserved1: [Mmio<u8>; 0x4],
     pub I2C_SL_DELAY_COUNT: Mmio<u32>,
     pub I2C_SL_INT_MASK: Mmio<u32>,
     pub I2C_SL_INT_SOURCE: Mmio<u32>,
     pub I2C_SL_INT_SET: Mmio<u32>,
-    _0x4C: Mmio<u32>,
+    _reserved2: [Mmio<u8>; 0x4],
     pub I2C_TX_PACKET_FIFO: Mmio<u32>,
     pub I2C_RX_FIFO: Mmio<u32>,
     pub PACKET_TRANSFER_STATUS: Mmio<u32>,
     pub FIFO_CONTROL: Mmio<u32>,
     pub FIFO_STATUS: Mmio<u32>,
-    pub INTERRUPT_MASK_REGISTER: Mmio<u32>,
-    pub INTERRUPT_STATUS_REGISTER: Mmio<u32>,
-    pub I2C_CLK_DIVISOR_REGISTER: Mmio<u32>,
-    pub I2C_INTERRUPT_SOURCE_REGISTER: Mmio<u32>,
-    pub I2C_INTERRUPT_SET_REGISTER: Mmio<u32>,
+    pub INTERRUPT_MASK: Mmio<u32>,
+    pub INTERRUPT_STATUS: Mmio<u32>,
+    pub I2C_CLK_DIVISOR: Mmio<u32>,
+    pub I2C_INTERRUPT_SOURCE: Mmio<u32>,
+    pub I2C_INTERRUPT_SET: Mmio<u32>,
     pub I2C_SLV_TX_PACKET_FIFO: Mmio<u32>,
     pub I2C_SLV_RX_FIFO: Mmio<u32>,
     pub I2C_SLV_PACKET_STATUS: Mmio<u32>,
     pub I2C_BUS_CLEAR_CONFIG: Mmio<u32>,
     pub I2C_BUS_CLEAR_STATUS: Mmio<u32>,
     pub I2C_CONFIG_LOAD: Mmio<u32>,
-    _0x90: Mmio<u32>,
+    _reserved3: [Mmio<u8>; 0x4],
     pub I2C_INTERFACE_TIMING_0: Mmio<u32>,
     pub I2C_INTERFACE_TIMING_1: Mmio<u32>,
     pub I2C_HS_INTERFACE_TIMING_0: Mmio<u32>,
@@ -153,149 +170,144 @@ pub struct Registers {
 /// Representation of an I²C controller.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct I2c {
-    /// The device clock for the controller.
-    clock: &'static Clock,
-    /// A pointer to the registers used for communication.
+    /// A pointer to the respective registers, used for communication.
     registers: *const Registers,
+    /// The respective device clock for the controller.
+    clock: &'static Clock,
 }
 
-// Definitions for known I²C devices.
+// Definitions of known I²C controllers.
 impl I2c {
-    /// Representation of the I²C controller 1.
+    /// Representation of the I²C 1 controller.
     pub const C1: Self = I2c {
+        registers: I2C_1_BASE as *const _,
         clock: &Clock::I2C_1,
-        registers: (I2C_1234_BASE + 0) as *const Registers,
     };
 
-    /// Representation of the I²C controller 2.
+    /// Representation of the I²C 2 controller.
     pub const C2: Self = I2c {
+        registers: I2C_2_BASE as *const _,
         clock: &Clock::I2C_2,
-        registers: (I2C_1234_BASE + 0x400) as *const Registers,
     };
 
-    /// Representation of the I²C controller 3.
+    /// Representation of the I²C 3 controller.
     pub const C3: Self = I2c {
+        registers: I2C_3_BASE as *const _,
         clock: &Clock::I2C_3,
-        registers: (I2C_1234_BASE + 0x500) as *const Registers,
     };
 
-    /// Representation of the I²C controller 4.
+    /// Representation of the I²C 4 controller.
     pub const C4: Self = I2c {
+        registers: I2C_4_BASE as *const _,
         clock: &Clock::I2C_4,
-        registers: (I2C_1234_BASE + 0x700) as *const Registers,
     };
 
-    /// Representation of the I²C controller 5.
+    /// Representation of the I²C 5 controller.
     pub const C5: Self = I2c {
+        registers: I2C_5_BASE as *const _,
         clock: &Clock::I2C_5,
-        registers: (I2C_56_BASE + 0x000) as *const Registers,
     };
 
-    /// Representation of the I²C controller 6.
+    /// Representation of the I²C 6 controller.
     pub const C6: Self = I2c {
+        registers: I2C_6_BASE as *const _,
         clock: &Clock::I2C_6,
-        registers: (I2C_56_BASE + 0x100) as *const Registers,
     };
 }
 
 impl I2c {
-    /// Loads the hardware configuration for the I²C.
+    /// Loads the hardware configuration for the controller.
     fn load_config(&self) {
         let register_base = unsafe { &*self.registers };
 
         // Set MSTR_CONFIG_LOAD, TIMEOUT_CONFIG_LOAD, undocumented bit.
         register_base.I2C_CONFIG_LOAD.write(0x25);
 
-        // Wait up to 20 microseconds for master config to be loaded.
-        for i in 0..20 {
-            usleep(i);
+        // Wait a bit for master config to be loaded.
+        for _ in 0..20 {
+            usleep(1);
+
             if register_base.I2C_CONFIG_LOAD.read() & 1 == 0 {
                 break;
             }
         }
     }
 
-    /// Transmits the data to the device over I²C.
-    fn send(&self, device: u32, data: &[u8]) -> Result<(), Error> {
+    /// Transmits a packet of data to a given device over I²C.
+    fn write_packet(&self, device: Device, packet: &[u8]) -> Result<(), Error> {
         let register_base = unsafe { &*self.registers };
 
         // Set device for 7-bit write mode.
-        register_base.I2C_CMD_ADDR0.write(device << 1);
+        register_base.I2C_CMD_ADDR0.write((device as u32) << 1);
 
         // Load in data to write.
-        let data_source = u32::from_le_bytes(data.try_into().unwrap());
-        register_base.I2C_CMD_DATA1.write(data_source);
+        let data = u32::from_le_bytes(packet.try_into().unwrap());
+        register_base.I2C_CMD_DATA1.write(data);
 
-        // Set config with LENGTH = data_length, NEW_MASTER_FSM, DEBOUNCE_CNT = 4T.
-        register_base
-            .I2C_CNFG
-            .write((((data.len() << 1) - 2) | 0x2800) as u32);
+        // Set config with LENGTH = packet.len(), NEW_MASTER_FSM, DEBOUNCE_CNT = 4T.
+        register_base.I2C_CNFG.write((((packet.len() - 1) << 1) | 0x2800) as u32);
 
-        // Load hardware configuration.
+        // Kick off the transaction.
         self.load_config();
 
-        // CONFIG |= SEND.
-        register_base
-            .I2C_CNFG
-            .write((register_base.I2C_CNFG.read() & 0xFFFF_FDFF) | 0x200);
+        // CONFIG |= SEND
+        register_base.I2C_CNFG.write((register_base.I2C_CNFG.read() & 0xFFFF_FDFF) | 0x200);
 
-        while register_base.I2C_STATUS.read() & 0x100 != 0 {
+        while (register_base.I2C_STATUS.read() & 0x100) != 0 {
             // Wait until not busy.
         }
 
-        // Determine result from the result of CMD1_STAT == SL1_XFER_SUCCESSFUL.
-        if register_base.I2C_STATUS.read() & 0xF == 0 {
-            return Ok(());
+        // Check whether the translation was successful and determine the appropriate Result.
+        // CMD1_STAT == SL1_XFER_SUCCESSFUL
+        if (register_base.I2C_STATUS.read() & 0xF) == 0 {
+            Ok(())
         } else {
-            return Err(Error::TransmissionFailed);
+            Err(Error::IOError)
         }
     }
 
-    /// Receives bytes from the device over I²C and writes them to the buffer.
-    fn receive(&self, device: u32, buffer: &mut [u8]) -> Result<(), Error> {
+    /// Reads a packet of data from a given device over I²C.
+    fn read_packet(&self, device: Device, packet: &mut [u8]) -> Result<(), Error> {
         let register_base = unsafe { &*self.registers };
 
         // Set device for 7-bit read mode.
-        register_base.I2C_CMD_ADDR0.write((device << 1) | 1);
+        register_base.I2C_CMD_ADDR0.write(((device as u32) << 1) | 1);
 
-        // Set config with LENGTH = buffer.len(), NEW_MASTER_FSM, DEBOUNCE_CNT = 4T.
-        register_base
-            .I2C_CNFG
-            .write((((buffer.len() << 1) - 2) | 0x2840) as u32);
+        // Set config with LENGTH = packet.len(), NEW_MASTER_FSM, DEBOUNCE_CNT = 4T.
+        register_base.I2C_CNFG.write((((packet.len() - 1) << 1) | 0x2840) as u32);
 
-        // Load hardware configuration.
+        // Kick off the transaction.
         self.load_config();
 
-        // CONFIG |= SEND.
-        register_base
-            .I2C_CNFG
-            .write((register_base.I2C_CNFG.read() & 0xFFFF_FDFF) | 0x200);
+        // CONFIG |= SEND
+        register_base.I2C_CNFG.write((register_base.I2C_CNFG.read() & 0xFFFF_FDFF) | 0x200);
 
-        while register_base.I2C_STATUS.read() & 0x100 != 0 {
+        while (register_base.I2C_STATUS.read() & 0x100) != 0 {
             // Wait until not busy.
         }
 
-        // Ensure success.
-        if register_base.I2C_STATUS.read() & 0xF != 0 {
-            return Err(Error::QueryFailed);
+        // Check whether the translation was successful and determine the appropriate Result.
+        // CMD1_STAT == SL1_XFER_SUCCESSFUL
+        if (register_base.I2C_STATUS.read() & 0xF) == 0 {
+            // Read and copy back the result.
+            let result = register_base.I2C_CMD_DATA1.read();
+            packet.copy_from_slice(&result.to_le_bytes()[..packet.len()]);
+
+            Ok(())
+        } else {
+            Err(Error::IOError)
         }
-
-        // Read result and copy it back.
-        let result = register_base.I2C_CMD_DATA1.read().to_le_bytes();
-        buffer.copy_from_slice(&result[..buffer.len()]);
-
-        Ok(())
     }
 
     /// Initializes the I²C controller.
     pub fn init(&self) {
         let register_base = unsafe { &*self.registers };
 
-        // Enable device clock.
+        // Enable the device clock.
         self.clock.enable();
 
-        // Setup divisor and clear the bus.
-        register_base.I2C_CLK_DIVISOR_REGISTER.write(0x50001);
+        // Setup divisor, and clear the bus.
+        register_base.I2C_CLK_DIVISOR.write(0x50001); // --- Dies here!
         register_base.I2C_BUS_CLEAR_CONFIG.write(0x90003);
 
         // Load hardware configuration.
@@ -303,8 +315,9 @@ impl I2c {
 
         // Wait a while until BUS_CLEAR_DONE is set.
         for _ in 0..10 {
-            usleep(20000);
-            if register_base.INTERRUPT_STATUS_REGISTER.read() & 0x800 != 0 {
+            usleep(20_000);
+
+            if (register_base.INTERRUPT_STATUS.read() & 0x800) != 0 {
                 break;
             }
         }
@@ -313,53 +326,50 @@ impl I2c {
         register_base.I2C_BUS_CLEAR_STATUS.read();
 
         // Read and set the Interrupt Status.
-        register_base
-            .INTERRUPT_STATUS_REGISTER
-            .write(register_base.INTERRUPT_STATUS_REGISTER.read());
+        register_base.INTERRUPT_STATUS.write(register_base.INTERRUPT_STATUS.read());
     }
 
-    /// Writes a buffer of data to a given device over I²C.
-    pub fn write(&self, device: u32, register: u8, data: &[u8]) -> Result<(), Error> {
-        // Limit input size to 32-bits. One byte is reserved for the device register.
+    /// Writes a buffer of data to a register from a device over I²C.
+    pub fn write(&self, device: Device, register: u8, data: &[u8]) -> Result<(), Error> {
+        // Limit input size to 24 bits. One byte is reserved for the device register.
         if data.len() > 3 {
-            return Err(Error::BufferBoundariesBlown);
+            return Err(Error::MemoryError);
         }
 
-        // Prepare a buffer holding the device register and the data contents.
-        let mut buffer = [0; 4];
-        buffer[0] = register;
-        buffer[1..].copy_from_slice(data);
+        // Prepare an I²C packet, composed from the device register and the provided data.
+        // The u32 value that is read from the bytes will be written to the data registers.
+        let mut packet = [0; 4];
+        packet[0] = register;
+        packet[1..].copy_from_slice(data);
 
-        // Send the buffer to the device.
-        self.send(device, &buffer[..])
+        // Write the packet to the device.
+        self.write_packet(device, &packet[..])
     }
 
-    /// Writes an byte to a given device over I²C.
-    #[inline]
-    pub fn write_byte(&self, device: u32, register: u8, byte: u8) -> Result<(), Error> {
-        // Write single byte to device.
+    /// Writes a byte to a register of a device over I²C.
+    #[inline(always)]
+    pub fn write_byte(&self, device: Device, register: u8, byte: u8) -> Result<(), Error> {
         self.write(device, register, &byte.to_le_bytes())
     }
 
-    /// Reads a register of a device over I²C and writes the result to the buffer.
-    pub fn read(&self, device: u32, register: u8, buffer: &mut [u8]) -> Result<(), Error> {
-        // Limit output size to 32-bits.
+    /// Reads the contents of a register from a device over I²C into a given buffer.
+    pub fn read(&self, device: Device, register: u8, buffer: &mut [u8]) -> Result<(), Error> {
+        // Limit output buffer size to 32 bits.
         if buffer.len() > 4 {
-            return Err(Error::BufferBoundariesBlown);
+            return Err(Error::MemoryError);
         }
 
         // Write single byte register ID to device.
-        self.send(device, &[register])?;
+        self.write_packet(device, &[register])?;
 
-        // Receive data and write these to the buffer.
-        self.receive(device, buffer)
+        // Receive data and write them to the buffer.
+        self.read_packet(device, buffer)
     }
 
-    /// Reads a byte from a given device over I²C.
-    #[inline]
-    pub fn read_byte(&self, device: u32, register: u8) -> Result<u8, Error> {
+    /// Reads a byte from a register of a device over I²C.
+    #[inline(always)]
+    pub fn read_byte(&self, device: Device, register: u8) -> Result<u8, Error> {
         let mut buffer = [0; 1];
-
         self.read(device, register, &mut buffer)?;
 
         Ok(u8::from_le_bytes(buffer.try_into().unwrap()))

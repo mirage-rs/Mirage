@@ -35,7 +35,7 @@
 
 use core::fmt;
 
-use crate::i2c::{I2c, MAX77620_RTC_I2C_ADDR};
+use crate::i2c::{I2c, Device};
 
 /// Representation of a point in time as provided by the RTC.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -61,25 +61,25 @@ impl RtcTime {
     pub fn now() -> Self {
         // Update RTC registers from RTC clock.
         I2c::C5
-            .write_byte(MAX77620_RTC_I2C_ADDR, 0x04, 0x10)
+            .write_byte(Device::Max77620Rtc, 0x04, 0x10)
             .unwrap();
 
         // Get control register config.
-        let control_config = I2c::C5.read_byte(MAX77620_RTC_I2C_ADDR, 0x03).unwrap();
+        let control_config = I2c::C5.read_byte(Device::Max77620Rtc, 0x03).unwrap();
 
         // Get time.
-        let mut hour = I2c::C5.read_byte(MAX77620_RTC_I2C_ADDR, 0x09).unwrap() & 0x1F;
+        let mut hour = I2c::C5.read_byte(Device::Max77620Rtc, 0x09).unwrap() & 0x1F;
 
         if control_config & 0x02 == 0 && hour & 0x40 != 0 {
             hour = (hour & 0xF) + 12;
         }
 
-        let minute = I2c::C5.read_byte(MAX77620_RTC_I2C_ADDR, 0x08).unwrap() & 0x7F;
-        let second = I2c::C5.read_byte(MAX77620_RTC_I2C_ADDR, 0x07).unwrap() & 0x7F;
+        let minute = I2c::C5.read_byte(Device::Max77620Rtc, 0x08).unwrap() & 0x7F;
+        let second = I2c::C5.read_byte(Device::Max77620Rtc, 0x07).unwrap() & 0x7F;
 
         // Get day of week.
         let mut weekday = 0;
-        let mut remainder = I2c::C5.read_byte(MAX77620_RTC_I2C_ADDR, 0x0A).unwrap();
+        let mut remainder = I2c::C5.read_byte(Device::Max77620Rtc, 0x0A).unwrap();
         for _ in 0..8 {
             weekday += 1;
 
@@ -93,12 +93,12 @@ impl RtcTime {
         // Get date.
         let mut year = [0; 2];
         I2c::C5
-            .read(MAX77620_RTC_I2C_ADDR, 0x0C, &mut year)
+            .read(Device::Max77620Rtc, 0x0C, &mut year)
             .unwrap();
         let year = (u16::from_le_bytes(year) & 0x7F) + 2000;
 
-        let month = (I2c::C5.read_byte(MAX77620_RTC_I2C_ADDR, 0x0B).unwrap() & 0xF) - 1;
-        let day = I2c::C5.read_byte(MAX77620_RTC_I2C_ADDR, 0x0D).unwrap() & 0x1F;
+        let month = (I2c::C5.read_byte(Device::Max77620Rtc, 0x0B).unwrap() & 0xF) - 1;
+        let day = I2c::C5.read_byte(Device::Max77620Rtc, 0x0D).unwrap() & 0x1F;
 
         RtcTime {
             year,

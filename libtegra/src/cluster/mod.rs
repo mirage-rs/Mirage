@@ -4,7 +4,7 @@ use mirage_mmio::{Mmio, VolatileStorage};
 
 use crate::{
     clock::{Car, Clock},
-    i2c::{Error, I2c, MAX77620_PWR_I2C_ADDR, MAX77621_CPU_I2C_ADDR},
+    i2c::{Error, I2c, Device},
     pmc::Pmc,
     sysreg::{SbRegisters, EXCEPTION_VECTOR_BASE},
     timer::usleep,
@@ -14,16 +14,16 @@ use crate::{
 pub(crate) const FLOW_CTLR_BASE: u32 = 0x6000_7000;
 
 fn try_enable_power() -> Result<(), Error> {
-    let value = I2c::C5.read_byte(MAX77620_PWR_I2C_ADDR, 0x40)?;
+    let value = I2c::C5.read_byte(Device::Max77620Pwr, 0x40)?;
 
-    I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x40, value & 0xDF)?;
-    I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x3B, 0x9)?;
+    I2c::C5.write_byte(Device::Max77620Pwr, 0x40, value & 0xDF)?;
+    I2c::C5.write_byte(Device::Max77620Pwr, 0x3B, 0x9)?;
 
     // Enable power.
-    I2c::C5.write_byte(MAX77621_CPU_I2C_ADDR, 0x2, 0x20)?;
-    I2c::C5.write_byte(MAX77621_CPU_I2C_ADDR, 0x3, 0x8D)?;
-    I2c::C5.write_byte(MAX77621_CPU_I2C_ADDR, 0, 0xB7)?;
-    I2c::C5.write_byte(MAX77621_CPU_I2C_ADDR, 0x1, 0xB7)
+    I2c::C5.write_byte(Device::Max77621Cpu, 0x2, 0x20)?;
+    I2c::C5.write_byte(Device::Max77621Cpu, 0x3, 0x8D)?;
+    I2c::C5.write_byte(Device::Max77621Cpu, 0, 0xB7)?;
+    I2c::C5.write_byte(Device::Max77621Cpu, 0x1, 0xB7)
 }
 
 fn enable_power() {

@@ -1,6 +1,6 @@
 //! Drivers for Nintendo Switch power components.
 
-use crate::i2c::{I2c, Error, BQ24193_I2C_ADDR, MAX77620_PWR_I2C_ADDR};
+use crate::i2c::{I2c, Error, Device};
 
 pub mod max77620;
 
@@ -8,16 +8,16 @@ pub mod max77620;
 #[inline]
 pub fn send_pmic_cpu_shutdown_cmd() -> Result<(), Error> {
     // PMIC == Device 4:3C.
-    let value = I2c::C5.read_byte(MAX77620_PWR_I2C_ADDR, 0x41)?;
+    let value = I2c::C5.read_byte(Device::Max77620Pwr, 0x41)?;
 
-    I2c::C5.write_byte(MAX77620_PWR_I2C_ADDR, 0x41, value | 4)
+    I2c::C5.write_byte(Device::Max77620Pwr, 0x41, value | 4)
 }
 
 /// Reads the value of TI charger bit over I²C.
 #[inline]
 pub fn read_ti_charger_bit_7() -> Result<bool, Error> {
     // TI Charger = Device 0:6B.
-    let value = I2c::C1.read_byte(BQ24193_I2C_ADDR, 0).unwrap();
+    let value = I2c::C1.read_byte(Device::Bq24193, 0).unwrap();
 
     Ok((value & 0x80) != 0)
 }
@@ -26,16 +26,16 @@ pub fn read_ti_charger_bit_7() -> Result<bool, Error> {
 #[inline]
 pub fn clear_ti_charger_bit_7() -> Result<(), Error> {
     // TI Charger = Device 0:6B.
-    let value = I2c::C1.read_byte(BQ24193_I2C_ADDR, 0)?;
+    let value = I2c::C1.read_byte(Device::Bq24193, 0)?;
 
-    I2c::C1.write_byte(BQ24193_I2C_ADDR, 0, value & 0x7F)
+    I2c::C1.write_byte(Device::Bq24193, 0, value & 0x7F)
 }
 
 /// Sets TI charger bit over I²C.
 #[inline]
 pub fn set_ti_charger_bit_7() -> Result<(), Error> {
     // TI Charger = Device 0:6B.
-    let value = I2c::C1.read_byte(BQ24193_I2C_ADDR, 0)?;
+    let value = I2c::C1.read_byte(Device::Bq24193, 0)?;
 
-    I2c::C1.write_byte(BQ24193_I2C_ADDR, 0, value | 0x80)
+    I2c::C1.write_byte(Device::Bq24193, 0, value | 0x80)
 }

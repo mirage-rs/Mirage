@@ -64,7 +64,7 @@ pub fn read() -> Button {
         result |= Button::VOL_UP;
     }
 
-    if I2c::C5.read_byte(MAX77620_PWR_I2C_ADDR, 0x15).unwrap() & 0x4 != 0 {
+    if I2c::C5.read_byte(Device::Max77620Pwr, 0x15).unwrap() & 0x4 != 0 {
         result |= Button::POWER;
     }
 
