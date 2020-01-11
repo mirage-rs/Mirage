@@ -50,6 +50,8 @@
 
 use mirage_mmio::{Mmio, VolatileStorage};
 
+use crate::timer::usleep;
+
 /// Base address for clock registers.
 pub(crate) const CLOCK_BASE: u32 = 0x6000_6000;
 
@@ -767,7 +769,7 @@ impl Clock {
         let reset_reg = unsafe { &*((CLOCK_BASE + self.reset) as *const Mmio<u32>) };
 
         let current_value = reset_reg.read();
-        let mask = (1 << self.index & 0x1F) as u32;
+        let mask = (1 << (self.index & 0x1F)) as u32;
 
         let new_value = if set_reset {
             current_value | mask
@@ -796,9 +798,6 @@ impl Clock {
 
     /// Enables the clock.
     pub fn enable(&self) {
-        // Put clock into reset.
-        self.set_reset(true);
-
         // Disable clock.
         self.disable();
 
@@ -806,13 +805,26 @@ impl Clock {
         if self.source != 0 {
             unsafe {
                 (*((CLOCK_BASE + self.source) as *const Mmio<u32>))
-                    .write(self.clock_divisor | (self.clock_source << 29));
+                    .write((self.clock_source << 29) | self.clock_divisor);
             }
         }
 
-        // Enable clock.
-        self.set_enable(true);
-        self.set_reset(false);
+        if self == &Self::KFUSE { // KFUSE steps out of line.
+            // Enable the clock.
+            self.set_enable(true);
+            usleep(100);
+
+            // Take clock off reset.
+            self.set_reset(false);
+            usleep(200);
+        } else {
+            // Enable the clock.
+            self.set_enable(true);
+            usleep(2);
+
+            // Take clock off reset.
+            self.set_reset(false);
+        }
     }
 
     /// Disables the clock.
