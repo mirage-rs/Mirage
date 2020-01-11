@@ -205,8 +205,8 @@ pub fn hwinit() {
     Clock::TZRAM.enable();
 
     // Initialize I2C 1.
-    I2c::C1.init(); // --- This is where execution gets stuck - no panic though.
-/*
+    I2c::C1.init();
+
     // Initialize I2C 5.
     I2c::C5.init();
 
@@ -258,7 +258,7 @@ pub fn hwinit() {
     car.sclk_brst_pol.write((car.sclk_brst_pol.read() & 0xFFFF_8888) | 0x3333);
 
     // Initialize SDRAM.
-    sdram::init(car, pmc);
+    //sdram::init(car, pmc); --- execution gets stuck here, no panic though
 
-    // TODO(Vale): Save SDRAM LP0 parameters.*/
+    // TODO(Vale): Save SDRAM LP0 parameters.
 }
