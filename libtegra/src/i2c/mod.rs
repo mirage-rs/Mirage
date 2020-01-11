@@ -307,7 +307,7 @@ impl I2c {
         self.clock.enable();
 
         // Setup divisor, and clear the bus.
-        register_base.I2C_CLK_DIVISOR.write(0x50001); // --- Dies here!
+        register_base.I2C_CLK_DIVISOR.write(0x50001);
         register_base.I2C_BUS_CLEAR_CONFIG.write(0x90003);
 
         // Load hardware configuration.
@@ -340,7 +340,7 @@ impl I2c {
         // The u32 value that is read from the bytes will be written to the data registers.
         let mut packet = [0; 4];
         packet[0] = register;
-        packet[1..].copy_from_slice(data);
+        packet[1..=data.len()].copy_from_slice(data);
 
         // Write the packet to the device.
         self.write_packet(device, &packet[..])
